@@ -1,0 +1,5 @@
+{
+  "python.defaultInterpreterPath": "/Users/kirtisoglu/cplex310env/bin/python",
+  "python.terminal.activateEnvironment": true,
+  "python-envs.pythonProjects": []
+}
