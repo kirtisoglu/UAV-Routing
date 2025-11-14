@@ -1,7 +1,7 @@
 """
 This module provides the Iterator class, which is designed to facilitate the creation
 and iteration of states in the context of UAV routing plans. It allows for the exploration 
-of different routes based on specified acceptance criteria.
+of different tours in the solution space.
 
 Key Components:
 
@@ -20,7 +20,7 @@ Last Updated:
 """
 
 from typing import Union, Iterable, Callable, Optional
-from .state import State
+from uav_routing.state import State
 
 
 class Iterator:
@@ -28,14 +28,15 @@ class Iterator:
     A class that creates an iterator for iterating over the states
     of a run in a UAV routing analysis context.
 
-    It allows for the generation of a sequence of states of tours.
+    It allows for the generation of a sequence of tours (states) with
+    their SOCP solutions.
 
     Example usage:
 
     .. code-block:: python
 
-        chain = Iterator(proposal, accept, initial_state, total_steps)
-        for state in chain:
+        seq = Iterator(proposal, initial_state, total_steps)
+        for state in seq:
             # Do whatever you want - print output, compute scores, ...
     """
 
@@ -49,10 +50,6 @@ class Iterator:
         """
         :param proposal: Function proposing the next state from the current state.
         :type proposal: Callable
-        :param accept: Function accepting or rejecting the proposed state. In the most basic
-            use case, this always returns ``True``. But if the user wanted to use a
-            Metropolis-Hastings acceptance rule, this is where you would implement it.
-        :type accept: Callable
         :param initial_state: Initial :class:`gerrychain.partition.Partition` class.
         :type initial_state: Partition
         :param total_steps: Number of steps to run.
@@ -60,13 +57,11 @@ class Iterator:
 
         :returns: None
         """
-
         self.proposal = proposal
         self.accept = accept
         self.total_steps = total_steps
         self.initial_state = initial_state
         self.state = initial_state
-
 
 
     def __iter__(self) -> "Iterator":
@@ -88,9 +83,8 @@ class Iterator:
         Advances the Iterator to the next state.
 
         This method is called to get the next item in the iteration.
-        It proposes the next state and moves to it if accepted by the
-        acceptance function. If the total number of steps has been
-        reached, it raises a StopIteration exception.
+        It proposes the next state and moves to it. If the total number 
+        of steps has been reached, it raises a StopIteration exception.
 
         :returns: The next state of the chain.
         :rtype: Optional[State]
@@ -106,7 +100,6 @@ class Iterator:
             # Erase the parent of the parent, to avoid memory leak
             if self.state is not None:
                 self.state.parent = None
-
             if self.accept(proposed_next_state):
                 self.state = proposed_next_state
             self.counter += 1
@@ -127,12 +120,12 @@ class Iterator:
 
     def with_progress_bar(self):
         """
-        Wraps the Markov chain in a tqdm progress bar.
+        Wraps the Iterator in a tqdm progress bar.
 
-        Useful for long-running Markov chains where you want to keep track
+        Useful for long-running iterations where you want to keep track
         of the progress. Requires the `tqdm` package to be installed.
 
-        :returns: A tqdm-wrapped Markov chain.
+        :returns: A tqdm-wrapped Iterator.
         """
         from tqdm.auto import tqdm
 

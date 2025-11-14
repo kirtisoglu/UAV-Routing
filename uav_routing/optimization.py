@@ -1,22 +1,44 @@
-from .state import State
+
 from typing import Union, Callable, List, Any
 import random
 import math
+from tqdm import tqdm
 
-from .iterator import Iterator
+from uav_routing.accept import always_accept
+from uav_routing.iterator import Iterator
+from uav_routing.state import State
+
+
+
 
 class Optimizer:
+    """
+    Optimizer represents the class of algorithms that optimize tours with respect to 
+    a single metric. An instance of this class encapsulates the following state
+    information:
+        * the dual graph and updaters via the initial partition,
+        * the metric over which to optimize,
+        * and whether or not to seek maximal or minimal values of the metric.
+
+    The SingleMetricOptimizer class implements the following common methods of optimization:
+        * Short Bursts
+        * Simulated Annealing
+        * Tilted Runs
+
+    Both during and after a optimization run, the class properties `best_part` and `best_score`
+    represent the optimal state / corresponding score value observed.  Note that these
+    properties do NOT persist across multiple optimization runs, as they are reset each time an
+    optimization run is invoked.
+    """
     
-    
-   def __init__(
+    def __init__(
         self,
         proposal: Callable[[State], State],
         initial_state: State,
         maximize: bool = True,
-        step_indexer: str = "step",
-    ):
+        step_indexer: str = "step"
+        ):
         """
-
         :param proposal: Function proposing the next state from the current state.
         :type proposal: Callable
         :param initial_state: Initial state of the optimizer.
@@ -31,25 +53,25 @@ class Optimizer:
         :return: An Optimizer object
         :rtype: Optimizer
         """
-        self._initial_part = initial_state
+        self._initial_state = initial_state
         self._proposal = proposal
-
-        self._score = optimization_metric
+        self._score = self.optimization_metric
         self._maximize = maximize
-        self._best_part = None
+        self._best_state = None
         self._best_score = None
         self._step_indexer = step_indexer
 
-        # we need this. but change it.
-        if self._step_indexer not in self._initial_part.updaters:
-            step_updater = lambda p: (
-                0 if p.parent is None else p.parent[self._step_indexer] + 1
-            )
-            self._initial_part.updaters[self._step_indexer] = step_updater
-        
 
+        step_updater = lambda p: (
+            0 if p.parent is None else p.parent[self._step_indexer] + 1
+        )
+        self._initial_state.updaters[self._step_indexer] = step_updater
+    
+
+    
+    
     @property
-    def best_part(self) -> State:
+    def best_state(self) -> State:
         """
         State object corresponding to best scoring tour observed over the current (or most
         recent) optimization run.
@@ -57,7 +79,7 @@ class Optimizer:
         :return: State object with the best score.
         :rtype: State
         """
-        return self._best_tour
+        return self._best_state
 
     @property
     def best_score(self) -> Any:
@@ -70,6 +92,7 @@ class Optimizer:
         """
         return self._best_score
 
+    # TODO: no need for this. change it later.
     @property
     def score(self) -> Callable[[State], Any]:
         """
@@ -80,10 +103,13 @@ class Optimizer:
         """
         return self._score
 
+    def optimization_metric(self, State):
+        return State.value
+    
     def _is_improvement(self, new_score: float, old_score: float) -> bool:
         """
-        Helper function defining improvement comparison between scores.  Scores can be any
-        comparable type.
+        Helper function defining improvement comparison between scores.  
+        Scores can be any comparable type.
 
         :param new_score: Score of proposed tour.
         :type new_score: float
@@ -106,18 +132,18 @@ class Optimizer:
         :param p: The probability of accepting a worse score.
         :type p: float
 
-        :return: An acceptance function for tilted chains.
-        :rtype: Callable[[Partition], bool]
+        :return: An acceptance function for tilted iterations.
+        :rtype: Callable[[State], bool]
         """
 
-        def tilted_acceptance_function(part):
-            if part.parent is None:
+        def tilted_acceptance_function(state):
+            if state.parent is None:
                 return True
 
-            part_score = self.score(part)
-            prev_score = self.score(part.parent)
+            state_score = self.score(state)
+            prev_score = self.score(state.parent)
 
-            if self._is_improvement(part_score, prev_score):
+            if self._is_improvement(state_score, prev_score):
                 return True
             else:
                 return random.random() < p
@@ -132,22 +158,22 @@ class Optimizer:
         Function factory that binds and returns a simulated annealing acceptance function.
 
         :param beta_function: Function (f: t -> beta, where beta is in [0,1]) defining temperature
-            over time.  f(t) = 0 the chain is hot and every proposal is accepted.  At f(t) = 1 the
-            chain is cold and worse proposal have a low probability of being accepted relative to
+            over time.  f(t) = 0 the iterator is hot and every proposal is accepted.  At f(t) = 1 the
+            iterator is cold and worse proposal have a low probability of being accepted relative to
             the magnitude of change in score.
         :type beta_function: Callable[[int], float]
         :param beta_magnitude: Scaling parameter for how much to weight changes in score.
         :type beta_magnitude: float
 
         :return: A acceptance function for simulated annealing runs.
-        :rtype: Callable[[Partition], bool]
+        :rtype: Callable[[State], bool]
         """
 
-        def simulated_annealing_acceptance_function(part):
-            if part.parent is None:
+        def simulated_annealing_acceptance_function(state):
+            if state.parent is None:
                 return True
-            score_delta = self.score(part) - self.score(part.parent)
-            beta = beta_function(part[self._step_indexer])
+            score_delta = self.score(state) - self.score(state.parent)
+            beta = beta_function(state[self._step_indexer])
             if self._maximize:
                 score_delta *= -1
             return random.random() < math.exp(-beta * beta_magnitude * score_delta)
@@ -160,7 +186,7 @@ class Optimizer:
     ) -> Callable[[int], float]:
         """
         Class method that binds and return simple hot-cold cycle beta temperature function, where
-        the chain runs hot for some given duration and then cold for some duration, and repeats that
+        the iteration runs hot for some given duration and then cold for some duration, and repeats that
         cycle.
 
         :param duration_hot: Number of steps to run chain hot.
@@ -185,15 +211,15 @@ class Optimizer:
     ) -> Callable[[int], float]:
         """
         Class method that binds and returns a simple linear hot-cool cycle beta temperature
-        function, where the chain runs hot for some given duration, cools down linearly for some
+        function, where the iteration runs hot for some given duration, cools down linearly for some
         duration, and then runs cold for some duration before warming up again and repeating.
 
-        :param duration_hot: Number of steps to run chain hot.
+        :param duration_hot: Number of steps to run iteration hot.
         :type duration_hot: int
         :param duration_cooldown: Number of steps needed to transition from hot to cold or
             vice-versa.
         :type duration_cooldown: int
-        :param duration_cold: Number of steps to run chain cold.
+        :param duration_cold: Number of steps to run iteration cold.
         :type duration_cold: int
 
         :return: Beta function defining linear hot-cool cycle.
@@ -224,14 +250,14 @@ class Optimizer:
     ):
         """
         Class method that binds and returns a simple linear hot-cool cycle beta temperature
-        function, where the chain runs hot for some given duration, cools down linearly for some
+        function, where the iteration runs hot for some given duration, cools down linearly for some
         duration, and then runs cold for some duration before jumping back to hot and repeating.
 
-        :param duration_hot: Number of steps to run chain hot.
+        :param duration_hot: Number of steps to run iteration hot.
         :type duration_hot: int
         :param duration_cooldown: Number of steps needed to transition from hot to cold.
         :type duration_cooldown: int
-        :param duration_cold: Number of steps to run chain cold.
+        :param duration_cold: Number of steps to run iteration cold.
         :type duration_cold: int
 
         :return: Beta function defining linear hot-cool cycle.
@@ -256,7 +282,7 @@ class Optimizer:
     ) -> Callable[[int], float]:
         """
         Class method that binds and returns a logit hot-cool cycle beta temperature function, where
-        the chain runs hot for some given duration, cools down according to the logit function
+        the iteration runs hot for some given duration, cools down according to the logit function
 
         :math:`f(x) = (log(x/(1-x)) + 5)/10`
 
@@ -308,19 +334,19 @@ class Optimizer:
     ) -> Callable[[int], float]:
         """
         Class method that binds and returns a logit hot-cool cycle beta temperature function, where
-        the chain runs hot for some given duration, cools down according to the logit function
+        the iteration runs hot for some given duration, cools down according to the logit function
 
         :math:`f(x) = (log(x/(1-x)) + 5)/10`
 
         for some duration, and then runs cold for some duration before jumping back to hot and
         repeating.
 
-        :param duration_hot: Number of steps to run chain hot.
+        :param duration_hot: Number of steps to run iteration hot.
         :type duration_hot: int
         :param duration_cooldown: Number of steps needed to transition from hot to cold or
             vice-versa.
         :type duration_cooldown: int
-        :param duration_cold: Number of steps to run chain cold.
+        :param duration_cold: Number of steps to run iteration cold.
         :type duration_cold: int
         """
         cycle_length = duration_hot + duration_cooldown + duration_cold
@@ -344,56 +370,59 @@ class Optimizer:
 
         return beta_function
 
+    def always_accept(staten: State) -> bool:
+        return True
+    
+    
     def short_bursts(
         self,
         burst_length: int,
         num_bursts: int,
-        accept: Callable[[Partition], bool] = always_accept,
+        accept: Callable[[State], bool] = always_accept,
         with_progress_bar: bool = False,
     ):
         """
         Performs a short burst run using the instance's score function. Each burst starts at the
-        best performing plan of the previous burst. If there's a tie, the later observed one is
+        best performing state of the previous burst. If there's a tie, the later observed one is
         selected.
 
         :param burst_length: Number of steps to run within each burst.
         :type burst_length: int
         :param num_bursts: Number of bursts to perform.
         :type num_bursts: int
-        :param accept: Function accepting or rejecting the proposed state. Defaults to
-            :func:`~gerrychain.accept.always_accept`.
-        :type accept: Callable[[Partition], bool], optional
+        :param accept: Function accepting or rejecting the proposed state. Defaults to always_accept()
+        :type accept: Callable[[State], bool], optional
         :param with_progress_bar: Whether or not to draw tqdm progress bar. Defaults to False.
         :type with_progress_bar: bool, optional
 
-        :return: Partition generator.
-        :rtype: Generator[Partition]
+        :return: State generator.
+        :rtype: Generator[State]
         """
         if with_progress_bar:
-            for part in tqdm(
+            for state in tqdm(
                 self.short_bursts(
                     burst_length, num_bursts, accept, with_progress_bar=False
                 ),
                 total=burst_length * num_bursts,
             ):
-                yield part
+                yield state
             return
 
-        self._best_part = self._initial_part
-        self._best_score = self.score(self._best_part)
+        self._best_state = self._initial_state
+        self._best_score = self.score(self._best_state)
 
         for _ in range(num_bursts):
-            chain = Iterator(
-                self._proposal, self._constraints, accept, self._best_part, burst_length
+            iteration = Iterator(
+                self._proposal, accept, self._best_state, burst_length
             )
 
-            for part in chain:
-                yield part
-                part_score = self.score(part)
+            for state in iteration:
+                yield state
+                state_score = self.score(state)
 
-                if self._is_improvement(part_score, self._best_score):
-                    self._best_part = part
-                    self._best_score = part_score
+                if self._is_improvement(state_score, self._best_score):
+                    self._best_state = state
+                    self._best_score = state_score
 
     def simulated_annealing(
         self,
@@ -408,8 +437,8 @@ class Optimizer:
         :param num_steps: Number of steps to run for.
         :type num_steps: int
         :param beta_function: Function (f: t -> beta, where beta is in [0,1]) defining temperature
-            over time.  f(t) = 0 the chain is hot and every proposal is accepted. At f(t) = 1 the
-            chain is cold and worse proposal have a low probability of being accepted relative to
+            over time.  f(t) = 0 the iteration is hot and every proposal is accepted. At f(t) = 1 the
+            iteration is cold and worse proposal have a low probability of being accepted relative to
             the magnitude of change in score.
         :type beta_function: Callable[[int], float]
         :param beta_magnitude: Scaling parameter for how much to weight changes in score.
@@ -418,30 +447,29 @@ class Optimizer:
         :param with_progress_bar: Whether or not to draw tqdm progress bar. Defaults to False.
         :type with_progress_bar: bool, optional
 
-        :return: Partition generator.
-        :rtype: Generator[Partition]
+        :return: State generator.
+        :rtype: Generator[State]
         """
-        chain = MarkovChain(
+        iteration = Iterator(
             self._proposal,
-            self._constraints,
             self._simulated_annealing_acceptance_function(
                 beta_function, beta_magnitude
             ),
-            self._initial_part,
+            self._initial_state,
             num_steps,
         )
 
-        self._best_part = self._initial_part
-        self._best_score = self.score(self._best_part)
+        self._best_state = self._initial_state
+        self._best_score = self.score(self._best_state)
 
-        chain_generator = tqdm(chain) if with_progress_bar else chain
+        iteration_generator = tqdm(iteration) if with_progress_bar else iteration
 
-        for part in chain_generator:
-            yield part
-            part_score = self.score(part)
-            if self._is_improvement(part_score, self._best_score):
-                self._best_part = part
-                self._best_score = part_score
+        for state in iteration_generator:
+            yield state
+            state_score = self.score(state)
+            if self._is_improvement(state_score, self._best_score):
+                self._best_state = state
+                self._best_score = state_score
 
     def tilted_short_bursts(
         self,
@@ -452,22 +480,22 @@ class Optimizer:
     ):
         """
         Performs a short burst run using the instance's score function. Each burst starts at the
-        best performing plan of the previous burst. If there's a tie, the later observed one is
-        selected. Within each burst a tilted acceptance function is used where better scoring plans
-        are always accepted and worse scoring plans are accepted with probability `p`.
+        best performing tour of the previous burst. If there's a tie, the later observed one is
+        selected. Within each burst a tilted acceptance function is used where better scoring tours
+        are always accepted and worse scoring tours are accepted with probability `p`.
 
         :param burst_length: Number of steps to run within each burst.
         :type burst_length: int
         :param num_bursts: Number of bursts to perform.
         :type num_bursts: int
-        :param p: The probability of accepting a plan with a worse score.
+        :param p: The probability of accepting a tour with a worse score.
         :type p: float
         :param with_progress_bar: Whether or not to draw tqdm progress bar. Defaults to False.
         :type with_progress_bar: bool, optional
 
 
-        :return: Partition generator.
-        :rtype: Generator[Partition]
+        :return: State generator.
+        :rtype: Generator[State]
         """
         return self.short_bursts(
             burst_length,
@@ -481,12 +509,12 @@ class Optimizer:
         self,
         num_steps: int,
         stuck_buffer: int,
-        accept: Callable[[Partition], bool] = always_accept,
+        accept: Callable[[State], bool] = always_accept,
         with_progress_bar: bool = False,
     ):
         """
         Performs a short burst where the burst length is allowed to increase as it gets harder to
-        find high scoring plans. The initial burst length is set to 2, and it is doubled each time
+        find high scoring tours. The initial burst length is set to 2, and it is doubled each time
         there is no improvement over the passed number (`stuck_buffer`) of runs.
 
         :param num_steps: Number of steps to run for.
@@ -495,40 +523,39 @@ class Optimizer:
             increasing the burst length.
         :type stuck_buffer: int
         :param accept: Function accepting or rejecting the proposed state. Defaults to
-            :func:`~gerrychain.accept.always_accept`.
-        :type accept: Callable[[Partition], bool], optional
+        :type accept: Callable[[State], bool], optional
         :param with_progress_bar: Whether or not to draw tqdm progress bar. Defaults to False.
         :type with_progress_bar: bool, optional
 
-        :return: Partition generator.
-        :rtype: Generator[Partition]
+        :return: State generator.
+        :rtype: Generator[State]
         """
         if with_progress_bar:
-            for part in tqdm(
+            for state in tqdm(
                 self.variable_length_short_bursts(
                     num_steps, stuck_buffer, accept, with_progress_bar=False
                 ),
                 total=num_steps,
             ):
-                yield part
+                yield state
             return
 
-        self._best_part = self._initial_part
-        self._best_score = self.score(self._best_part)
+        self._best_state = self._initial_state
+        self._best_score = self.score(self._best_state)
         time_stuck = 0
         burst_length = 2
         i = 0
 
         while i < num_steps:
-            chain = MarkovChain(
-                self._proposal, self._constraints, accept, self._best_part, burst_length
+            iteration =Iterator(
+                self._proposal, accept, self._best_state, burst_length
             )
-            for part in chain:
-                yield part
-                part_score = self.score(part)
-                if self._is_improvement(part_score, self._best_score):
-                    self._best_part = part
-                    self._best_score = part_score
+            for state in iteration:
+                yield state
+                state_score = self.score(state)
+                if self._is_improvement(state_score, self._best_score):
+                    self._best_state = state
+                    self._best_score = state_score
                     time_stuck = 0
                 else:
                     time_stuck += 1
@@ -539,43 +566,75 @@ class Optimizer:
 
             if time_stuck >= stuck_buffer * burst_length:
                 burst_length *= 2
+    
+    def ascent_run(self, num_steps: int, with_progress_bar: bool = False):
+        """
+        Performs an ascent run. An iterator where only better tours are accepted.
+        
+        :param num_steps: Number of steps to run for.
+        :type num_steps: int
+        :param with_progress_bar: Whether or not to draw tqdm progress bar. Defaults to False.
+        :type with_progress_bar: bool, optional
 
+        :return: State generator.
+        :rtype: Generator[State]
+        """
+        iteration = Iterator(
+            self._proposal,
+            always_accept,
+            self._initial_state,
+            num_steps,
+        )
+
+        self._best_state = self._initial_state
+        self._best_score = self.score(self._best_state)
+
+        iteration_generator = tqdm(iteration) if with_progress_bar else iteration
+
+        for state in iteration_generator:
+            yield state
+            state_score = self.score(state)
+
+            if self._is_improvement(state_score, self._best_score):
+                self._best_state = state
+                self._best_score = state_score
+        return
+    
+    
     def tilted_run(self, num_steps: int, p: float, with_progress_bar: bool = False):
         """
-        Performs a tilted run. A chain where the acceptance function always accepts better plans
-        and accepts worse plans with some probability `p`.
-
+        Performs a tilted run. An iterator where better tours are accepted and 
+        worse tours with some probability `p`.
 
         :param num_steps: Number of steps to run for.
         :type num_steps: int
-        :param p: The probability of accepting a plan with a worse score.
+        :param p: The probability of accepting a tour with a worse score.
         :type p: float
         :param with_progress_bar: Whether or not to draw tqdm progress bar. Defaults to False.
         :type with_progress_bar: bool, optional
 
-        :return: Partition generator.
-        :rtype: Generator[Partition]
+        :return: State generator.
+        :rtype: Generator[State]
         """
-        chain = Iterator(
+        iteration = Iterator(
             self._proposal,
-            self._constraints,
             self._tilted_acceptance_function(p),
-            self._initial_part,
+            self._initial_state,
             num_steps,
         )
 
-        self._best_part = self._initial_part
-        self._best_score = self.score(self._best_part)
+        self._best_state = self._initial_state
+        self._best_score = self.score(self._best_state)
 
-        chain_generator = tqdm(chain) if with_progress_bar else chain
+        iteration_generator = tqdm(iteration) if with_progress_bar else iteration
 
-        for part in chain_generator:
-            yield part
-            part_score = self.score(part)
+        for state in iteration_generator:
+            yield state
+            state_score = self.score(state)
 
-            if self._is_improvement(part_score, self._best_score):
-                self._best_part = part
-                self._best_score = part_score
+            if self._is_improvement(state_score, self._best_score):
+                self._best_state = state
+                self._best_score = state_score
             
             
         
