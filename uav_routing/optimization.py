@@ -36,7 +36,6 @@ class Optimizer:
         proposal: Callable[[State], State],
         initial_state: State,
         maximize: bool = True,
-        step_indexer: str = "step"
         ):
         """
         :param proposal: Function proposing the next state from the current state.
@@ -55,17 +54,12 @@ class Optimizer:
         """
         self._initial_state = initial_state
         self._proposal = proposal
-        self._score = self.optimization_metric
+        self._score = lambda p: p.value
         self._maximize = maximize
         self._best_state = None
         self._best_score = None
-        self._step_indexer = step_indexer
-
-
-        step_updater = lambda p: (
-            0 if p.parent is None else p.parent[self._step_indexer] + 1
-        )
-        self._initial_state.updaters[self._step_indexer] = step_updater
+        self.step = 1
+   
     
 
     
@@ -119,10 +113,14 @@ class Optimizer:
         :return: Whether the new score is an improvement over the old score.
         :rtype: bool
         """
+
         if self._maximize:
+            print("new score:", new_score)
+            print("old score:", old_score)
             return new_score >= old_score
         else:
             return new_score <= old_score
+
 
 
     def _tilted_acceptance_function(self, p: float) -> Callable[[State], bool]:
@@ -139,7 +137,9 @@ class Optimizer:
         def tilted_acceptance_function(state):
             if state.parent is None:
                 return True
-
+            if state.solver.solution == None:
+                return False
+            
             state_score = self.score(state)
             prev_score = self.score(state.parent)
 
@@ -172,8 +172,12 @@ class Optimizer:
         def simulated_annealing_acceptance_function(state):
             if state.parent is None:
                 return True
+            
+            if state.solver.solution == None:
+                return False
+            
             score_delta = self.score(state) - self.score(state.parent)
-            beta = beta_function(state[self._step_indexer])
+            beta = beta_function(self.step)
             if self._maximize:
                 score_delta *= -1
             return random.random() < math.exp(-beta * beta_magnitude * score_delta)
@@ -370,8 +374,6 @@ class Optimizer:
 
         return beta_function
 
-    def always_accept(staten: State) -> bool:
-        return True
     
     
     def short_bursts(
@@ -470,6 +472,7 @@ class Optimizer:
             if self._is_improvement(state_score, self._best_score):
                 self._best_state = state
                 self._best_score = state_score
+                self.step += 1
 
     def tilted_short_bursts(
         self,
@@ -567,7 +570,10 @@ class Optimizer:
             if time_stuck >= stuck_buffer * burst_length:
                 burst_length *= 2
     
-    def ascent_run(self, num_steps: int, with_progress_bar: bool = False):
+    def ascent_run(self, 
+                   num_steps: int,
+                   accept: Callable[[State], bool] = always_accept,
+                   with_progress_bar: bool = False):
         """
         Performs an ascent run. An iterator where only better tours are accepted.
         
@@ -581,9 +587,9 @@ class Optimizer:
         """
         iteration = Iterator(
             self._proposal,
-            always_accept,
-            self._initial_state,
-            num_steps,
+            accept = accept,
+            initial_state=self._initial_state,
+            total_steps=num_steps,
         )
 
         self._best_state = self._initial_state

@@ -18,7 +18,6 @@ def grid_3x3():
     
     metadata = {
                 "base": 0, 
-                "destination": 9,
                 "max_energy":6030, 
                 "campaign_time": 100, 
                 "speed_min": 20, 
@@ -68,12 +67,6 @@ def grid_3x3():
                                         "info_slope":slope,
                                         "time_window":time_window
                                         }
-            # final destination
-            nodes[9] = {"position":(0,0),
-                        "info_at_lowest":0, 
-                        "info_slope":0,
-                        "time_window":[0,100]
-                        }
 
     return nodes, cycle, metadata
     
@@ -384,7 +377,7 @@ def plot_graph_with_positions(nodes, edges):
                       representing the position of each node.
         edges (list): A list of tuples, where each tuple represents an edge (pair of node IDs).
     """
-    G = nx.Graph()
+    G = nx.DiGraph()
 
     # Add nodes to the graph
     G.add_nodes_from(nodes.keys())

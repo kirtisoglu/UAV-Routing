@@ -23,6 +23,8 @@ from dataclasses import dataclass, field
 from functools import partial
 from uav_routing.state import State
 
+class EdgeCaseError(Exception):
+    "Raised when an edge case error occurs"
 
 @dataclass
 class Flows:
@@ -32,21 +34,8 @@ class Flows:
     edges_in: frozenset = field(default_factory=frozenset)
 
 
-def random_flip(state: State
-    ) -> State:
-    """
-    _summary_
-
-    Example usage:
+def random_flip(state: State) -> State:
     
-    Args:
-        state (State): _description_
-        method (Callable): _description_
-
-    Returns:
-        _type_: _description_
-    """
-
     base=state.base 
     tour=state.tour
     l = len(tour)
@@ -75,13 +64,14 @@ def random_flip(state: State
     print("tour nodes before operation", tour.nodes)
     print("tour edges before operation", tour.edges)
     
-    new_tour, complement, flows =chosen(tour, state.complement, state.base)
+    complement = list(set(state.nodes.keys()) - set(tour.nodes))
+    new_tour, flows =chosen(tour, complement, state.base)
     
     print("tour nodes after", new_tour.nodes)
     print("tour edges after", new_tour.edges)
     print("flows", flows)
     
-    return state.flip(flows, new_tour, complement)
+    return state.flip(flows, new_tour)
 
 
 # TODO: keep tally to track methods and choosen methods
@@ -93,19 +83,17 @@ def random_flip(state: State
 def replace_random_node(cycle, complement, base): 
     # perform whenever 1 < len(cycle) < n 
     node_from_complement = random.choice(complement)
-    complement.remove(node_from_complement)
     # random node from tour other than base and destination
     possibles = [node for node in cycle.nodes if node != base]
     random_node = random.choice(possibles)
     mapping = {random_node: node_from_complement}
     C = nx.relabel_nodes(cycle, mapping)
-    complement.append(random_node)
     flows= Flows(nodes_out=frozenset({random_node}),
                  nodes_in=frozenset({node_from_complement}),
                  edges_out=frozenset({e for e in cycle.edges if random_node in e}),
                  edges_in=frozenset({e for e in C.edges if node_from_complement in e})
                 )
-    return C, complement, flows
+    return C, flows
 
 
 def remove_random_node(cycle, complement, base):
@@ -113,6 +101,7 @@ def remove_random_node(cycle, complement, base):
     random_edge = random.choice(list(cycle.edges))
     print("random edge and the remove func", random_edge)
     n1, n2 = random_edge[0], random_edge[1]
+    
     if n2 != base:
         removed = n2
         print("n2", n2)
@@ -127,35 +116,55 @@ def remove_random_node(cycle, complement, base):
         pred =list(cycle.predecessors(removed))[0]
         cycle_minor = nx.contracted_nodes(cycle, n2, n1, self_loops=False, copy=True)
         edge_in = (pred ,n2)
-    complement.append(removed)
+        
     flows= Flows(nodes_out=frozenset({removed}),
                  nodes_in=frozenset(set()),
                  edges_out=frozenset({random_edge}),
-                 edges_in=frozenset({edge_in})
+                 edges_in=frozenset({edge_in}) if edge_in != (0,0) else frozenset(set())
                 )
-    return cycle_minor, complement, flows
+    return cycle_minor, flows
 
 
 
 def add_random_node(cycle, complement, base):
-    # perform when l <= n-1
+    """
+    performed when l <= n-1
+    edge case: cycle is a single node (base)
+    
+    Raises:
+        EdgeCaseError: _description_
+    Returns:
+        _type_: _description_
+    """
+    
     cyc = cycle.copy()
     random_node = random.choice(complement)
-    complement.remove(random_node)
-    random_edge = random.choice(list(cyc.edges))
-    n1, n2 = random_edge
-    # Remove the original edge
-    cyc.remove_edge(n1, n2)
-    # Add intermediate nodes and new edges
-    cyc.add_edges_from([(n1, random_node), (random_node, n2)])
+    
+    if len(cyc.edges) >0: 
+        random_edge = random.choice(list(cyc.edges))
+        n1, n2 = random_edge
+        # Remove the original edge
+        cyc.remove_edge(n1, n2)
+        # Add intermediate nodes and new edges
+        cyc.add_edges_from([(n1, random_node), (random_node, n2)])
+        edges_in, edges_out = {(n1, random_node), (random_node, n2)}, {random_edge}
+    
+    else: # edge case: cycle nodes = {base}
+        if set(cyc.nodes) != {base}:
+            raise EdgeCaseError("Edge case error in add_random_node function:\n"
+                                f"Cycle nodes {set(cyc.nodes)} does not contain only base {base}.")
+        cyc.add_edges_from([(base, random_node), (random_node, base)])
+        edges_in, edges_out = {(base, random_node), (random_node, base)}, {}
+        
     flows= Flows(nodes_out=frozenset(set()),
                  nodes_in=frozenset({random_node}),
-                 edges_out=frozenset({random_edge}),
-                 edges_in=frozenset({(n1, random_node), (random_node, n2)})
+                 edges_out=frozenset(edges_out),
+                 edges_in=frozenset(edges_in)
                 )
-    return cyc, complement, flows
+    return cyc, flows
 
-                                                                             
+
+                                                            
 def swap_two_nodes(cycle, complement, base):
     # perform whenever 2 < len(cycle) 
     possibles = [node for node in cycle.nodes if node!=base]
@@ -168,7 +177,7 @@ def swap_two_nodes(cycle, complement, base):
                  edges_out=frozenset({e for e in cycle.edges if e not in C.edges}),
                  edges_in=frozenset({e for e in C.edges if e not in cycle.edges})
                 )
-    return C, complement, flows
+    return C, flows
 
 
 def swap_two_opt(cycle, complement, base):
@@ -180,6 +189,6 @@ def swap_two_opt(cycle, complement, base):
                  edges_out=frozenset({e for e in cycle.edges if e not in C.edges}),
                  edges_in=frozenset({e for e in C.edges if e not in cycle.edges})
                 )
-    return C, complement, flows
+    return C, flows
 
 

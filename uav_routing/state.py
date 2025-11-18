@@ -6,7 +6,12 @@ from dataclasses import dataclass, field
 from uav_routing.data import grid_3x3
 from uav_routing.socp import Solver
 
-    
+
+class InvalidStartError(Exception):
+    """Raised when initial solution is not valid."""
+
+class DistanceError(Exception):
+    "Raised when distance d_ij == 0 for an edge (i,j)."
     
 class State:
     """  
@@ -21,10 +26,9 @@ class State:
                  "flows",  # used for updating solver
                  "solver",
                  "tour",
-                 "complement",  # no really need for this. list(set(nodes.keys()) - set(tour.nodes))
-                 "destination", 
                  "base",
                  "nodes",
+                 "solution",
                  "updaters",
                  "_cache",
                 )
@@ -34,7 +38,6 @@ class State:
                  nodes=None, # will pass this to solver
                  parent=None, 
                  tour=None,
-                 complement=None,
                  updaters=None,
                  flows=None, 
                  solver_metadata=None,  # will pass this to solver
@@ -45,7 +48,7 @@ class State:
         if parent is None:
             self._first_time(nodes, tour, solver_metadata, warm_start, updaters, use_default_updaters)
         else:
-            self._from_parent(parent, flows, tour, complement)
+            self._from_parent(parent, flows, tour)
         
         self._cache = dict()
         
@@ -68,22 +71,14 @@ class State:
                 )
 
     def _first_time(self, nodes, tour, solver_metadata, warm_start, updaters, use_default_updaters):
-        #TODO: flows uzerinden tanimla
+
         self.base = solver_metadata["base"]
-        # TODO: no need for destination anymore. remove its attribute and its data
-        self.destination = solver_metadata["destination"]
+        # NOTE: no need for destination anymore. remove its attribute and its data
         self.nodes = nodes
         self.parent = None
         self.flows = None
-       # move Flows dataclass in this module. 
-       #self.flows = Flows(nodes_out=frozenset({random_node}),
-       #                     nodes_in=frozenset({node_from_complement}),
-       #                     edges_out=frozenset({e for e in cycle.edges if random_node in e}),
-       #                     edges_in=frozenset({e for e in C.edges if node_from_complement in e})
-       #                 )
         self.tour = tour    
-        # TODO: change this later after removing the destination node
-        self.complement = list(set(nodes.keys()) - (set(tour.nodes) - {self.destination}))
+
         
         # TODO: remove updaters. needs a "step" attribute
         if updaters is None:
@@ -94,44 +89,32 @@ class State:
             self.updaters = {}
         self.updaters.update(updaters)
         
+        self.solver = Solver(tour=tour,
+                            distances=self._calculate_distances(),
+                            nodes=self.nodes, 
+                            metadata=solver_metadata,
+                            warm_start=warm_start,
+                            )
 
-        try:
-            self.solver = Solver(tour_nodes=list(self.tour.nodes), 
-                                 tour_edges=list(self.tour.edges), 
-                                 distances=self._calculate_distances(),
-                                 nodes=self.nodes, 
-                                 metadata=solver_metadata,
-                                 warm_start=warm_start
-                                )
-        except:
-            raise
+        if self.solver.solution == None:
+            raise InvalidStartError("Initial solution is not feasible.")
         
         
-    def _from_parent(self, parent: "State", flows: dataclass, tour, complement):
-        
+    def _from_parent(self, parent: "State", flows: dataclass, tour):
+    
+        self.parent = parent
+        self.base = parent.base
+        self.updaters = parent.updaters
+        self.nodes = parent.nodes
+         
+        self.tour = tour
         self.flows = flows
+        self.solver = parent.solver.copy(tour)
         
-        try:
-            self.solver.update_solver(flows=self.flows)       
-        except:
-            Exception("Couldn't uptade the solver.")
-        
-        if self.solver.solution != None:
-            self.parent = parent
-            self.base = parent.base
-            self.destination = parent.destination
-            self.updaters = parent.updaters
-            self.nodes = parent.nodes
-            self.solver = parent.solver
-            
-            self.tour = tour
-            self.complement = complement
-        else:
-            self = parent
 
     
     # call this function to create a State instance during the intermadiate steps. 
-    def flip(self, flows, tour, complement) -> "State":
+    def flip(self, flows, tour) -> "State":
         """
         Returns the new state obtained by performing the given `flows`
         on this state.
@@ -140,7 +123,7 @@ class State:
         :returns: the new :class:`State`
         :rtype: State
         """
-        return self.__class__(parent=self, flows=flows, tour=tour, complement=complement)
+        return self.__class__(parent=self, flows=flows, tour=tour)
 
     def print_variables(self):
         for var in self.solver.model.iter_continuous_vars():
@@ -148,27 +131,9 @@ class State:
     
     @property
     def value(self):
-        return self.solver.objective_value
+        return self.solver.obj_value
     
-    def __getitem__(self, key: str) -> Any:
-        """
-        Allows accessing the values of updaters computed for this
-        Partition instance.
 
-        :param key: Property to access.
-        :type key: str
-
-        :returns: The value of the updater.
-        :rtype: Any
-        """
-        if key not in self._cache:
-            self._cache[key] = self.updaters[key](self)
-        return self._cache[key]
-    def __getattr__(self, key):
-        return self[key]
-    def keys(self):
-        return self.updaters.keys()
-    
     
     def _calculate_distances(self):
         import math
@@ -178,7 +143,11 @@ class State:
             for v in self.nodes:
                 if u!=v:
                     point1, point2 = self.nodes[u]["position"], self.nodes[v]["position"]
-                    distances[(u,v)] = math.dist(point1, point2)
+                    distance = math.dist(point1, point2)
+                    if distance == 0:
+                        raise DistanceError(f"Distance cannot be zero for edge {(u,v)}.")
+                    
+                    distances[(u,v)] = distance
                     # TODO: remove this later by changing the way we access the distance of a directed edge
                     distances[(v,u)] = distances[(u,v)]
         return distances
