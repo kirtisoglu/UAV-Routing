@@ -78,7 +78,52 @@ def grid_3x3():
     return nodes, cycle, metadata
     
 
+
+def tour_optimum_speed():
+    """
+    A dummy data to observe whether Solver can find v_opt. 
+    
+    """
+    metadata = {
+                "base": 0, 
+                "destination": 5,
+                "max_energy":300, 
+                "campaign_time": 100000, 
+                "speed_min": 10, 
+                "speed_max": 50,
+                }
+     
+    tour_nodes = [0,1,2,3]
+    
+    tour_edges = []
+    for i in tour_nodes[0:-1]:
+        idx = tour_nodes.index(i)
+        tour_edges.append((i, tour_nodes[idx+1]))
+    tour_edges.append((tour_nodes[-1], tour_nodes[0]))
+    cycle = nx.DiGraph()
+    cycle.add_edges_from(tour_edges)
+    
+    nodes = {} 
+    
+    
+    for i in range(4):
+
+        nodes[i] = {"position":(0,i),
+                    "info_at_lowest":10, 
+                    "info_slope":0,
+                    "time_window":[0,10000]
+                    }
+    
+    return nodes, cycle, metadata
+
+
+
 def tour_info_increasing():
+    """
+    Info increasing in time, uav patrols as much as it can.
+    v_ij =10 for every edge, where 99/10 of it is just for 
+    patroling. Optimal cost is 330
+    """
     metadata = {
                 "base": 0, 
                 "destination": 5,
@@ -113,7 +158,11 @@ def tour_info_increasing():
 
 
 def tour_info_decreasing():
-    
+    """
+    Info is decreasing in time. So, uav goes as fast as
+    possible without waiting at all. v_ij = 10, where 
+    patroling time is 0. Objective cost is 440.
+    """
     metadata = {
                 "base": 0, 
                 "destination": 5,

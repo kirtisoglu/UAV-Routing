@@ -109,14 +109,12 @@ class State:
         
     def _from_parent(self, parent: "State", flows: dataclass, tour, complement):
         
-        
-
         self.flows = flows
         
         try:
             self.solver.update_solver(flows=self.flows)       
         except:
-            raise print("Couldn't uptade the solver.")
+            Exception("Couldn't uptade the solver.")
         
         if self.solver.solution != None:
             self.parent = parent
