@@ -115,8 +115,6 @@ class Optimizer:
         """
 
         if self._maximize:
-            print("new score:", new_score)
-            print("old score:", old_score)
             return new_score >= old_score
         else:
             return new_score <= old_score

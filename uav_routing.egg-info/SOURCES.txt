@@ -1,0 +1,17 @@
+LICENSE
+README.md
+pyproject.toml
+uav_routing/__init__.py
+uav_routing/accept.py
+uav_routing/data.py
+uav_routing/iterator.py
+uav_routing/optimization.py
+uav_routing/proposal.py
+uav_routing/real_data.py
+uav_routing/socp.py
+uav_routing/state.py
+uav_routing.egg-info/PKG-INFO
+uav_routing.egg-info/SOURCES.txt
+uav_routing.egg-info/dependency_links.txt
+uav_routing.egg-info/top_level.txt
+uav_routing/notebooks/__init__.py

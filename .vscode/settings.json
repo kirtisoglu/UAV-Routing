@@ -1,5 +1,10 @@
 {
   "python.defaultInterpreterPath": "/Users/kirtisoglu/cplex310env/bin/python",
   "python.terminal.activateEnvironment": true,
-  "python-envs.pythonProjects": []
+  "python-envs.pythonProjects": [],
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/lib": true,
+    "**/uav_routing.egg-info": true
+  }
 }

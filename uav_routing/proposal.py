@@ -59,17 +59,17 @@ def random_flip(state: State) -> State:
     
     chosen = random.choice(methods)
     
-    print("methods", methods)
-    print("chosen method", chosen)
-    print("tour nodes before operation", tour.nodes)
-    print("tour edges before operation", tour.edges)
+    #print("methods", methods)
+    #print("chosen method", chosen)
+    #print("tour nodes before operation", tour.nodes)
+    #print("tour edges before operation", tour.edges)
     
     complement = list(set(state.nodes.keys()) - set(tour.nodes))
     new_tour, flows =chosen(tour, complement, state.base)
     
-    print("tour nodes after", new_tour.nodes)
-    print("tour edges after", new_tour.edges)
-    print("flows", flows)
+    #print("tour nodes after", new_tour.nodes)
+    #print("tour edges after", new_tour.edges)
+    #print("flows", flows)
     
     return state.flip(flows, new_tour)
 
@@ -99,20 +99,20 @@ def replace_random_node(cycle, complement, base):
 def remove_random_node(cycle, complement, base):
     # perform when 2 <= l
     random_edge = random.choice(list(cycle.edges))
-    print("random edge and the remove func", random_edge)
+    #print("random edge and the remove func", random_edge)
     n1, n2 = random_edge[0], random_edge[1]
     
     if n2 != base:
         removed = n2
-        print("n2", n2)
-        print("removed", removed)
+        #print("n2", n2)
+        #print("removed", removed)
         succ = list(cycle.successors(removed))[0]
         cycle_minor = nx.contracted_nodes(cycle, n1, n2, self_loops=False, copy=True)
         edge_in = (n1, succ)
     else:
         removed = n1
-        print("n1", n1)
-        print("removed", removed)
+        #print("n1", n1)
+        #print("removed", removed)
         pred =list(cycle.predecessors(removed))[0]
         cycle_minor = nx.contracted_nodes(cycle, n2, n1, self_loops=False, copy=True)
         edge_in = (pred ,n2)
@@ -155,6 +155,7 @@ def add_random_node(cycle, complement, base):
                                 f"Cycle nodes {set(cyc.nodes)} does not contain only base {base}.")
         cyc.add_edges_from([(base, random_node), (random_node, base)])
         edges_in, edges_out = {(base, random_node), (random_node, base)}, {}
+   
         
     flows= Flows(nodes_out=frozenset(set()),
                  nodes_in=frozenset({random_node}),

@@ -148,8 +148,8 @@ class Solver:
         except Exception as e: 
             print("Solver error:", e) 
             sol = None 
-        if not sol: 
-            print("⚠️ No feasible solution found.") 
+        #if not sol: 
+            #print("⚠️ No feasible solution found.") 
         return sol 
 
     # --------------------- Warm Start --------------------- 

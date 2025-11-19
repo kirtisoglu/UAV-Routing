@@ -72,15 +72,15 @@ def grid_3x3():
     
 
 
-def tour_optimum_speed():
+def tour_optimum_speed(max_energy=300):
     """
     A dummy data to observe whether Solver can find v_opt. 
     
     """
     metadata = {
                 "base": 0, 
-                "destination": 5,
-                "max_energy":300, 
+                "destination": 26,
+                "max_energy":max_energy, 
                 "campaign_time": 100000, 
                 "speed_min": 10, 
                 "speed_max": 50,
@@ -99,13 +99,14 @@ def tour_optimum_speed():
     nodes = {} 
     
     
-    for i in range(4):
+    for i in range(5):
+        for j in range(5):
 
-        nodes[i] = {"position":(0,i),
-                    "info_at_lowest":10, 
-                    "info_slope":0,
-                    "time_window":[0,10000]
-                    }
+            nodes[i] = {"position":(i,j),
+                        "info_at_lowest":10, 
+                        "info_slope":0,
+                        "time_window":[0,10000]
+                        }
     
     return nodes, cycle, metadata
 
@@ -384,10 +385,11 @@ def plot_graph_with_positions(nodes, edges):
 
     # Add edges to the graph
     G.add_edges_from(edges)
-
+    
+    pos = {node: nodes[node]["position"] for node in nodes.keys()}
     # Draw the graph using the provided positions
     plt.figure(figsize=(8, 6)) # Optional: Adjust figure size
-    nx.draw(G, pos=nodes, with_labels=True, node_color='skyblue', node_size=700, font_size=10, font_weight='bold')
+    nx.draw(G, pos=pos, with_labels=True, node_color='skyblue', node_size=300, font_size=10, font_weight='bold')
     plt.title("Graph with Fixed Node Positions")
     plt.show()
 
