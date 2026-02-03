@@ -1,0 +1,6 @@
+cplex @ file:///Applications/CPLEX_Studio_Community2211/cplex/python/3.10/arm64_osx
+docplex==2.30.254
+networkx==3.4.2
+numpy==2.2.6
+six==1.17.0
+uav-routing==0.1.0

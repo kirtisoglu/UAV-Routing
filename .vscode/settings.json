@@ -1,7 +1,11 @@
 {
   "python.defaultInterpreterPath": "/Users/kirtisoglu/cplex310env/bin/python",
-  "python.terminal.activateEnvironment": true,
-  "python-envs.pythonProjects": [],
+  "python.analysis.extraPaths": [
+      "/Applications/CPLEX_Studio2211/cplex/python/3.10/arm64_osx"
+  ],
+  "python.autoComplete.extraPaths": [
+      "/Applications/CPLEX_Studio2211/cplex/python/3.10/arm64_osx"
+  ],
   "files.exclude": {
     "**/__pycache__": true,
     "**/lib": true,
