@@ -6,6 +6,8 @@ class DistanceError(Exception):
     "Raised when distance d_ij == 0 for an edge (i,j)."
 
 
+    
+    
 #graph attributes: base
 #node attributes: position, info_at_lowest, time_window
 #edge attributes: distance      
@@ -28,7 +30,7 @@ def dict_to_graph(nodes, base_id):
             pos_u = nodes[u]['position']
             pos_v = nodes[v]['position']
             
-            dist = math.sqrt((pos_u[0]-pos_v[0])**2 + (pos_u[1]-pos_v[1])**2)*1000 # converting 1 solomon unit to 1000 m.
+            dist = math.sqrt((pos_u[0]-pos_v[0])**2 + (pos_u[1]-pos_v[1])**2) # converting 1 solomon unit to 1000 m. canceled.
             if dist == 0:
                 raise DistanceError(f"Distance cannot be zero for the edge {(u,v)}.")
             G.add_edge(int(u), (v), distance=dist)
