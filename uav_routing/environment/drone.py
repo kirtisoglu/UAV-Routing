@@ -1,20 +1,12 @@
 """
 drone.py
-=================
+========
 
-Overview
---------
-Processes data files line-by-line, validates field counts, and handles errors gracefully.
-Supports CSV-like files with exactly 10 fields per valid line.
+Drone dataclasses representing UAV specifications and energy models.
 
-Key Functions:
-- Drone_test: returns a test drone dataclass reoresenting a rotary-wing UAV.
-- Drone: returns a fixed-wing drone dataclass reoresenting Bayraktar TB2.
-
-Usage:
-
-Dependencies:
-- dataclasses 
+Key Classes:
+- Drone_test: Rotary-wing UAV (generic, for unit tests).
+- Drone: Fixed-wing drone (Bayraktar TB2) with calibration support.
 
 Last update: 2025-12-20
 """
@@ -56,7 +48,6 @@ class Drone_test:
 
 
 
-
 @dataclass
 class Drone:
     """
@@ -65,63 +56,43 @@ class Drone:
     """
     
     base: int 
-    
     name: str = "Bayraktar TB2"
-    speed_min: float = 20  
-    speed_max: float = 61      
-    optimum_speed: float = 44.31  
     
-    c_0: float = 0 
-    c_1: float = 0.0905
-    c_2: float = 349095
+    speed_min: float = 20           # stall speed (m/s)
+    speed_max: float = 61           # maximum speed (m/s)
+    optimum_speed: float = 44.31    # optimal travel speed (m/s), e.g. 44
+    loiter_speed: float = 33.5      # optimal loitering speed (m/s), e.g. 33.5
     
-    time_factor: float = 1.0
-    energy_factor: float = 1.0
-    tour_time: float = 0
+    c_0: float = 0                  # avionics power coefficient 
+    c_1: float = 0.0905              # parasitic drag coefficient
+    c_2: float = 349095             # induced drag coefficient
+
+
 
     @property
-    def max_energy(self):
-        energy = self.energy_function(self.optimum_speed, self.max_distance())
-        return self.energy_factor * energy
+    def loiter_power(self):
+        v = self.loiter_speed
+        return self.c_0 + self.c_1 * v**3 + self.c_2 / v
     
-    @property
-    def max_time(self):
-        return self.time_factor*self.tour_time
-    
-    def power_function(self, v):
+    def power(self, v):
         """Calculates Power (Watts) for a given speed v (m/s)."""
-        return self.c_0 + self.c_1 * (v**3) + self.c_2 / v
-
+        return self.c_0 + self.c_1 * v**3 + + self.c_2 / v
+    
     def energy_function(self, v, d):
         """Calculates Energy (Joules) for distance d at speed v."""
         if v == 0: raise ValueError("speed is zero!")
-        return self.power_function(v) * (d / v)
-
+        return (self.c_0 * d / v) + (self.c_1 * d * v**2) + (self.c_2 * d / v**2)
     
     def socp_energy_function(self, t, y, z):
         """Linearized energy function for the SOCP solver."""
         return self.c_0 * t + self.c_1 * y + self.c_2 * z
-
-    def max_distance(self):
-        """Calculates the maximum distance the drone can cover at optimum speed."""
-        return self.max_time*self.optimum_speed
     
-    
-    def energy_per_meter(self):
-        """Calculates energy consumption per meter at optimum speed."""
-        return self.energy_function(self.optimum_speed, 1.0)
+    def energy_per_meter(self, v):
+        """Calculates energy consumption per meter at given speed v."""
+        return self.energy_function(v, 1.0)
     
     @staticmethod
     def collected_info(arrival_time, earliest_time, slope, info_at_lowest):
         return slope*(arrival_time - earliest_time) + info_at_lowest
 
 
-    def callibrate_time(self, time: float, 
-                        t_factor: float, 
-                        e_factor: float) -> "Drone":
-        return replace(self, 
-                       tour_time=time, 
-                       time_factor=t_factor, 
-                       energy_factor=e_factor)
-    
-    

@@ -75,7 +75,7 @@ def plot_uav_tour(nodes, tour_edges, obj_value, energy_used=None):
     
     
 
-def plot_interactive_graph(nodes_metadata, edges):
+def plot_interactive_graph(nodes_metadata, edges, filename='graph.html'):
     """
     Creates an interactive graph visualization with hover tooltips using Pyvis.
 
@@ -83,10 +83,8 @@ def plot_interactive_graph(nodes_metadata, edges):
         nodes_metadata (dict): A dictionary keyed by node ID, 
                                mapped to a dictionary of metadata (including 'position').
         edges (list): A list of tuples representing pairs of connected node IDs.
-        filename (str): The output HTML filename.
+        filename (str): The output HTML filename (default: 'graph.html').
     """
-    
-    filename = "/Users/kirtisoglu/Documents/GitHub/UAV-Routing/graph.html"
     # Create a Pyvis network object
     # enable_physics=False allows manual positioning
     net = Network(height="750px", width="100%", bgcolor="#222222", 

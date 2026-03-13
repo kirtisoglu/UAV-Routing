@@ -1,203 +1,196 @@
-import networkx as nx
 
 
 
-def distance_to_depot_feasibility(graph, drone):
-    impossible_nodes = set()
-    e_meter = drone.energy_per_meter()
-    for i in graph.nodes:
-        if i == 0: 
-            continue
-        
-        # Round trip: 0 -> i -> 0
-        dist_0i = graph.edges[(0, i)]['distance']
-        dist_i0 = graph.edges[(i, 0)]['distance']
-        round_trip_energy = (dist_0i + dist_i0) * e_meter # min energy for the distance
 
-        if round_trip_energy > drone.max_energy:
-            impossible_nodes.add(i)
-    return impossible_nodes
+# ── Individual pruning rules ──────────────────────────────────────────────────
 
-
-def energy_feasibility(graph, drone):
-    """To enhance computational efficiency, we perform a reachability analysis 
-    based on the UAV's energy-optimal speed. An arc $(i, j)$ is pruned from 
-    the decision space if the minimum energy required for the sequence 
-    $0 \to i \to j \to 0$ exceeds the total energy budget $\mathcal{E}_{\max}$. 
-    This preprocessing significantly reduces the number of binary variables 
-    $x_{ij}$ and tightens the linear programming relaxation of the MISOCP model."""
-    impossible_arcs = set()
-    e_meter = drone.energy_per_meter()
-    
-    # since distance is symmetric
-    for edge in graph.edges:
-        if drone.base not in edge:
-            i, j = edge[0], edge[1]
-            
-            
-            # Energy for: Depot(0) -> i -> j -> Depot(0). Note that distances are Euclidean.
-            mission_dist = (graph.edges[(0, i)]['distance'] 
-                          + graph.edges[(i, j)]['distance'] 
-                          + graph.edges[(j, 0)]['distance'])
-            
-            # min energy for the distance
-            if (mission_dist * e_meter) > drone.max_energy:
-                impossible_arcs.add((i, j))
-                impossible_arcs.add((j, i))
-                
-    return impossible_arcs
-
-
-
-def time_window_feasibility(graph, drone):
+def prune_nodes(graph, instance):
     """
-    An arc $(i, j)$ is only feasible if the UAV can arrive at $i$ at its 
-    earliest time $e_i$, travel to $j$, and arrive before $j$'s latest time 
-    $\ell_j$.Logic: $e_i + t_{ij}^{min} \le \ell_j$Corridor Logic: $t_{0i}^{min} 
-    + t_{ij}^{min} + t_{j0}^{min} \le T_{max}$In your code, $t_{ij}^{min}$ is 
-    simply $d_{ij} / v_{max}$.
+    Rule: depot→node→depot round-trip exceeds time or energy budget.
+    Returns a set of infeasible node IDs.
     """
-    base = drone.base
-    direct_time_impossible = set()
-    total_time_impossible = set()
-    
-    for edge in graph.edges:
-        i, j = edge[0], edge[1]
-        
-        # Min travel time between i and j. Symmetric.
-        t_min_ij = graph.edges[(i, j)]['distance'] / drone.speed_max
-        
-        # Direct Time Window feasibility (Earliest i + travel > Latest j)
-        if graph.nodes[i]['time_window'][0] + t_min_ij > graph.nodes[j]['time_window'][1]:
-            direct_time_impossible.add((i, j))
-        if graph.nodes[j]['time_window'][0] + t_min_ij > graph.nodes[i]['time_window'][1]:
-            direct_time_impossible.add((j, i))
+    depot   = graph.graph['base']
+    T_max   = instance.time_horizon
+    E_max   = instance.max_energy
+    drone   = instance.drone
+    epsilon = drone.energy_per_meter(drone.optimum_speed)
+
+    infeasible = set()
+    for node in graph.nodes:
+        if node == depot:
             continue
-        
-        # 4. Total Mission Time feasibility (0 -> i -> j -> 0). Symmetric.
-        if base not in edge:
-            t_min_0i = graph.edges[(base, i)]['distance'] / drone.speed_max
-            t_min_j0 = graph.edges[(j, base)]['distance'] / drone.speed_max
-            if (t_min_0i + t_min_ij + t_min_j0) > drone.max_time:
-                total_time_impossible.add((i, j))
-                total_time_impossible.add((j, i))
-                
-                    
-    return direct_time_impossible, total_time_impossible
+        d_total = graph[depot][node]['distance'] + graph[node][depot]['distance']
+        if d_total / drone.speed_max > T_max or epsilon * d_total > E_max:
+            infeasible.add(node)
+    return infeasible
 
 
+def prune_edges(graph, instance, feasible_nodes):
+    """
+    Rule: depot→i→j→depot round-trip exceeds time or energy budget.
+    Only considers arcs between feasible nodes.
+    Returns a set of infeasible (i, j) directed arc pairs.
+    """
+    depot   = graph.graph['base']
+    T_max   = instance.time_horizon
+    E_max   = instance.max_energy
+    drone   = instance.drone
+    epsilon = drone.energy_per_meter(drone.optimum_speed)
 
-def prune_and_report(graph, drone):
-    "Calls pruning functions, prints a report, returns feasible node and edge sets for the model."
-    
-    base = drone.base
-    
-    # prune nodes
-    prune_nodes = distance_to_depot_feasibility(graph, drone)
-    feasible_nodes_1 = set(graph.nodes) - prune_nodes
-    
-    # prune edges
-    energy_prune_edges = energy_feasibility(graph, drone)
-    direct_time_prune, total_time_prune = time_window_feasibility(graph, drone)
-    infeasible_arcs = list(energy_prune_edges) + list(direct_time_prune) + list(total_time_prune)
-    
-    # all arcs
-    all_arcs = set()
-    for edge in graph.edges:
-        all_arcs.add(edge)
-        all_arcs.add((edge[1], edge[0]))
-    
-    # feasible arcs
-    first_feasible_arcs = {arc for arc in all_arcs if arc not in set(infeasible_arcs)}
-    
-    G = nx.DiGraph(list(first_feasible_arcs))
+    infeasible = set()
+    for u, v, data in graph.edges(data=True):
+        for i, j in [(u, v), (v, u)]:   # undirected → both directions
+            if i not in feasible_nodes or j not in feasible_nodes:
+                infeasible.add((i, j))
+                continue
+            if i == depot or j == depot:
+                continue
+            d_total = graph[depot][i]['distance'] + data['distance'] + graph[j][depot]['distance']
+            if d_total / drone.speed_max > T_max or epsilon * d_total > E_max:
+                infeasible.add((i, j))
+    return infeasible
+
+
+def prune_by_time_windows(graph, instance, feasible_nodes):
+    """
+    Rule: earliest possible arrival at j via i exceeds j's time window close.
+    Only considers arcs between feasible nodes.
+    Returns a set of infeasible (i, j) directed arc pairs.
+    """
+    depot = graph.graph['base']
+    drone = instance.drone
+
+    infeasible = set()
+    for u, v, data in graph.edges(data=True):
+        for i, j in [(u, v), (v, u)]:
+            if j == depot:
+                continue
+            if i not in feasible_nodes or j not in feasible_nodes:
+                infeasible.add((i, j))
+                continue
+            d_depot_i   = graph[depot][i]['distance'] if i != depot else 0.0
+            e_i         = graph.nodes[i]['time_window'][0]
+            l_j         = graph.nodes[j]['time_window'][1]
+            earliest_i  = max(e_i, d_depot_i / drone.speed_max)
+            earliest_j  = earliest_i + data['distance'] / drone.speed_max
+            if earliest_j > l_j:
+                infeasible.add((i, j))
+    return infeasible
+
+
+# ── Connectivity clean-up ─────────────────────────────────────────────────────
+
+def _remove_disconnected(feasible_arcs, base):
+    """
+    Iteratively remove non-depot nodes with no outgoing or no incoming arc
+    (they can never be part of a valid tour).
+    Returns the pruned arc set.
+    """
+    arcs = set(feasible_arcs)
     removed = True
     while removed:
         removed = False
-        nodes_to_remove = [n for n in G.nodes 
-                        if (G.out_degree(n) == 0 or G.in_degree(n) == 0) and n != base]
-        
-        if nodes_to_remove:
-            G.remove_nodes_from(nodes_to_remove)
-            removed = True
-    
-    # Check if base node is still connected
-    if base not in G.nodes:
-        raise TypeError("Base node was pruned away. Problem is infeasible.")
-    
-    if G.out_degree(base) == 0 or G.in_degree(base) == 0:
-        raise TypeError(f"Base node has no feasible outgoing or incoming edges. "
-                       f"Out-degree: {G.out_degree(base)}, In-degree: {G.in_degree(base)}. "
-                       f"Consider relaxing pruning constraints (time, energy, or distance).")
-
-    feasible_arcs = {edge for edge in G.edges}
-    feasible_nodes = {node for node in G.nodes if node in feasible_nodes_1}
-            
-    summary = {"distance_to_depot": {'rule':"min [E(0, i) + E(i,O)] > E_max",
-                                        'pruned': len(prune_nodes)
-                    },
-                "energy_edges": {'rule':"min [E(0, i) + E(i,j) + E(j,O)] > E_max",
-                                    'pruned': len(energy_prune_edges)
-                    },
-                "direct_time": {'rule':"e_i + min t_ij > l_j",
-                                        'pruned': len(direct_time_prune)  
-                    },
-                "total_time": {'rule':"[d_0i + d_ij + d_j0] \ v_opt > T_max",
-                                        'pruned': len(total_time_prune)
-                    }
-        }
-    
-    # report 
-    prune_report(summary, len(graph.nodes), len(feasible_nodes), len(all_arcs), len(feasible_arcs))
-    
-    return feasible_nodes, feasible_arcs, G
+        nodes_present = {i for i, _ in arcs} | {j for _, j in arcs}
+        for n in list(nodes_present):
+            if n == base:
+                continue
+            has_out = any(i == n for i, _ in arcs)
+            has_in  = any(j == n for _, j in arcs)
+            if not has_out or not has_in:
+                arcs = {(i, j) for i, j in arcs if i != n and j != n}
+                removed = True
+    return arcs
 
 
-def prune_report(summary, len_all_nodes, len_feasible_nodes, len_all_arcs, len_feasible_arcs):
-    
-    
-    # variable report
-    node_dict = {'total': len_all_nodes, 'zeros': len_all_nodes - len_feasible_nodes}
-    edge_dict = {'total': len_all_arcs, 'zeros': len_all_arcs - len_feasible_arcs}
-    
-    stats = {
-        'w': node_dict,
-        'a': node_dict,
-        'x': edge_dict,
-        't': edge_dict,
-        'L': edge_dict,
-        'y': edge_dict,
-        'z': edge_dict,
-        's': edge_dict,
-    }
+# ── Main entry point ──────────────────────────────────────────────────────────
 
-    total_vars = sum(value['total'] for value in stats.values())
-    zero_fixed = sum(value['zeros'] for value in stats.values())
+def prune(instance):
+    """
+    Apply all pruning rules and return feasible node / arc sets.
 
-    # start printing a table
-    print(f"\n{'='*70}") # hline
-    print(f"PRE-SOLVE VARIABLE REPORT: UAV_MISOCP_Routing") # title
-    print(f"{'='*70}") # hline
-    
-    # summarize prunning functions
-    print(f"{'Prunning Type':<45} | {'Pruned':<10} | {'%'}") # columns
-    print("-" * 70) # hline
-    for key, value in summary.items():
-        l = len_all_nodes if key == 'distance_to_depot' else len_all_arcs
-        perc = (value['pruned'] / l * 100)  # percentage column
-        print(f"{value['rule']:<45} | {value['pruned']:<10} | {perc:.1f}%") # print row
-    print("-" * 70)
-    print(f"num of nodes {len_all_nodes:<10} | feasible {len_feasible_nodes:<10} | {len_feasible_nodes/len_all_nodes*100:.1f}%")
-    print(f"num of arcs {len_all_arcs:<11} | feasible {len_feasible_arcs:<10} | {len_feasible_arcs/len_all_arcs*100:.1f}%")
-    print(f"\n{'='*70}") # hline
-    
-    # summarize variable fixing
-    print(f"\n{'='*60}") # hline
-    print(f"{'Var Type':<15} | {'Total':<10} | {'Fixed to Zero':<15} | {'% Zero'}") # columns
-    print("-" * 60) # hline
-    for g, s in stats.items():
-        perc = (s['zeros'] / s['total'] * 100) if s['total'] > 0 else 0 # percentage column
-        print(f"{g:<15} | {s['total']:<10} | {s['zeros']:<15} | {perc:.1f}%") # print row
-    print("-" * 60)
-    print(f"TOTAL MODEL:    | {total_vars:<10} | {zero_fixed:<15} | {(zero_fixed/total_vars*100):.1f}%")
-    print(f"{'='*60}\n")
+    Returns
+    -------
+    feasible_nodes : set
+    feasible_arcs  : set of (i, j) directed pairs
+    """
+    graph = instance.graph
+    base = graph.graph['base']
+    N    = set(graph.nodes)
+
+    # --- node pruning ---
+    infeasible_nodes = prune_nodes(graph, instance)
+    feasible_nodes   = (N - infeasible_nodes) | {base}
+
+    # --- arc pruning ---
+    infeasible_energy = prune_edges(graph, instance, feasible_nodes)
+    infeasible_tw     = prune_by_time_windows(graph, instance, feasible_nodes)
+    infeasible_arcs   = infeasible_energy | infeasible_tw
+
+    all_arcs = {(i, j) for i in feasible_nodes for j in feasible_nodes if i != j}
+    feasible_arcs = all_arcs - infeasible_arcs
+
+    # --- connectivity clean-up ---
+    feasible_arcs = _remove_disconnected(feasible_arcs, base)
+
+    # nodes still reachable after connectivity clean-up
+    reachable = {i for i, _ in feasible_arcs} | {j for _, j in feasible_arcs}
+    feasible_nodes = feasible_nodes & reachable
+
+    if base not in feasible_nodes:
+        raise ValueError("Base node was pruned away — problem is infeasible.")
+
+    _prune_report(N, infeasible_nodes, all_arcs, infeasible_energy, infeasible_tw, feasible_nodes, feasible_arcs)
+    return feasible_nodes, feasible_arcs
+
+
+# ── Report ────────────────────────────────────────────────────────────────────
+
+def _prune_report(all_nodes, infeasible_nodes, all_arcs,
+                  infeasible_energy, infeasible_tw, feasible_nodes, feasible_arcs):
+
+    n_all   = len(all_nodes)
+    n_feas  = len(feasible_nodes)
+    a_all   = len(all_arcs)
+    a_feas  = len(feasible_arcs)
+    n_pruned = len(infeasible_nodes)
+    a_energy = len(infeasible_energy)
+    a_tw     = len(infeasible_tw)
+    a_total  = len(all_arcs - feasible_arcs)
+
+    W = 72
+
+    print(f"\n{'═'*W}")
+    print(f"  PRE-SOLVE PRUNING REPORT")
+    print(f"{'═'*W}")
+
+    # Node pruning
+    print(f"  {'NODES':<30}  {'Before':>8}  {'Pruned':>8}  {'After':>8}  {'% kept':>8}")
+    print(f"  {'-'*62}")
+    print(f"  {'Round-trip budget':<30}  {n_all:>8}  {n_pruned:>8}  {n_feas:>8}  {n_feas/n_all*100:>7.1f}%")
+
+    print(f"\n  {'ARCS':<30}  {'Before':>8}  {'Pruned':>8}  {'After':>8}  {'% kept':>8}")
+    print(f"  {'-'*62}")
+    print(f"  {'Energy budget':<30}  {a_all:>8}  {a_energy:>8}  {a_all-a_energy:>8}  {(a_all-a_energy)/a_all*100:>7.1f}%")
+    print(f"  {'Time windows':<30}  {a_all:>8}  {a_tw:>8}  {a_all-a_tw:>8}  {(a_all-a_tw)/a_all*100:>7.1f}%")
+    a_conn = a_total - min(a_energy + a_tw, a_total)
+    print(f"  {'Connectivity clean-up':<30}  {'':>8}  {a_conn:>8}  {'':>8}  {'':>8}")
+    print(f"  {'-'*62}")
+    print(f"  {'TOTAL':<30}  {a_all:>8}  {a_total:>8}  {a_feas:>8}  {a_feas/a_all*100:>7.1f}%")
+
+    # Variable count impact
+    var_types = {'w': ('node', n_all), 'a': ('node', n_all),
+                 'x': ('arc',  a_all), 't': ('arc',  a_all),
+                 'L': ('arc',  a_all), 'y': ('arc',  a_all),
+                 'z': ('arc',  a_all), 's': ('arc',  a_all)}
+    total_before = sum(v for _, v in var_types.values())
+    total_after  = sum(n_feas if kind == 'node' else a_feas for _, (kind, _) in var_types.items())
+
+    print(f"\n  {'VARIABLE IMPACT':<30}  {'Before':>8}  {'After':>8}  {'Reduced':>8}  {'% kept':>8}")
+    print(f"  {'-'*62}")
+    for var, (kind, before) in var_types.items():
+        after   = n_feas if kind == 'node' else a_feas
+        reduced = before - after
+        print(f"  {var:<30}  {before:>8}  {after:>8}  {reduced:>8}  {after/before*100:>7.1f}%")
+    print(f"  {'-'*62}")
+    print(f"  {'TOTAL':<30}  {total_before:>8}  {total_after:>8}  {total_before-total_after:>8}  {total_after/total_before*100:>7.1f}%")
+    print(f"{'═'*W}\n")

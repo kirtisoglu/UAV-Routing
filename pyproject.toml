@@ -5,7 +5,19 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "uav-routing"
 version = "0.1.0"
-dependencies = []
+dependencies = [
+    "networkx",
+    "numpy",
+    "pandas",
+    "matplotlib",
+    "scipy",
+    "gurobipy",
+    "pyvis",
+    "tqdm",
+]
+
+[project.scripts]
+uav-analyse = "uav_routing.environment.data_analysis:main"
 
 [tool.setuptools.packages.find]
 include = ["uav_routing*"]

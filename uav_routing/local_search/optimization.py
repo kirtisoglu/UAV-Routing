@@ -60,7 +60,6 @@ class Optimizer:
         self._best_score = None
         self.step = 1
    
-    
 
     
     
@@ -135,9 +134,9 @@ class Optimizer:
         def tilted_acceptance_function(state):
             if state.parent is None:
                 return True
-            if state.solver.solution == None:
+            if state.solver.solution is None:
                 return False
-            
+
             state_score = self.score(state)
             prev_score = self.score(state.parent)
 
@@ -170,16 +169,19 @@ class Optimizer:
         def simulated_annealing_acceptance_function(state):
             if state.parent is None:
                 return True
-            if state.solver.solution == None:
+            if state.solver.solution is None:
                 return False
-            
+
             score_delta = self.score(state) - self.score(state.parent)
-            
-            # Normalization: Divide delta by best_score so change is a % 
-            # We use max(1, best) to avoid division by zero
+
+            # Always accept improvements
+            if (self._maximize and score_delta >= 0) or (not self._maximize and score_delta <= 0):
+                return True
+
+            # For worse moves: accept with probability exp(-beta * magnitude * |delta|/best)
             best = max(1.0, self._best_score if self._best_score else 1.0)
             normalized_delta = abs(score_delta) / best
-            
+
             beta = beta_function(self.step)
 
             return random.random() < math.exp(-beta * beta_magnitude * normalized_delta)
@@ -470,11 +472,11 @@ class Optimizer:
 
         for state in iteration_generator:
             yield state
+            self.step += 1
             state_score = self.score(state)
             if self._is_improvement(state_score, self._best_score):
                 self._best_state = state
                 self._best_score = state_score
-                self.step += 1
 
     def tilted_short_bursts(
         self,
@@ -669,102 +671,21 @@ class Optimizer:
         self.tabu_list = {}  # {node_id: expiry_iteration}
         self.current_iteration = 0
         self.improvements_since_perturb = 0
-
-        # 1. Define the Proposal Wrapper (Closure)
-        def ils_proposal_wrapper(current_state: State) -> State:
-            # Update internal iteration count
-            self.current_iteration += 1
-            
-            # Clean expired tabu entries
-            self.tabu_list = {node: expiry for node, expiry in self.tabu_list.items() 
-                            if expiry > self.current_iteration}
-            
-            # Determine if we need to Perturb (The Shake)
-            if self.improvements_since_perturb >= t_improve:
-                # Trigger perturbation
-                perturbed_state, new_tabu_entries = perturb_state(
-                    current_state, k_remove, self.current_iteration, tabu_tenure
-                )
-                self.tabu_list.update(new_tabu_entries)
-                self.improvements_since_perturb = 0 # Reset counter after shake
-                return perturbed_state
-            
-            # Otherwise, perform a standard local move
-            return random_flip_with_tabu(current_state, set(self.tabu_list.keys()))
-
-        # 2. Define the Acceptance Function
-        def ils_accept(proposed_state: State) -> bool:
-            # Reject if the SOCP solver failed or the graph is invalid
-            if proposed_state.solver is None or proposed_state.solver.solution is None:
-                return False
-            
-            proposed_score = proposed_state.value
-            # Compare to parent to determine if we move the chain
-            parent_score = proposed_state.parent.value if proposed_state.parent else -float('inf')
-            
-            # Hill-climbing logic
-            if self._is_improvement(proposed_score, parent_score):
-                # Update global best tracking
-                if self._is_improvement(proposed_score, self._best_score):
-                    self._best_state = proposed_state
-                    self._best_score = proposed_score
-                    # Increment counter to eventually trigger a Shake
-                    self.improvements_since_perturb += 1
-                return True
-            
-            return False
-
-        # 3. Initialize the Iterator
-        chain = Iterator(
-            proposal=ils_proposal_wrapper,
-            accept=ils_accept,
-            initial_state=self._initial_state,
-            total_steps=total_steps
-        )
-
-        # 4. Yield states to support the 'for i, state in enumerate(...)' pattern
-        iterator_loop = chain.with_progress_bar() if with_progress_bar else chain
-        
-        for state in iterator_loop:
-            yield state
-            
-   
-    
-    def run_ils(
-        self,
-        total_steps: int = 1000,
-        t_improve: int = 50,
-        k_remove: int = 3,
-        tabu_tenure: int = 20,
-        with_progress_bar: bool = True
-    ):
-        """
-        Executes Iterated Local Search (ILS) as a generator.
-        
-        :param total_steps: Total number of steps to run.
-        :param t_improve: Threshold of improvements before triggering a 'Shake'.
-        :param k_remove: Number of nodes to remove during perturbation.
-        :param tabu_tenure: How many iterations a removed node remains Tabu.
-        """
-        # 0. Reset best state for this specific run
-        self._best_state = self._initial_state
-        self._best_score = self._initial_state.value
-        
-        # Initialize trackers
-        self.tabu_list = {}  # {node_id: expiry_iteration}
-        self.current_iteration = 0
-        self.improvements_since_perturb = 0
         
         self.stagnation_counter = 0 
 
         def ils_proposal_wrapper(current_state: State) -> State:
             self.current_iteration += 1
-            
+
+            # Purge expired tabu entries
+            self.tabu_list = {node: expiry for node, expiry in self.tabu_list.items()
+                              if expiry > self.current_iteration}
+
             # 1. Trigger Perturbation if stagnant
             if self.stagnation_counter >= t_improve:
-                # Shake the BEST state, not the current state
+                # Shake the current state
                 perturbed_state, new_tabu_entries = perturb_state(
-                    self._best_state, k_remove, self.current_iteration, tabu_tenure
+                    current_state, k_remove, self.current_iteration, tabu_tenure
                 )
                 self.tabu_list.update(new_tabu_entries)
                 self.stagnation_counter = 0 

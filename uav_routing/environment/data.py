@@ -1,6 +1,10 @@
+"""
+data.py
+=======
+Parses Solomon-format text files into dictionaries for graph construction.
+Provides save/load utilities for serialized Python objects.
+"""
 
-#TODO: Data validation.
-# TODO: drone functions
 import pickle
 import pandas as pd
 
@@ -52,17 +56,21 @@ def data_to_dict(path):
         for line in file:
             fields = line.strip().split()
             
+            if not fields:
+                continue  # skip empty lines (e.g. trailing newline)
+            
             try:
                 valid = _validator(fields)
             except Exception as e:
                 print(e)
+                continue
             
             node_id = int(fields[0])
             nodes[node_id] = {
                 "position": (float(fields[1]), float(fields[2])),
                 "info_at_lowest": float(fields[4]),
-                "time_window": [float(fields[8]), float(fields[9])],
-                "info_slope": None # temporarily.
+                "time_window": (float(fields[8]), float(fields[9])),
+                "info_slope": None, 
             }
     return nodes, base
 
@@ -72,17 +80,16 @@ def data_to_dict(path):
 
 def _validator(fields):
     """
-    Step 2: Validate data dictionary.
+    Validate a single data row from a Solomon file.
+    
+    Raises:
+        ValidationError: If field count is not 9 or 10.
+        ValueError: If time window is invalid (end <= start).
     """
-    #for nid, data in nodes.items():
-    #    if data["time_window"][0] < 0 or data["time_window"][1] < data["time_window"][0]:
-    #        raise ValueError(f"Invalid time window for node {nid}.")
-    #    if data["info_at_lowest"] < 0:
-    #        raise ValueError(f"Negative info_at_lowest for node {nid}.")
-    if len(fields) != 10 and 9:
+    if len(fields) not in (9, 10):
         print("length", len(fields))
         print("row", fields)
-        raise ValidationError(f"Field length must be exactly 10 for {fields}.")
+        raise ValidationError(f"Field length must be 9 or 10, got {len(fields)} for {fields}.")
     
     if (float(fields[9]) - float(fields[8])) <= 0:
         raise ValueError(f"Time window of node {int(fields[0])} is not valid.")

@@ -1,2 +1,8 @@
-# to ignore the pushed files, first remove them using
-# git rm --cached <file-name>
+paper/
+venv/
+__pycache__/
+*.egg-info/
+*.pkl
+*.pyc
+uav_routing/notebooks/
+fig

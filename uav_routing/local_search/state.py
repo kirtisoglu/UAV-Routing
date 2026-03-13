@@ -24,15 +24,13 @@ class State:
                  "parent",
                  "solver",
                  "tour",
-                 "graph", 
-                 "drone",
-                 "is_perturbation"
+                 "is_perturbation",
+                 "instance",
                 )
     default_updaters = {}
     
     def __init__(self,
-                 graph=None,
-                 drone=None,
+                 instance,
                  parent=None, 
                  tour=None,
                  warm_start=False,  # will pass this to solver
@@ -40,40 +38,36 @@ class State:
     
         
         if parent is None:
-            self._first_time(graph, drone, tour, warm_start)
+            self._first_time(instance, tour, warm_start)
         else:
             self._from_parent(parent, tour)
         
-    @classmethod 
+    @classmethod
     def initial_state(cls,
-                        graph,
-                        drone,
+                        instance,
                         initial_tour,
-                        warm_start: Optional[bool]
+                        warm_start: Optional[bool] = False
                         ):
         "Creates a State object using a data generator and SOCP solver."
-        
-        return cls(graph = graph, 
-                   tour = initial_tour, 
-                   drone = drone,
-                   warm_start = warm_start,
+
+        return cls(instance=instance,
+                   tour=initial_tour,
+                   warm_start=warm_start,
                 )
 
-    def _first_time(self, graph, drone, initial_tour, warm_start):
+    def _first_time(self, instance, initial_tour, warm_start):
 
         self.is_perturbation = False
         self.parent = None
-        self.graph = graph
-        self.drone = drone
+        self.instance = instance
         self.tour = initial_tour    
 
         self.solver = Solver(tour=initial_tour,
-                            graph=self.graph,
-                            drone=self.drone, 
+                            instance=instance,
                             warm_start=warm_start,
                             )
 
-        if self.solver.solution == None:
+        if self.solver.solution is None:
             raise InvalidStartError("Initial solution is not feasible.")
         
         
@@ -82,8 +76,7 @@ class State:
         self.is_perturbation = False
         self.parent = parent
         self.tour = tour
-        self.graph = parent.graph
-        self.drone = parent.drone
+        self.instance = parent.instance
 
 
         
@@ -102,8 +95,11 @@ class State:
         return self.__class__(parent=self, tour=tour)
 
     def print_variables(self):
-        for var in self.solver.model.iter_continuous_vars():
-            return print(var.name, self.solver.solution.get_value(var))
+        if not self.solver.solution:
+            print("No solution available.")
+            return
+        for var in self.solver.model.getVars():
+            print(var.VarName, var.X)
     
     @property
     def value(self):

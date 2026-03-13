@@ -32,11 +32,11 @@ def universal_proposal(state):
     Includes remove_random_node rather than perturbation.
     """
     current_route = state.solver.tour_nodes 
-    available_nodes = list(set(state.graph.nodes) - set(current_route))
+    available_nodes = list(set(state.instance.graph.nodes) - set(current_route))
  
     l = len(current_route)
     
-    if l == 0 or l>len(state.graph.nodes):
+    if l == 0 or l>len(state.instance.graph.nodes):
         raise EdgeCaseError("Current route is empty, cannot propose a new state.\n"
                             f"Route: {current_route}")
     if l==1:
@@ -68,11 +68,11 @@ def random_flip_with_tabu(state, tabu_set: set):
     current_route = state.solver.tour_nodes 
     l = len(current_route)
     
-    if l == 0 or l>len(state.graph.nodes):
+    if l == 0 or l>len(state.instance.graph.nodes):
         raise EdgeCaseError("Current route is empty, cannot propose a new state.\n"
                             f"Route: {current_route}")
         
-    available_nodes = list(set(state.graph.nodes) - set(current_route) - tabu_set)
+    available_nodes = list(set(state.instance.graph.nodes) - set(current_route) - tabu_set)
 
     # Logic for selecting methods
     if l==1:
@@ -101,7 +101,7 @@ def random_flip_with_tabu(state, tabu_set: set):
 def perturb_state(state, k_remove: int, current_iteration: int, tabu_tenure: int):
     """The 'Shake' operation for ILS."""
     route = list(state.solver.tour_nodes)
-    base = state.drone.base
+    base = state.instance.drone.base
     
     possibles = [n for n in route if n != base]
     num_to_remove = min(k_remove, len(possibles))
@@ -129,9 +129,9 @@ def add_random_node(route: List[int], complement: List[int]) -> List[int]:
     new_route.insert(insertion_point, new_node)
     return new_route
 
-def remove_random_node(route: List[int], complement: List[int], base: int) -> List[int]:
-    "Removes a random node from the route (excluding the base)."
-    possibles = [n for n in route if n != base]
+def remove_random_node(route: List[int], complement: List[int]) -> List[int]:
+    "Removes a random node from the route (excluding the base at index 0)."
+    possibles = [n for n in route if n != route[0]]
     removed = random.choice(possibles)
     return [n for n in route if n != removed]
 
