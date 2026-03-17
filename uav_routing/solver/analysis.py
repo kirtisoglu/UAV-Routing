@@ -367,7 +367,11 @@ def value_of_loitering(instance, env, seed=42,
 # ---------------------------------------------------------------------------
 
 def _gap_callback(model, where):
-    """Gurobi callback that records (time, gap) pairs during MIP solving."""
+    """Gurobi callback that records (time, gap%) pairs during MIP solving.
+
+    Attaches to model._gap_log, which must be initialized as an empty list
+    before calling model.optimize(callback=_gap_callback).
+    """
     if where == GRB.Callback.MIP:
         runtime = model.cbGet(GRB.Callback.RUNTIME)
         obj_best = model.cbGet(GRB.Callback.MIP_OBJBST)

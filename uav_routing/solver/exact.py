@@ -1,16 +1,50 @@
+"""
+exact.py
+========
+Gurobi MISOCP solver for the full UAV routing problem (Paper Section 4).
 
+Jointly optimizes node selection, visit sequence, and arc speeds using
+mixed-integer second-order cone programming with MTZ subtour elimination.
+All variables are normalized for numerical stability; physical units are
+recovered in the results dictionary.
+"""
 
 import time
 import pandas as pd
 from typing import Optional
 import gurobipy as gp
 from gurobipy import GRB
-from uav_routing.solver.prune import prune 
-    
+from uav_routing.solver.prune import prune
+
 
 
 
 def solve_model_gurobi(instance, seed, time_limit, env, prune=False, stats=False, no_loiter=False):
+    """Solve the full MISOCP UAV routing model with Gurobi.
+
+    Parameters
+    ----------
+    instance : Environment
+        Calibrated and normalized problem instance.
+    seed : int
+        Gurobi random seed for reproducibility.
+    time_limit : float
+        Maximum solve time in seconds.
+    env : gurobipy.Env
+        Shared Gurobi environment (suppresses license messages).
+    prune : bool
+        If True, apply node/arc pruning before solving.
+    stats : bool
+        If True, print model statistics after building.
+    no_loiter : bool
+        If True, force L[i,j] == d[i,j]*x[i,j] (no extra distance).
+
+    Returns
+    -------
+    dict
+        Results with keys: status, obj, solve_time, gap, arrival_times,
+        arc_data, active_arcs, tour. Empty dict if no feasible solution.
+    """
     """
     Build a Gurobi MISOCP model for UAV routing with energy constraints.
 
@@ -232,8 +266,14 @@ def solve_model_gurobi(instance, seed, time_limit, env, prune=False, stats=False
 
 
 def print_table(instance, results):
-    """
-    Detailed Tour Analysis Table
+    """Print a detailed tour analysis table with per-arc energy, speed, and timing.
+
+    Parameters
+    ----------
+    instance : Environment
+        The problem instance used for solving.
+    results : dict
+        Results dictionary from solve_model_gurobi.
     """
     import pandas as pd
     
@@ -313,6 +353,20 @@ def print_table(instance, results):
     
     
 def construct_tour(base, active_arcs):
+    """Reconstruct the ordered tour sequence from active arcs.
+
+    Parameters
+    ----------
+    base : int
+        Depot node ID.
+    active_arcs : list of (int, int)
+        Active arcs from the MISOCP solution.
+
+    Returns
+    -------
+    list of int
+        Ordered tour starting and ending at the depot.
+    """
     seq = [base]
     curr = base
     visited = {base}

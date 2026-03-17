@@ -1,9 +1,12 @@
 """
-environment_real.py
-==================
-Orchestrator that builds a calibrated UAV routing environment from Solomon data.
-Creates a graph and drone, calibrates time windows and distances to real-world
-Bayraktar TB2 specifications.
+environment.py
+==============
+Normalized problem wrapper with eta energy scaling.
+
+The Environment class takes a CalibrationResult and a Drone, applies the
+eta energy budget multiplier, and precomputes normalized lookups for the
+MISOCP solver (distances, time windows, speed bounds). All normalization
+denominators are fixed at eta=1 for numerical stability.
 """
 
 from typing import Optional
@@ -63,18 +66,27 @@ class Environment:
 
     @cached_property
     def max_distance(self) -> float:
+        """Maximum distance (meters) achievable at optimum speed with current energy budget."""
         return self.max_energy / self.drone.energy_per_meter(self.drone.optimum_speed)
 
     @cached_property
     def max_time(self):
+        """Maximum flight time (seconds) at optimum speed with current energy budget."""
         return  self.max_distance / self.drone.optimum_speed
 
     @property
     def T_max_s(self) -> float:
-        """Mission time horizon in normalized units."""
+        """Mission time horizon in normalized (dimensionless) units."""
         return self.time_horizon / self._t_norm
 
     def update_scaling(self, eta=None):
+        """Update the energy budget multiplier and invalidate cached properties.
+
+        Parameters
+        ----------
+        eta : float, optional
+            New energy budget multiplier. If None, keeps current value.
+        """
         if eta is not None:
             self.eta = eta
             self.__dict__.pop('max_energy', None)

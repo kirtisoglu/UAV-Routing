@@ -5,14 +5,16 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "uav-routing"
 version = "0.1.0"
+description = "UAV routing with time windows and speed optimization via MISOCP"
+readme = "README.md"
+requires-python = ">=3.9"
 dependencies = [
+    "gurobipy",
     "networkx",
     "numpy",
     "pandas",
     "matplotlib",
     "scipy",
-    "gurobipy",
-    "pyvis",
     "tqdm",
 ]
 

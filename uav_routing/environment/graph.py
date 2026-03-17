@@ -20,6 +20,17 @@ class Graph(nx.Graph):
     Never stores scaled values. Calibration is always applied externally.
     """
     def __init__(self, path: Optional[str] = None, seed: Optional[int] = None, slope: str = 'random', **kwargs):
+        """Build a complete graph from a Solomon-format text file.
+
+        Parameters
+        ----------
+        path : str, optional
+            Path to Solomon-format data file. If None, creates an empty graph.
+        seed : int, optional
+            Random seed for slope assignment.
+        slope : str
+            Information slope regime: 'random', 'positive', 'negative', or 'zero'.
+        """
         
         # Initialize the underlying nx.Graph structures
         super().__init__(**kwargs)
@@ -33,11 +44,13 @@ class Graph(nx.Graph):
                 self._assign_info_slopes_randomly(seed=seed)
             elif slope == 'positive':
                 self._assign_info_slopes_positive(seed=seed)
+            elif slope == 'negative':
+                self._assign_info_slopes_negative(seed=seed)
             elif slope == 'zero':
                 for node in self.nodes:
                     self.nodes[node]['info_slope'] = 0.0
             else:
-                raise ValueError(f"Unknown slope type '{slope}'. Use 'random', 'positive', or 'zero'.")
+                raise ValueError(f"Unknown slope type '{slope}'. Use 'random', 'positive', 'negative', or 'zero'.")
 
   
     def _build_from_dict(self, node_dict: dict):
@@ -99,6 +112,21 @@ class Graph(nx.Graph):
                 slope_bound = data['info_at_lowest'] / delta_t
                 self.nodes[node_id]['info_slope'] = rng.uniform(0, slope_bound)
 
+    def _assign_info_slopes_negative(self, seed: int = None):
+        """
+        Assigns a negative random slope to each node, sampled uniformly
+        from [-I_e / delta_t, 0], so information can only decay over time.
+        """
+        rng = random.Random(seed)
+
+        for node_id, data in self.nodes(data=True):
+            delta_t = data['time_window'][1] - data['time_window'][0]
+            if delta_t == 0:
+                self.nodes[node_id]['info_slope'] = 0.0
+            else:
+                slope_bound = data['info_at_lowest'] / delta_t
+                self.nodes[node_id]['info_slope'] = rng.uniform(-slope_bound, 0)
+
     def _get_random_slope(self, node, time_window, info_at_lowest, seed):
         """
         Calculates the boundary for the slope and returns a random 
@@ -116,9 +144,27 @@ class Graph(nx.Graph):
 
     
 def directed_cycle(tour_nodes, reference_graph):
-    """
-    Creates a DiGraph cycle from tour_nodes, pulling edge attributes 
-    (like distance) from the reference_graph.
+    """Create a directed cycle (DiGraph) from an ordered list of node IDs.
+
+    Edges are created in order tour_nodes[0]->tour_nodes[1]->...->tour_nodes[0],
+    with attributes (e.g. distance) copied from the reference graph.
+
+    Parameters
+    ----------
+    tour_nodes : list of int
+        Ordered node IDs forming the tour (depot first).
+    reference_graph : nx.Graph
+        The complete graph to pull edge attributes from.
+
+    Returns
+    -------
+    nx.DiGraph
+        A directed cycle with edge attributes from reference_graph.
+
+    Raises
+    ------
+    KeyError
+        If an edge in the tour does not exist in reference_graph.
     """
     cycle = nx.DiGraph()
     # Iterate through nodes to create edges

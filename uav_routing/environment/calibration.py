@@ -1,5 +1,19 @@
 
+"""
+calibration.py
+==============
+Calibrates Solomon benchmark instances to real-world Bayraktar TB2
+drone specifications through spatial and time scaling.
 
+Two calibration methods:
+    - **energy**: Scales so the reference tour consumes the full energy
+      budget at optimum speed.
+    - **campaign**: Scales so the Solomon time horizon maps to the drone's
+      sortie duration.
+
+All solver computations use dimensionless normalized variables for
+numerical stability. Physical units are recovered only at result extraction.
+"""
 
 import random
 import pandas as pd
@@ -14,6 +28,31 @@ from .graph import nearest_neighbor_tour, nearest_neighbor_tour_time
 
 @dataclass
 class CalibrationResult:
+    """Container for calibration outputs.
+
+    Attributes
+    ----------
+    graph : nx.Graph
+        Calibrated graph with scaled time windows and distances.
+    tour : nx.DiGraph
+        Reference tour (directed cycle) over n/2 customers.
+    spatial_scale : float
+        Meters per Solomon coordinate unit.
+    time_scale : float
+        Seconds per Solomon time unit.
+    tour_distance_drone : float
+        Reference tour distance in meters.
+    tour_dist_solomon : float
+        Reference tour distance in Solomon units.
+    solomon_tour_energy : float
+        Reference tour energy in Joules (unscaled distances).
+    scaled_tour_energy : float
+        Reference tour energy in Joules (scaled distances).
+    drone_campaign_time : float
+        Mission duration in seconds.
+    scaled_max_energy : float
+        Energy budget in Joules (at eta=1).
+    """
     graph: nx.Graph              # calibrated graph with scaled time windows and distances,
     tour: nx.Graph              # reference tour (DiGraph) over n/2 customers, with edge distances
     spatial_scale: float        # meters per Solomon coordinate unit
@@ -105,6 +144,16 @@ def calibrate(graph: nx.Graph,
 
 
 def calculate_scales_energy(graph, tour, drone, drone_sortie_time):
+    """Compute spatial and time scales using the energy calibration method.
+
+    Sets spatial_scale so that the reference tour distance in meters equals
+    the maximum range at optimum speed for the given sortie time.
+
+    Returns
+    -------
+    tuple
+        (spatial_scale, time_scale, tour_dist_solomon, max_drone_distance, drone_campaign_time)
+    """
     data_campaign_time = graph.nodes[drone.base]['time_window'][1]
     drone_campaign_time = drone_sortie_time * 3600   
     tour_dist_solomon = sum(graph.edges[edge]['distance'] for edge in tour.edges)
@@ -125,6 +174,16 @@ def calculate_scales_uniform(graph, tour, drone, drone_sortie_time):
 
 
 def calculate_scales_campaign(graph, tour, drone, drone_sortie_time):
+    """Compute spatial and time scales using the campaign-time calibration method.
+
+    Sets time_scale so that the Solomon campaign time maps to the drone's
+    sortie duration, then derives spatial_scale = time_scale * v_opt.
+
+    Returns
+    -------
+    tuple
+        (spatial_scale, time_scale, tour_dist_solomon, max_drone_distance, drone_campaign_time)
+    """
     data_campaign_time = graph.nodes[drone.base]['time_window'][1]
     drone_campaign_time = drone_sortie_time * 3600
     tour_dist_solomon = sum(graph.edges[edge]['distance'] for edge in tour.edges)
@@ -135,7 +194,25 @@ def calculate_scales_campaign(graph, tour, drone, drone_sortie_time):
 
 
 def _callibrate_data(graph, spatial_scale, time_scale):
-    """Calibrate Solomon node attributes (time windows) by the scaling factor."""
+    """Apply spatial and time scaling to a Solomon graph.
+
+    Scales time windows by time_scale and edge distances by spatial_scale.
+    Info slopes are rescaled to match the new time units.
+
+    Parameters
+    ----------
+    graph : nx.Graph
+        Original unscaled Solomon graph.
+    spatial_scale : float
+        Meters per Solomon distance unit.
+    time_scale : float
+        Seconds per Solomon time unit.
+
+    Returns
+    -------
+    nx.Graph
+        New graph with calibrated attributes.
+    """
     new_graph = graph.copy()
     
     # 1. Scale Time Windows and add info_slope based on the scaled time windows

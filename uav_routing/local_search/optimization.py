@@ -1,3 +1,18 @@
+"""
+optimization.py
+===============
+Metaheuristic optimization algorithms for UAV routing.
+
+The Optimizer class provides:
+    - Iterated Local Search (ILS) with tabu perturbation
+    - Simulated Annealing (SA) with configurable temperature schedules
+    - Hill climbing (ascent runs)
+    - Tilted runs (accept worse with fixed probability p)
+    - Short bursts and variable-length short bursts
+
+All methods are generators yielding State objects at each iteration,
+allowing real-time tracking of convergence.
+"""
 
 from typing import Union, Callable, List, Any
 import random
@@ -12,23 +27,14 @@ from uav_routing.local_search.proposal import random_flip_with_tabu, perturb_sta
 
 
 class Optimizer:
-    """
-    Optimizer represents the class of algorithms that optimize tours with respect to 
-    a single metric. An instance of this class encapsulates the following state
-    information:
-        * the dual graph and updaters via the initial partition,
-        * the metric over which to optimize,
-        * and whether or not to seek maximal or minimal values of the metric.
+    """Metaheuristic optimizer for UAV tour improvement.
 
-    The SingleMetricOptimizer class implements the following common methods of optimization:
-        * Short Bursts
-        * Simulated Annealing
-        * Tilted Runs
+    Wraps a proposal function and an initial State, providing methods for
+    ILS, SA, hill climbing, tilted runs, and short bursts. All methods are
+    generators yielding State objects.
 
-    Both during and after a optimization run, the class properties `best_part` and `best_score`
-    represent the optimal state / corresponding score value observed.  Note that these
-    properties do NOT persist across multiple optimization runs, as they are reset each time an
-    optimization run is invoked.
+    The ``best_state`` and ``best_score`` properties track the best tour
+    found during the current optimization run (reset at the start of each run).
     """
     
     def __init__(
@@ -97,6 +103,7 @@ class Optimizer:
         return self._score
 
     def optimization_metric(self, State):
+        """Return the optimization metric for a given state."""
         return State.value
     
     def _is_improvement(self, new_score: float, old_score: float) -> bool:
@@ -653,11 +660,11 @@ class Optimizer:
         t_improve: int = 50,
         k_remove: int = 3,
         tabu_tenure: int = 20,
-        with_progress_bar: bool = True
+        with_progress_bar: bool = False
     ):
         """
         Executes Iterated Local Search (ILS) as a generator.
-        
+
         :param total_steps: Total number of steps to run.
         :param t_improve: Threshold of improvements before triggering a 'Shake'.
         :param k_remove: Number of nodes to remove during perturbation.
@@ -712,10 +719,10 @@ class Optimizer:
                 if self._is_improvement(proposed_score, self._best_score):
                     self._best_state = proposed_state
                     self._best_score = proposed_score
-                    self.stagnation_counter = 0 # Found a new global best
+                self.stagnation_counter = 0  # Local improvement resets stagnation
                 return True
-            
-            self.stagnation_counter += 1 # Didn't improve
+
+            self.stagnation_counter += 1  # No improvement
             return False
         # 3. Initialize the Iterator
         chain = Iterator(

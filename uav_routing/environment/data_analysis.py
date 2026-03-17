@@ -12,6 +12,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import spearmanr
+import networkx as nx
 
 from uav_routing.environment.data import data_to_dict
 
@@ -296,6 +297,37 @@ def plot_tightness_ratio(sources, figsize=(6, 4)):
     fig.tight_layout()
     return fig
 
+
+
+
+# ---------------------------------------------------------------------------
+# 7. Plot data points
+# ---------------------------------------------------------------------------
+
+def plot_graph_with_positions(nodes, edges, name=None):
+    """
+    Plots a graph using NetworkX with specified node positions.
+
+    Args:
+        nodes (dict): A dictionary where keys are node IDs and values are (x, y) tuples
+                      representing the position of each node.
+        edges (list): A list of tuples, where each tuple represents an edge (pair of node IDs).
+    """
+    G = nx.DiGraph()
+
+    # Add nodes to the graph
+    G.add_nodes_from(nodes.keys())
+
+    # Add edges to the graph
+    G.add_edges_from(edges)
+    
+    pos = {node: nodes[node]["position"] for node in nodes.keys()}
+    # Draw the graph using the provided positions
+    plt.figure(figsize=(6, 4)) # Optional: Adjust figure size
+    nx.draw(G, pos=pos, with_labels=True, node_color='skyblue', node_size=200, font_size=7, font_weight='bold')
+    plt.title(f"Graph with Fixed Node Positions for {name}")
+    plt.show()
+    
 
 # ---------------------------------------------------------------------------
 # Convenience: run all plots

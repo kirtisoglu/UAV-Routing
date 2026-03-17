@@ -1,5 +1,12 @@
+"""
+prune.py
+========
+Node and arc feasibility preprocessing for the MISOCP model.
 
-
+Removes nodes and arcs that cannot be part of any feasible tour based on
+round-trip energy/time budgets and time window compatibility. Reduces the
+model size before solving, improving LP relaxation quality.
+"""
 
 
 # ── Individual pruning rules ──────────────────────────────────────────────────
@@ -81,10 +88,22 @@ def prune_by_time_windows(graph, instance, feasible_nodes):
 # ── Connectivity clean-up ─────────────────────────────────────────────────────
 
 def _remove_disconnected(feasible_arcs, base):
-    """
-    Iteratively remove non-depot nodes with no outgoing or no incoming arc
-    (they can never be part of a valid tour).
-    Returns the pruned arc set.
+    """Iteratively remove non-depot nodes lacking incoming or outgoing arcs.
+
+    Such nodes can never be part of a valid tour. Repeats until no more
+    nodes are removed.
+
+    Parameters
+    ----------
+    feasible_arcs : set of (int, int)
+        Current set of feasible directed arcs.
+    base : int
+        Depot node ID (never removed).
+
+    Returns
+    -------
+    set of (int, int)
+        Pruned arc set with disconnected nodes removed.
     """
     arcs = set(feasible_arcs)
     removed = True
@@ -147,6 +166,7 @@ def prune(instance):
 
 def _prune_report(all_nodes, infeasible_nodes, all_arcs,
                   infeasible_energy, infeasible_tw, feasible_nodes, feasible_arcs):
+    """Print a formatted pruning summary showing nodes/arcs/variables removed."""
 
     n_all   = len(all_nodes)
     n_feas  = len(feasible_nodes)

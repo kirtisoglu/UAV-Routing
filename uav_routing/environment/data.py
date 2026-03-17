@@ -11,30 +11,74 @@ import pandas as pd
 
 
 class ValidationError(Exception):
-    "Raised when data is not validated."
+    """Raised when a Solomon data row fails validation."""
 
 
 def save(object, path):
+    """Serialize a Python object to disk using pickle.
+
+    Parameters
+    ----------
+    object : any
+        Object to serialize.
+    path : str
+        Output file path.
+    """
     with open(path, "wb") as f:
         pickle.dump(object, f)
 
 
 def load(path):
+    """Deserialize a Python object from a pickle file.
+
+    Parameters
+    ----------
+    path : str
+        Path to the pickle file.
+
+    Returns
+    -------
+    object
+        The deserialized Python object.
+    """
     with open(path, "rb") as f:
         G = pickle.load(f)
     return G
 
 
 def to_dataframe(path):
-    " Convert a dictionary to a pandas DataFrame. "
+    """Parse a Solomon file and return a pandas DataFrame of node attributes.
+
+    Parameters
+    ----------
+    path : str
+        Path to the Solomon-format text file.
+
+    Returns
+    -------
+    pd.DataFrame
+        One row per node with columns: position, info_at_lowest, time_window, info_slope.
+    """
     data =  data_to_dict(path)
     df = pd.DataFrame.from_dict(data, orient='index')
     return df
-    
+
 
 def data_to_dict(path):
-    """
-    Step 1: Parse text to dictionary.
+    """Parse a Solomon-format text file into a node dictionary.
+
+    The file format has two header lines, then one line per node with fields:
+    id, x, y, service_time, info_at_lowest, flags..., tw_start, tw_end.
+
+    Parameters
+    ----------
+    path : str
+        Path to the Solomon-format text file.
+
+    Returns
+    -------
+    tuple of (dict, str)
+        (nodes_dict, depot_id) where nodes_dict maps node ID to attributes.
     """
     nodes = {}
     

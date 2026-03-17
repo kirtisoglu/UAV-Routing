@@ -1,22 +1,11 @@
 """
-This module provides the Iterator class, which is designed to facilitate the creation
-and iteration of states in the context of UAV routing plans. It allows for the exploration 
-of different tours in the solution space.
+iterator.py
+============
+Markov chain iteration framework for local search.
 
-Key Components:
-
-- Iterator: The main class used for creating and iterating over states.
-
-Usage:
-The primary use of this module is to create an instance of Iterator with appropriate
-parameters like proposal function, acceptance function, and initial state, and then 
-to iterate through the states of the Iterator, yielding a new proposal at each step.
-
-Dependencies:
-
-- typing: Used for type hints.
-
-Last Updated: 
+The Iterator class drives the proposal-accept loop: at each step it
+proposes a new tour via the proposal function, applies the acceptance
+criterion, and yields the current state. Used by all Optimizer methods.
 """
 
 from typing import Union, Iterable, Callable, Optional

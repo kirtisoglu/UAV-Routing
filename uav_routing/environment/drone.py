@@ -19,7 +19,22 @@ from dataclasses import dataclass, field, replace
 
 @dataclass
 class Drone_test:
-    "Represents a rotary-wing UAV with its specifications."
+    """Rotary-wing UAV model for unit testing.
+
+    Uses a four-term power model: P(v) = mu_1 + mu_2*v^2 + mu_3/v + mu_4*v^3.
+    Not used in experiments; included as a reference for rotary-wing energy modeling.
+
+    Parameters
+    ----------
+    base : int
+        Depot node ID.
+    max_energy : float
+        Energy budget in Joules.
+    campaign_time : float
+        Mission duration in seconds.
+    speed_min, speed_max : float
+        Speed bounds in m/s.
+    """
     
     name = "Generic UAV"
     base: int
@@ -50,9 +65,16 @@ class Drone_test:
 
 @dataclass
 class Drone:
-    """
-    Represents the UAV Bayraktar TB2 with its specifications. 
-    A fixed-wing drone manufactured by Turkey.
+    """Fixed-wing UAV model: Bayraktar TB2.
+
+    Power model: P(v) = c_0 + c_1*v^3 + c_2/v, where c_0 is avionics power
+    (set to 0), c_1 is the parasitic drag coefficient, and c_2 is the induced
+    drag coefficient.
+
+    Parameters
+    ----------
+    base : int
+        Depot node ID.
     """
     
     base: int 
@@ -71,6 +93,7 @@ class Drone:
 
     @property
     def loiter_power(self):
+        """Power consumption (Watts) at loiter speed."""
         v = self.loiter_speed
         return self.c_0 + self.c_1 * v**3 + self.c_2 / v
     
@@ -93,6 +116,7 @@ class Drone:
     
     @staticmethod
     def collected_info(arrival_time, earliest_time, slope, info_at_lowest):
+        """Compute information collected at a node given arrival time."""
         return slope*(arrival_time - earliest_time) + info_at_lowest
 
 

@@ -1,3 +1,13 @@
+"""
+state.py
+========
+Search state representation for the local search framework.
+
+Each State wraps a tour (directed cycle) and its SOCP solution. States
+form a chain via the ``parent`` attribute, enabling acceptance criteria
+that compare consecutive proposals. The ``flip`` method creates a child
+state with a new tour, solving the SOCP automatically.
+"""
 
 from typing import Any, Callable, Dict, Optional, Tuple, Set, List
 
@@ -6,18 +16,24 @@ from uav_routing.solver.socp import Solver
 
 
 class InvalidStartError(Exception):
-    """Raised when initial solution is not valid."""
+    """Raised when the initial tour has no feasible SOCP solution."""
 
 
 class State:
-    """  
-    A State instance represents a state in a local search iteration.
-    Attributes:
-    tour: 
-    drone:
-    graph:
-    solver: 
-    parent:
+    """A state in the local search iteration chain.
+
+    Attributes
+    ----------
+    tour : nx.DiGraph
+        Directed cycle representing the current tour.
+    instance : Environment
+        The calibrated problem instance.
+    solver : Solver
+        SOCP solver with the current tour's solution.
+    parent : State or None
+        Previous state in the chain (None for the initial state).
+    is_perturbation : bool
+        True if this state was created by an ILS perturbation.
     """
     
     __slots__ = (
@@ -56,7 +72,7 @@ class State:
                 )
 
     def _first_time(self, instance, initial_tour, warm_start):
-
+        """Initialize the root state (no parent)."""
         self.is_perturbation = False
         self.parent = None
         self.instance = instance
@@ -72,7 +88,7 @@ class State:
         
         
     def _from_parent(self, parent: "State", tour):
-    
+        """Initialize a child state from a parent, reusing the Gurobi environment."""
         self.is_perturbation = False
         self.parent = parent
         self.tour = tour
@@ -92,9 +108,10 @@ class State:
         :returns: the new :class:`State`
         :rtype: State
         """
-        return self.__class__(parent=self, tour=tour)
+        return self.__class__(instance=self.instance, parent=self, tour=tour)
 
     def print_variables(self):
+        """Print all Gurobi variable values from the current SOCP solution."""
         if not self.solver.solution:
             print("No solution available.")
             return
@@ -103,6 +120,7 @@ class State:
     
     @property
     def value(self):
+        """The objective value (total information collected) of this state."""
         return self.solver.obj_value
 
 """    # we call this here and in socp. Do it only once.

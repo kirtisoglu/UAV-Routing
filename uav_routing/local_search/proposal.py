@@ -1,3 +1,21 @@
+"""
+proposal.py
+============
+Move operators and proposal functions for local search.
+
+Provides two proposal wrappers:
+    - ``universal_proposal``: For SA, hill climbing, and tilted runs
+      (no tabu, includes remove_random_node).
+    - ``random_flip_with_tabu``: For ILS local improvement phase
+      (respects tabu set, no remove operator).
+
+Move operators (list-based for speed):
+    - add_random_node, remove_random_node, swap_two_nodes,
+      replace_random_node, swap_two_opt
+
+Also provides ``perturb_state`` (the ILS "Shake" operation).
+"""
+
 import random
 import networkx as nx
 from typing import List, Set, Tuple
@@ -8,11 +26,11 @@ from typing import List, Set, Tuple
 
 
 class EdgeCaseError(Exception):
-    "Raised when an edge case error occurs"
+    """Raised when the current route is empty or invalid."""
 
 
 def route_to_nx(route: List[int]) -> nx.DiGraph:
-    """Converts an ordered list of node IDs into a NetworkX DiGraph cycle."""
+    """Convert an ordered list of node IDs into a NetworkX DiGraph cycle."""
     G = nx.DiGraph()
     G.add_nodes_from(route)
     if len(route) > 1:
@@ -26,10 +44,20 @@ def route_to_nx(route: List[int]) -> nx.DiGraph:
 # ------------ Main Proposal Logic ---------------
 
 def universal_proposal(state):
-    """
-    A standard proposal wrapper that can be used by SA, Ascent, and Tilt.
-    We don't use perturbation or a Tabu set here so SA/Ascent can explore freely.
-    Includes remove_random_node rather than perturbation.
+    """Proposal function for SA, hill climbing, and tilted runs.
+
+    Selects a random move operator based on current tour size. Does not
+    use perturbation or tabu, allowing free exploration of the search space.
+
+    Parameters
+    ----------
+    state : State
+        Current search state.
+
+    Returns
+    -------
+    State
+        New state with the proposed tour.
     """
     current_route = state.solver.tour_nodes 
     available_nodes = list(set(state.instance.graph.nodes) - set(current_route))
@@ -60,9 +88,23 @@ def universal_proposal(state):
 
 
 def random_flip_with_tabu(state, tabu_set: set):
-    """
-    Core proposal function. Uses state.solver.tour_nodes for high-performance
-    access to the current ordered sequence.
+    """Proposal function for ILS local improvement phase.
+
+    Selects a random move operator, excluding nodes in the tabu set from
+    the available complement. Does not include remove_random_node to
+    preserve tour quality during the improvement phase.
+
+    Parameters
+    ----------
+    state : State
+        Current search state.
+    tabu_set : set
+        Node IDs that are temporarily forbidden from being added.
+
+    Returns
+    -------
+    State
+        New state with the proposed tour.
     """
     # Use the pre-ordered nodes from the solver to save CPU time
     current_route = state.solver.tour_nodes 
@@ -99,7 +141,25 @@ def random_flip_with_tabu(state, tabu_set: set):
 
 
 def perturb_state(state, k_remove: int, current_iteration: int, tabu_tenure: int):
-    """The 'Shake' operation for ILS."""
+    """ILS perturbation ("Shake"): remove k nodes and add them to tabu.
+
+    Parameters
+    ----------
+    state : State
+        Current search state.
+    k_remove : int
+        Number of non-depot nodes to remove.
+    current_iteration : int
+        Current ILS iteration (for tabu expiry calculation).
+    tabu_tenure : int
+        Number of iterations removed nodes remain tabu.
+
+    Returns
+    -------
+    tuple of (State, dict)
+        (perturbed_state, new_tabu_entries) where tabu entries map
+        node ID to expiry iteration.
+    """
     route = list(state.solver.tour_nodes)
     base = state.instance.drone.base
     
