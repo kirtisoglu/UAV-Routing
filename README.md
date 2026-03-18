@@ -62,7 +62,7 @@ uav_routing/
     initial_solution.py    # Initial tour heuristics (R1-R4)
     proposal.py            # Move operators (add, remove, swap, replace, 2-opt)
     optimization.py        # ILS, SA, hill climbing, tilted runs
-    iterator.py            # Markov chain iteration framework
+    iterator.py            # Chain iteration framework
     accept.py              # Acceptance criteria
 
 experiments/               # Computational experiments
