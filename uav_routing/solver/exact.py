@@ -341,13 +341,18 @@ def print_table(instance, results):
         }])
         df = pd.concat([df, summary_row], ignore_index=True)
 
+    from IPython.display import display
+
+    summary_df = pd.DataFrame([{
+        "Objective": f"{results['obj']:.2f}",
+        "MIP Gap": f"{results['gap']:.4%}",
+        "Tour": '-'.join(map(str, tour)),
+        "Solve Time (s)": f"{results['solve_time']:.2f}",
+    }])
+
     print("\n--- Gurobi Solver Report ---")
-    print(df.to_string(index=False))
-    print("-" * 60)
-    print(f"Objective Value:      {results['obj']:.2f}")
-    print(f"MIP Gap:              {results['gap']:.4%}")
-    print(f"Tour Sequence:        {'-'.join(map(str, tour))}")
-    print(f"Solve Time:           {results['solve_time']:.2f} seconds")
+    display(df)
+    display(summary_df)
 
     
     

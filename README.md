@@ -181,15 +181,23 @@ Derives and visualizes the power consumption models:
 - `r1_2_1.txt` -- Random (200 nodes)
 - `rc1_2_1.txt` -- Mixed (200 nodes)
 
-## Dependencies
-
-- **Gurobi** (exact solver + SOCP for local search)
-- NetworkX, NumPy, SciPy, Pandas, Matplotlib
-
 ## Installation
 
+Requires Python >= 3.9 and a valid [Gurobi license](https://www.gurobi.com/academia/academic-program-and-licenses/) (free for academics).
+
 ```bash
+git clone https://github.com/kirtisoglu/UAV-Routing.git
+cd UAV-Routing
 pip install -e .
 ```
 
-Requires a valid Gurobi license.
+This installs all dependencies: gurobipy, networkx, numpy, scipy, pandas, matplotlib, tqdm.
+
+To reproduce the experiments, open the notebooks and run all cells:
+
+```bash
+cd experiments
+jupyter notebook
+```
+
+The notebooks are committed with outputs so results can be inspected without re-running. To reproduce on your own machine, select **Kernel → Restart & Run All**. Exact solver experiments on 100-node instances may take 10+ minutes per run depending on hardware.
