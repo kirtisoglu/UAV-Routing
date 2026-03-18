@@ -11,7 +11,6 @@ Key Classes:
 Last update: 2025-12-20
 """
 
-# TODO: Drone max energy and campaign time consistency check.
 
 from dataclasses import dataclass, field, replace
 

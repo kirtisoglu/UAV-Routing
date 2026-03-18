@@ -219,7 +219,7 @@ def speed_histogram_by_eta(instance, env, seed=42,
         instance.update_scaling(eta=eta)
         results = solve_model_gurobi(instance, seed=seed,
                                      time_limit=time_limit, env=env)
-        if results and results.get('status') == GRB.OPTIMAL:
+        if results and results.get('arc_data'):
             speeds = []
             for ad in results['arc_data'].values():
                 if ad['t'] > 1e-6:

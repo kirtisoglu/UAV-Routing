@@ -1,8 +1,8 @@
-paper/
 venv/
 __pycache__/
 *.egg-info/
 *.pkl
 *.pyc
-uav_routing/notebooks/
 fig
+
+experiments/results
