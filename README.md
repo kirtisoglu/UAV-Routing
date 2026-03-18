@@ -49,6 +49,7 @@ uav_routing/
     calibration.py         # Solomon-to-real-world scaling
     environment.py         # Normalized problem wrapper with eta energy scaling
     data.py                # Solomon format parser
+    data_analysis.py       # Dataset structural analysis utilities
 
   solver/                  # Optimization solvers
     exact.py               # Gurobi MISOCP (full problem)
@@ -68,14 +69,18 @@ experiments/               # Computational experiments
   exact.ipynb              # Exact solver: scalability, slopes, eta, loitering, speed/arrival analysis
   local.ipynb              # Local search: metaheuristic comparison, hyperparameters, convergence, 200-node
   calibration.ipynb        # Calibration analysis
+  data.ipynb               # Dataset structural analysis
+  energy.ipynb             # Energy model derivation and visualization
+  run_ils_section2.py      # ILS cross-validation runner script
+  initial_tour_results.csv # Initial tour heuristic results
 
 datasets/
   data/                    # Solomon benchmark instances (50 and 100 nodes)
-  c_r_rc_100_100/          # Additional Solomon 100-node variants (c102-c109, r102-r112, rc102-rc108)
-  c_r_rc_100_50/           # Additional Solomon 50-node variants
   homberger_200/           # Gehring & Homberger 200-node instances (c1_2_1, r1_2_1, rc1_2_1)
 
-paper/                     # Research paper (LaTeX)
+pyproject.toml             # Package configuration
+requirements.txt           # Python dependencies
+LICENSE                    # License file
 ```
 
 ## Parameters
