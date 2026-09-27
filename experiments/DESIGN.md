@@ -519,3 +519,52 @@ NumericFocus 3 removes the PR15 miss but costs 3x on C104 and is worse there.
 Not changed: the design keeps P0+BH, per the rule of the rerun plan. Recorded so
 that Section 5.8 can state the false-infeasibility rate rather than imply 40/40,
 and so the caveat list carries a measured number for long routes.
+
+## Cloud session, 27 September 2026 (afternoon): one driver, one table writer, a runbook
+
+Section 5.8 now states the long-route check above (one false infeasibility in forty on
+PR15, none on C104, per-solve times of the two campaigns).
+
+Code changes, none of which alters a mixed-regime run:
+
+* `--reorder-rcl` breaks ties by the distance saving: `heapq.nlargest` on
+  `(exchange value, -dd)`. Ties between exchange values have measure zero with sampled
+  slopes, but with static rewards every exchange value is zero and `nlargest` kept the
+  first L_r pairs in construction order, all with p = 1. Section 4.3 says so in one clause.
+* `build_R4` (and the screen before it) evaluate candidates under the subproblem of the
+  run (`instance.no_loiter`). Found by the smoke test of the driver: with `--no-loiter`
+  the R4 tour of R101 (50) was built with loitering allowed and the run died on an
+  infeasible start. The reference configuration is unaffected.
+* The runner prints the flown length, energy and mission time of the best route
+  (`best flown ... m energy ... J time ... s`), for the loitering and speed tables.
+* `paper_runs/run_design.py`: knobs `DESIGN_INIT`, `DESIGN_INIT_SEED`, `DESIGN_DYNAMICS`;
+  columns `init_obj`, `init_size`, `flown_km`, `energy_pct`, `time_s`, `commit`; a CSV
+  with the earlier columns is moved to `.v1.csv` and the campaign restarts; refuses to
+  run with `ILS_LICENSE_GUARD` set. Replaces `run_capdiv.py`, `run_capdiv_fixed.py`,
+  `run_initial_tours.py`, `run_matheuristic.py` and `campaign/final_run.py`.
+* `paper_runs/fill_tables.py` writes the bodies of the five matheuristic tables from the
+  CSVs; `make_convergence_figure.py` and `make_capdiv_figure.py` read the driver's
+  traces and write into `paper/fig/`. Tested end to end on R101 (50) in the container
+  (driver, five tables, two figures, pdflatex clean).
+* `experiments/RERUN_PLAN.md` rewritten as the runbook (seven steps, then the prose).
+
+The greedy column f(R4) of Table 5.9 will change when Step 1 of the runbook runs: the
+old column equals the fixed-speed evaluation of the R4 tour (R101 (50): 4 643.08, which
+is what `--fixed-speed` reproduces), the new one is the value of the tour the run
+starts from with the speed free (5 863.95).
+
+Files identified as superseded, to be removed by the author (git history keeps them):
+`experiments/tm_ils_*` (runner outputs, now ignored), `archive/`, `animation/traces/`,
+`animation/.viewer_template.bak`, `figures/`, `fig/` (stale copies; the tex reads
+`paper/fig/`), `texput.log`, `paper/ArXiv-version.{aux,bbl,blg,log,out}`,
+`paper/Section4-matheuristic.tex`, `paper/Section5.1-5.2-datasets-information.tex`,
+`paper/Table5.9-and-5.8-parameters.tex`, `paper/ref-additions.bib` (merged into
+`ref.bib`), `paper_runs/run_capdiv.py`, `run_capdiv_fixed.py`, `show_runs.py`,
+`run_matheuristic.py`, `run_initial_tours.py`, `paper_runs/campaign/`,
+`experiments/run_fig_convergence_tm.py`, `run_fig_pr15_dynamics.py`, `run_ils_rcl.py`,
+`experiments/initial_tour_results.csv`, and under `paper_runs/results`: `anim_exch.csv`,
+`capdiv*.csv`, `verify_d3.csv`, `stall_ten.csv`, `iratio_*.csv`, `initial_tours*.csv`,
+`ils_*.csv`, `final.csv`, `tuning/`, `figures/`, `details/{aba,dynamics,capdiv_traces,
+theta_traces,ils_traces,gain1h_traces}`, `details/*.log`, and every `newdesign/*.log`
+except `anim_*.log` and `design_*.log`. Kept on purpose: `animation/datasets/` (the
+built viewer pages), the MISOCP result files, `design_*.csv`, `paper/fig/`.

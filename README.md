@@ -65,18 +65,31 @@ uav_routing/
     iterator.py            # Chain iteration framework
     accept.py              # Acceptance criteria
 
-experiments/               # Computational experiments
-  exact.ipynb              # Exact solver: scalability, slopes, eta, loitering, speed/arrival analysis
-  local.ipynb              # Local search: metaheuristic comparison, hyperparameters, convergence, 200-node
-  calibration.ipynb        # Calibration analysis
-  data.ipynb               # Dataset structural analysis
-  energy.ipynb             # Energy model derivation and visualization
-  run_ils_section2.py      # ILS cross-validation runner script
-  initial_tour_results.csv # Initial tour heuristic results
+experiments/               # The matheuristic of the paper's Section 4 and its checks
+  run_ils_time_matched.py  # Iterated local search with the fixed-tour SOCP (the runner)
+  fast_sets.py             # Feasible move sets and weights in O(1) per move
+  run_ils_final.py         # Instance list; run_ils_final_scored.py: taut-string energy test
+  run_ils_fb_cascade_demo.py  # Instance construction, leg sets F_i / B_j
+  validate_fast_sets.py, test_scaled_socp*.py   # Checks of the O(1) sets and of the scaled SOCP
+  RERUN_PLAN.md            # Runbook that produces the matheuristic tables of Section 5
+  DESIGN.md                # Design record and evidence
+  *.ipynb                  # Notebooks: calibration, data, energy model, exact solver, local search
+
+paper_runs/                # One driver per table of Section 5 (see paper_runs/README.md)
+  run_misocp_*.py, run_slope_regimes.py, run_eta_sweep.py, run_loitering.py   # exact solver
+  run_design.py            # every matheuristic table; fill_tables.py writes them into the tex
+  make_*_figure.py, analyze_traces.py, compare_runs.py
+  results/                 # CSV per table (results/README.md says which is which)
+
+paper/                     # ArXiv-version.tex (single source), ref.bib, fig/
+
+animation/                 # Route-replay viewer of a run (animation/README.md)
 
 datasets/
-  data/                    # Solomon benchmark instances (50 and 100 nodes)
-  homberger_200/           # Gehring & Homberger 200-node instances (c1_2_1, r1_2_1, rc1_2_1)
+  data/, c_r_rc_100_50/, c_r_rc_100_100/, c_r_rc_100_100_Vansteen/, c_r_rc_200_100/
+                           # Solomon instances and their OPTW adaptations
+  homberger_200/           # Gehring & Homberger 200-target instances
+  pr01_10/, pr01_10_Vansteen/, pr11_20/   # Cordeau instances (OPTW adaptations)
 
 pyproject.toml             # Package configuration
 requirements.txt           # Python dependencies
