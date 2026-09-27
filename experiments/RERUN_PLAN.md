@@ -74,7 +74,10 @@ Then, without any run:
 
 prints, per instance, the objective and stopping shake for S in {25, 50, 100, 150,
 200, 300}: this is the S calibration of Section 5.8 (the runs used S = 100, so values
-above 100 are not observable and read as the S = 100 result).
+above 100 are not observable and read as the S = 100 result). On the traces of the
+2026-09-26 base, S = 100 is the smallest value that loses no improvement (S = 50
+loses 0.95% on PR11, S = 25 up to 6.1% on PR15); the author confirmed S = 100 on the
+new design's results on 2026-09-27, so S is settled.
 
 ## Step 2: same-machine baseline (feeds the design comparison in Section 5.8)
 
@@ -87,16 +90,21 @@ for both designs; the cloud numbers in DESIGN.md are for reference only.
 
 ## Step 3: parameter grids (Section 5.8), on the five instances where they can matter
 
-    G="R104 (100);RC104 (100);C104 (100);PR15 (240);PR10 (288)"
+    G="PR11 (48);R104 (100);RC104 (100);C104 (100);PR15 (240);PR10 (288)"
     DESIGN_INSTANCES="$G" DESIGN_RCL=10 DESIGN_OUT=_L10 python3 paper_runs/run_design.py new
     DESIGN_INSTANCES="$G" DESIGN_RCL=40 DESIGN_OUT=_L40 python3 paper_runs/run_design.py new
     DESIGN_INSTANCES="$G" DESIGN_RCL=0  DESIGN_OUT=_Lall python3 paper_runs/run_design.py new
     DESIGN_INSTANCES="$G" DESIGN_CAPDIV=6 DESIGN_OUT=_D6 python3 paper_runs/run_design.py new
 
 L_r = 20 and D = 3 are the main campaign. The `_Lall` grid (no restriction) is the
-ablation that justifies L_r; expect it to be slower with a similar objective on the
-first four and much slower on C104. The co-monotone instances are not needed here:
-their reorder sets hold a handful of moves and the list is not binding.
+ablation that justifies L_r. First results from this machine (2026-09-27): L_r = 20
+buys +7.78% on PR15, +4.62% on PR10 and +0.99% on C104 (shakes 116 -> 691, 89 -> 311,
+36 -> 381) and costs 0.70% on PR11 (48), where the unrestricted set recovers 0.56 of
+the 0.70% at 313 shakes in 43 s against 146 shakes in 17 s. PR11 is therefore in the
+grid: on a short route with wide windows the full set is affordable and the list is
+binding in the wrong direction. Section 5.8 must state this cost, not present the
+list as free (Section 4.3 now says so). The co-monotone instances are not needed:
+their reorder sets hold a handful of moves and the list is not binding there.
 
 ## Step 4: acceptance rate by rank (the evidence for L_r, Section 5.8)
 

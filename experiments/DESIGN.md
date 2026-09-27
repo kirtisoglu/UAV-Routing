@@ -446,3 +446,41 @@ and counted as infeasible, so R1_2_1 is not a clean comparison; single runs, see
 Time per SOCP solve in the loop: 20-40 ms physical (NumericFocus 3) vs 3.6-7 ms scaled.
 The long-route instances (C104, PR15, PR10), where the O(1) construction matters most,
 exceed the license here and are to be run with `paper_runs/run_design.py` on the licensed machine.
+
+Local-machine results relayed by the author (2026-09-27), new design vs 2026-09-26 base:
+
+| Instance | base | new, L_r = 20 | new, L_r = 0 (no list) |
+|---|---|---|---|
+| PR11 (48) | 6 519.29, 227 s, 295 shakes | 6 473.95, 17 s, 146 shakes | 6 509.95, 43 s, 313 shakes |
+
+L_r = 20 against the unrestricted set: +7.78% on PR15, +4.62% on PR10, +0.99% on C104,
+with shakes 116 -> 691, 89 -> 311, 36 -> 381; -0.70% on PR11. Reading: on a short route
+with wide windows the full reorder set is affordable and informative, and the list discards
+moves that would have been accepted; on the long routes the list is what buys the shakes.
+S = 100 confirmed by the author on the new design. Section 4.3 states the trade-off;
+Section 5.8 is to report it (PR11 added to the L_r grid of the note).
+
+Full campaign of the new design on the licensed machine (M3 Pro, `run_design.py new`,
+D = 3, L_r = 20, S = 100; relayed by the author 2026-09-27), against the 2026-09-26 base
+(paper_runs/results/final.csv). Objective / t_best / run time:
+
+| Instance | base | new | obj change |
+|---|---|---|---|
+| R101 (50) | 11 902.02 / 0.6 s / 12 s | 11 902.02 / 0.1 s / 1.9 s | 0 |
+| R101 (100) | 22 884.32 / 0.8 / 21 | 22 884.44 / 0.2 / 4.2 | +0.00% |
+| R1_2_1 (200) | 16 586.21 / 25.5 / 77 | 16 586.35 / 9.2 / 17.8 | +0.00% |
+| C101 (50) | 8 591.92 / 38.9 / 240 | 8 591.92 / 1.5 / 33.4 | 0 |
+| C101 (100) | 11 153.74 / 188.3 / 281 | 11 324.41 / 110.2 / 147.3 | +1.53% |
+| C1_2_1 (200) | 11 083.27 / 39.2 / 187 | 11 146.32 / 78.0 / 138.7 | +0.57% |
+| RC1_2_1 (200) | 17 669.96 / 64.3 / 194 | 17 973.77 / 70.1 / 90.3 | +1.72% |
+| R102 (100) | 30 443.78 / 61.6 / 135 | 30 443.78 / 42.9 / 59.2 | 0 |
+| R104 (100) | 38 060.94 / 169.3 / 240 | 38 105.79 / 39.9 / 57.7 | +0.12% |
+| C104 (100) | 18 233.89 / 378.9 / 587 | 18 414.60 / 217.4 / 304.3 | +0.99% |
+| RC104 (100) | 35 809.19 / 45.9 / 156 | 36 231.33 / 17.2 / 27.8 | +1.18% |
+| PR11 (48) | 6 519.29 / 133.3 / 227 | 6 473.95 / 6.9 / 17.3 | -0.70% |
+| PR15 (240) | 18 221.45 / 578.9 / 982 | 19 639.68 / 609.4 / 704.8 | +7.78% |
+| PR10 (288) | 15 958.48 / 114.6 / 354 | 16 696.23 / 128.4 / 196.6 | +4.62% |
+
+Total run time 1 801 s against 3 693 s; t_best under 100 s on 10 instances against 8;
+every run ended by the shake limit. Table 5.9 and the 5.8 parameter paragraph carry these
+numbers (commit of 2026-09-27).

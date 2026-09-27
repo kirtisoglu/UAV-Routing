@@ -60,7 +60,7 @@ OUT = os.environ.get("DESIGN_OUT", "")
 EXTRA = os.environ.get("DESIGN_EXTRA", "").split()
 TRACE_DIR = os.path.join(HERE, "results", "details", "design_traces")
 COLS = ["Instance", "design", "Objective", "Tour", "t_best (s)", "Wall (s)", "stop", "iterations",
-        "shakes", "shake_of_best", "accepted", "socp_calls", "socp_ms", "reorder_trimmed",
+        "shakes", "iter_of_best", "accepted", "socp_calls", "socp_ms", "reorder_trimmed",
         "socp_numeric_infeasible", "Route"]
 
 
@@ -93,7 +93,7 @@ def run_one(name, design):
         shutil.copy(prefix + "_trace.csv", os.path.join(TRACE_DIR, f"{stem}_{design}{OUT}.csv"))
     m = re.search(r"best obj ([\d.]+)\s+size (\d+)\s+found at ([\d.]+) s \(iter (\d+)\)", out)
     stop = re.search(r"stopped by (\w+)", out)
-    itr = re.search(r"after (\d+) (?:shakes and \d+ )?iterations at", out)
+    itr = re.search(r"(\d+) iterations at", out)
     route = re.search(r"best route: \[([^\]]*)\]", out)
     c = re.search(r"counters: (\{.*\})", out)
     cnt = ast.literal_eval(c.group(1)) if c else {}
@@ -104,7 +104,7 @@ def run_one(name, design):
     return {"Instance": name, "design": design, "Objective": float(m.group(1)), "Tour": int(m.group(2)),
             "t_best (s)": round(float(m.group(3)), 1), "Wall (s)": round(wall, 1),
             "stop": stop.group(1) if stop else "", "iterations": int(itr.group(1)) if itr else "",
-            "shakes": cnt.get("kicks", 0), "shake_of_best": "",
+            "shakes": cnt.get("kicks", 0), "iter_of_best": int(m.group(4)),
             "accepted": cnt.get("accepted", 0), "socp_calls": cnt.get("socp_calls", 0),
             "socp_ms": round(socp_ms, 2) if socp_ms != "" else "",
             "reorder_trimmed": cnt.get("reorder_trimmed", 0),

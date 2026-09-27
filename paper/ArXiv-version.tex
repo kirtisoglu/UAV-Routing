@@ -730,7 +730,7 @@ the two forms agreeing because the exchange permutes the two targets over the tw
 Equation~\eqref{eq:exch} isolates the effect the move is made for. The route-wide change $\Delta I_m$ of~\eqref{eq:info-change} also carries the retiming of every visit downstream of the move, which for a reordering is large, of either sign, and unrelated to the exchange the move performs.
 
 \paragraph{Restricted candidate list for reorderings.}
-The two families of operators differ in what their weights predict. For Insert and Replace the weight~\eqref{eq:cand-weight} decides which move is drawn first, but the share of drawn moves the subproblem then accepts is as large in the tail of the ranking as at its head, since a replacement that fits a window the estimate cannot see is found by the subproblem alone; a set restricted to its best-weighted moves would lose those acceptances, and the full set is kept. For Swap and 2-opt the acceptance rate decays with the rank of the exchange weight~\eqref{eq:exch}, and the sets are the large ones: on a route of $k$ targets with wide windows they hold hundreds of position pairs, most of them refused by the subproblem after a solve each. Of the reorderings that pass the two conditions, therefore, only the $L_r$ of largest weight enter the set, a restricted candidate list in the sense of \citep{gunawan2015iterated}, who keep the five best insertions of their construction. Section~\ref{subsec:parameter-analysis} reports the acceptance rates by rank on which this asymmetry rests and sets $L_r$. On instances whose windows fix the order the reordering sets hold a handful of pairs and the list is not binding.
+The two families of operators differ in what their weights predict. For Insert and Replace the weight~\eqref{eq:cand-weight} decides which move is drawn first, but the share of drawn moves the subproblem then accepts is as large in the tail of the ranking as at its head, since a replacement that fits a window the estimate cannot see is found by the subproblem alone; a set restricted to its best-weighted moves would lose those acceptances, and the full set is kept. For Swap and 2-opt the acceptance rate decays with the rank of the exchange weight~\eqref{eq:exch}, and the sets are the large ones: on a route of $k$ targets with wide windows they hold hundreds of position pairs, most of them refused by the subproblem after a solve each. Of the reorderings that pass the two conditions, therefore, only the $L_r$ of largest weight enter the set, a restricted candidate list in the sense of \citep{gunawan2015iterated}, who keep the five best insertions of their construction. Section~\ref{subsec:parameter-analysis} reports the acceptance rates by rank on which this asymmetry rests and sets $L_r$. The list is a trade rather than a free saving. On the large instances with wide windows it multiplies the number of shakes a run affords and raises the objective; on a small instance with wide windows the full set is affordable, and the list can discard a reordering the subproblem would have accepted, at a cost of well under one percent in our experiments. On instances whose windows fix the order the sets hold a handful of pairs and the list is not binding.
 
 \paragraph{Candidate selection.}
 Write $\mathcal{M} = \mathcal{M}_o(R)$ for the feasible set of the drawn operator. One move is drawn from $\mathcal{M}$ by roulette-wheel selection, the fitness-proportionate rule of genetic algorithms \citep{goldberg1989genetic} that \citep{gunawan2015iterated} use in their construction heuristic. Each move receives a nonnegative weight, and the move $m$ is drawn with probability
@@ -1204,7 +1204,9 @@ PR10 (288)      & \textbf{16\,780.49} & 16\,508.00 & 16\,757.07 / 17\,445.05 & 1
 
 \subsection{Parameter analysis}\label{subsec:parameter-analysis}
 
-The three parameters of Section~\ref{subsec:ils} are set once for every instance and every experiment that follows. The shake cap is $c = \lceil k/3 \rceil$, chosen by Table~\ref{tab:theta}; the shake is fired after $\mathit{stall} = 1000$ iterations without one; and the run ends after $\mathit{maxIter} = 13\,000$ iterations without an improvement of the best found solution. The look-ahead of Equation~\eqref{eq:shake-value} scores the next six pairs of the enumeration.
+The three parameters of Section~\ref{subsec:ils} are set once for every instance and every experiment that follows: the cap divisor $D = 3$, so that a shake removes at most $c = \lceil k/3 \rceil$ targets, the length $L_r = 20$ of the restricted candidate list of the reordering operators, and the shake limit $S = 100$. The look-ahead of Equation~\eqref{eq:shake-value} scores the next six removals of the enumeration. Table~\ref{tab:theta} reports the choice of $D$.
+
+The shake limit is read from the traces rather than tuned by repeated runs, since every run records the shake count at each improvement of the best found solution. On the fourteen runs of Table~\ref{tab:matheuristic-vs-exact} the longest gap between two successive improvements is $88$ shakes, on PR11~(48), and at most $46$ elsewhere, so $S = 100$ is the smallest round value that cuts no improvement; $S = 50$ would have lost $0.95\%$ on PR11 and saved a third of the shakes, and $S = 25$ up to $6.1\%$ on PR15~(240). The restricted list is a trade, as Section~\ref{subsec:proposal} states. Against the unrestricted reordering sets, $L_r = 20$ raises the objective by $7.78\%$ on PR15~(240), $4.62\%$ on PR10~(288) and $0.99\%$ on C104~(100), where it multiplies the shakes a run affords from $116$, $89$ and $36$ to $691$, $311$ and $381$; on PR11~(48), whose $33$ scheduled targets leave a reordering set that is affordable in full, it costs $0.70\%$, of which the unrestricted set recovers $0.56$ points at $313$ shakes in $43$\,s against $146$ shakes in $17$\,s. On the instances whose windows fix the order the list is not binding.
 
 \begin{table}[H]
 \centering\small
@@ -1248,34 +1250,35 @@ PR10 (288)      & 15\,958.48 & 89 & 115 & 354 & \textbf{16\,870.31} & 306 & 997 
 % TEXT REMOVED (September 2026): to be rewritten after the rerun campaign on the expanded benchmark.
 % Tables and figures below keep the old results. Plan: UAV-Routing/experiments/RERUN_PLAN.md
 
-% ILS columns refreshed on 2026-09-26 from paper_runs/results/final.csv,
-% the single-start runs at the base of Section 4 with maxIter = 13000.
+% ILS columns refreshed on 2026-09-27 from paper_runs/results/design_new.csv
+% (paper_runs/run_design.py new: --fast-sets --scaled-socp --reorder-rcl 20 --sweep enum
+% --max-idle-shakes 100, D = 3), single start from R4 on the M3 Pro.
 % The MISOCP columns and the Greedy (R4) column are unchanged.
 
 \begin{table}[H]
 \centering\footnotesize
 \setlength{\tabcolsep}{4pt}
-\caption{Greedy (R4) vs.\ single-start matheuristic vs.\ MISOCP at $\eta = 1$, the design of Section~\ref{sec:heuristic} with $c = \lceil k/3 \rceil$. The matheuristic is not capped by the clock and ends after $\mathit{maxIter} = 13\,000$ iterations without an improvement. $t_{\mathrm{best}}$ is the wall-clock time at which the ILS reaches its best solution and Run is the time the whole run takes, the MISOCP gap is from Table~\ref{tab:scalability} (bold marks gap $\le 0.5\%$), and $\Delta = (f^{\star} - f_{\mathrm{best}}^{\mathrm{ILS}})/f^{\star}$ is negative when the ILS beats the MISOCP incumbent.}\label{tab:matheuristic-vs-exact}
+\caption{Greedy (R4) vs.\ single-start matheuristic vs.\ MISOCP at $\eta = 1$, the design of Section~\ref{sec:heuristic}. The matheuristic is not capped by the clock and ends after $S = 100$ consecutive shakes without an improvement (Section~\ref{subsec:ils}), with $D = 3$ and $L_r = 20$. $t_{\mathrm{best}}$ is the wall-clock time at which the ILS reaches its best solution and Run is the time the whole run takes, the MISOCP gap is from Table~\ref{tab:scalability} (bold marks gap $\le 0.5\%$), and $\Delta = (f^{\star} - f_{\mathrm{best}}^{\mathrm{ILS}})/f^{\star}$ is negative when the ILS beats the MISOCP incumbent.}\label{tab:matheuristic-vs-exact}
 \begin{tabular}{l r rrr r r c r}
 \toprule
-& \multicolumn{1}{c}{Greedy (R4)} & \multicolumn{3}{c}{Single-start ILS ($\mathit{maxIter} = 13\,000$)} & \multicolumn{3}{c}{Exact MISOCP} & \\
+& \multicolumn{1}{c}{Greedy (R4)} & \multicolumn{3}{c}{Single-start ILS ($S = 100$)} & \multicolumn{3}{c}{Exact MISOCP} & \\
 \cmidrule(lr){2-2}\cmidrule(lr){3-5}\cmidrule(lr){6-8}
 Instance & $f(R_4)$ & $f_{\mathrm{best}}^{\mathrm{ILS}}$ & $t_{\mathrm{best}}$ (s) & Run (s) & $f^{\star}$ & time (s) & gap (\%) & $\Delta$ (\%) \\
 \midrule
-R101 (50)       & 4\,643.08 & 11\,902.02 & 1 & 12 & \textbf{11\,921.13} & \textbf{7.7} & \textbf{0.00} & $+0.16$ \\
-R101 (100)      & 8\,830.33 & 22\,884.32 & 1 & 21 & \textbf{22\,886.91} & \textbf{40.9} & \textbf{0.00} & $+0.01$ \\
-R1\_2\_1 (200)  & 5\,758.63 & 16\,586.21 & 26 & 77 & \textbf{16\,954.02} & \textbf{99.6} & \textbf{0.00} & $+2.17$ \\
-C101 (50)       & 2\,432.97 & 8\,591.92 & 39 & 240 & 8\,594.11 & 3\,600.0 & 2.61 & $+0.03$ \\
-C101 (100)      & 3\,776.53 & 11\,153.74 & 188 & 281 & 11\,328.36 & 3\,600.1 & 32.19 & $+1.54$ \\
-C1\_2\_1 (200)  & 2\,583.30 & 11\,083.27 & 39 & 187 & 10\,747.43 & 3\,600.4 & 87.46 & $\mathbf{-3.12}$ \\
-RC1\_2\_1 (200) & 4\,198.18 & 17\,669.96 & 64 & 194 & 16\,746.34 & 3\,600.2 & 209.93 & $\mathbf{-5.52}$ \\
-R102 (100)      & 13\,854.06 & 30\,443.78 & 62 & 135 & 27\,941.61 & 3\,600.1 & 108.51 & $\mathbf{-8.95}$ \\
-R104 (100)      & 15\,524.42 & 38\,060.94 & 169 & 240 & 25\,377.52 & 3\,600.1 & 271.42 & $\mathbf{-49.98}$ \\
-C104 (100)      & 9\,670.98 & 18\,233.89 & 379 & 587 & 16\,468.21 & 3\,600.2 & 32.01 & $\mathbf{-10.72}$ \\
-RC104 (100)     & 19\,444.49 & 35\,809.19 & 46 & 156 & 27\,439.42 & 3\,600.1 & 289.22 & $\mathbf{-30.50}$ \\
-PR11 (48)       & 1\,858.09 & 6\,519.29 & 133 & 227 & 5\,401.01 & 3\,600.0 & 78.53 & $\mathbf{-20.71}$ \\
-PR15 (240)      & 2\,471.30 & 18\,221.45 & 579 & 982 & 6\,005.65 & 3\,600.8 & 713.79 & $\mathbf{-203.41}$ \\
-PR10 (288)      & 3\,113.48 & 15\,958.48 & 115 & 354 & 5\,377.05 & 3\,600.9 & 984.58 & $\mathbf{-196.79}$ \\
+R101 (50)       & 4\,643.08 & 11\,902.02 & 0.1 & 1.9 & \textbf{11\,921.13} & \textbf{7.7} & \textbf{0.00} & $+0.16$ \\
+R101 (100)      & 8\,830.33 & 22\,884.44 & 0.2 & 4.2 & \textbf{22\,886.91} & \textbf{40.9} & \textbf{0.00} & $+0.01$ \\
+R1\_2\_1 (200)  & 5\,758.63 & 16\,586.35 & 9.2 & 17.8 & \textbf{16\,954.02} & \textbf{99.6} & \textbf{0.00} & $+2.17$ \\
+C101 (50)       & 2\,432.97 & 8\,591.92 & 1.5 & 33.4 & 8\,594.11 & 3\,600.0 & 2.61 & $+0.03$ \\
+C101 (100)      & 3\,776.53 & 11\,324.41 & 110.2 & 147.3 & 11\,328.36 & 3\,600.1 & 32.19 & $+0.03$ \\
+C1\_2\_1 (200)  & 2\,583.30 & 11\,146.32 & 78.0 & 138.7 & 10\,747.43 & 3\,600.4 & 87.46 & $\mathbf{-3.71}$ \\
+RC1\_2\_1 (200) & 4\,198.18 & 17\,973.77 & 70.1 & 90.3 & 16\,746.34 & 3\,600.2 & 209.93 & $\mathbf{-7.33}$ \\
+R102 (100)      & 13\,854.06 & 30\,443.78 & 42.9 & 59.2 & 27\,941.61 & 3\,600.1 & 108.51 & $\mathbf{-8.95}$ \\
+R104 (100)      & 15\,524.42 & 38\,105.79 & 39.9 & 57.7 & 25\,377.52 & 3\,600.1 & 271.42 & $\mathbf{-50.16}$ \\
+C104 (100)      & 9\,670.98 & 18\,414.60 & 217.4 & 304.3 & 16\,468.21 & 3\,600.2 & 32.01 & $\mathbf{-11.82}$ \\
+RC104 (100)     & 19\,444.49 & 36\,231.33 & 17.2 & 27.8 & 27\,439.42 & 3\,600.1 & 289.22 & $\mathbf{-32.04}$ \\
+PR11 (48)       & 1\,858.09 & 6\,473.95 & 6.9 & 17.3 & 5\,401.01 & 3\,600.0 & 78.53 & $\mathbf{-19.87}$ \\
+PR15 (240)      & 2\,471.30 & 19\,639.68 & 609.4 & 704.8 & 6\,005.65 & 3\,600.8 & 713.79 & $\mathbf{-227.02}$ \\
+PR10 (288)      & 3\,113.48 & 16\,696.23 & 128.4 & 196.6 & 5\,377.05 & 3\,600.9 & 984.58 & $\mathbf{-210.51}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
