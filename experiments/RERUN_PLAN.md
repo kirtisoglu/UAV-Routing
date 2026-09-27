@@ -1,3 +1,168 @@
+# Note for the local agent (written 2026-09-27 by the cloud session; read this first)
+
+Context. The cloud session rewrote Section 4 of the paper for a revised matheuristic
+design, implemented the design as opt-in flags of `experiments/run_ils_time_matched.py`,
+and merged everything to `main` (PR #1, commit 9b0a4cb; this note and small driver fixes
+came after). The cloud machine had only the pip Gurobi license (routes of at most 32
+targets), so the design was validated on the mechanics and on four short-route instances
+only. **Every number that Section 5 needs has to be produced on this machine.** The
+evidence behind the design is in `experiments/DESIGN.md` (section "Change round of
+27 September 2026"); the paper files are `paper/Section4-matheuristic.tex` (the section),
+`paper/ArXiv-version.tex` (full manuscript, compiles) and `paper/ref.bib` (adds
+`savelsbergh1992vehicle`). Section 5 has not been touched and is now inconsistent with
+Section 4 in the places listed under "Then edit Section 5" below.
+
+The design, in one line: same operators, roulette, acceptance and reference-route shake
+as before, plus `--fast-sets` (O(1) move tests, same sets and weights), `--scaled-socp`
+(subproblem in nondimensional units, Presolve 0, homogeneous barrier), `--reorder-rcl 20`
+(only the 20 best Swap/2-opt moves enter the set), `--sweep enum` (explicit interleaved
+enumeration of a reference's removals) and `--max-idle-shakes 100` (stop after 100
+consecutive shakes without an improvement); no stall, no maxIter. Parameters of the
+paper: D = 3 (cap c = ceil(k/D)), L_r = 20, S = 100, look-ahead m = 6 fixed.
+
+## Rules
+
+* Never set `ILS_LICENSE_GUARD` here (it was a cloud-only workaround).
+* Protocol of `paper_runs/README.md` stays: single start from R4, seed 42, eta = 1,
+  slope seed 1, one ILS run at a time and never concurrently with a MISOCP solve,
+  so that t_best and Run are comparable with the MISOCP column.
+* `paper_runs/run_design.py` is the only driver for matheuristic numbers. It appends
+  each finished run to its CSV and resumes, so an interrupted campaign is simply
+  restarted. Its knobs: `DESIGN_INSTANCES`, `DESIGN_RCL`, `DESIGN_IDLE`, `DESIGN_CAPDIV`,
+  `DESIGN_OUT` (suffix so a grid does not overwrite the main campaign), `DESIGN_EXTRA`
+  (flags appended to every run), `DESIGN_BUDGET`, `DESIGN_WORKERS` (keep 1).
+* Do not change the design while producing the tables. If something looks wrong,
+  record it in `experiments/DESIGN.md` and stop.
+
+## Step 0: sanity checks (15 minutes)
+
+1. `python3 experiments/validate_fast_sets.py` must print "sets identical on 120/120"
+   for every instance (it needs no solver; the long-route instances are the point).
+2. Regression of the O(1) construction inside the loop: with the base environment
+   `ILS_INSERT_RATIO=1 ILS_SHAKE_KNAP=6 ILS_NO_RETURN=2 ILS_REORDER_W=exch
+   ILS_SHAKE_STALL=1000` run
+   `python3 experiments/run_ils_time_matched.py --instance "R101 (100)" --max-iter 13000
+   --budget 600 --init R4 --shake-return --shake-backtrack --fast-sets --tag reg`
+   and compare with `paper_runs/results/newdesign/final_r101_100.log`: it must report
+   best 22 884.32 found at iteration 351 after 13 351 iterations (identical trajectory).
+3. `python3 experiments/test_scaled_socp2.py`: the "P0+BH" row must agree with the
+   physical model on 40/40 routes for R102, RC104 and R101. Then add PR15 (240) and
+   C104 (100) to the dictionary at the bottom of the script and run it again: these are
+   the long routes the cloud could not test. Keep the printed iteration counts and
+   milliseconds for Section 5.8.
+4. Smoke test of the full configuration: `python3 paper_runs/run_design.py new` with
+   `DESIGN_INSTANCES="R101 (50)"`; expect 11 902.02 or the optimum 11 921.13 within
+   seconds, and `stop = idle_shakes` in `paper_runs/results/design_new.csv`. Delete that
+   CSV afterwards so the main campaign starts clean, or keep it (the driver resumes).
+
+## Step 1: the main campaign (feeds Table 5.9, Figure 5, the S calibration)
+
+    python3 paper_runs/run_design.py new
+
+14 runs, one at a time. Output `paper_runs/results/design_new.csv` (Objective, Tour,
+t_best, Wall, stop, iterations, shakes, accepted, socp_calls, socp_ms, Route) and the
+best-seen traces `paper_runs/results/details/design_traces/<stem>_new.csv` with a
+`shakes` column. Expected order of magnitude: the old design took 62 minutes for all
+fourteen on this machine; the new one should be shorter on the short-route instances
+and longer only where 100 idle shakes take long (PR15, PR10, C104). If a run hits the
+14 400 s safeguard, note it in the table (Section 4.4 promises to report how often it
+binds).
+
+Then, without any run:
+
+    python3 paper_runs/analyze_traces.py stop paper_runs/results/details/design_traces
+
+prints, per instance, the objective and stopping shake for S in {25, 50, 100, 150,
+200, 300}: this is the S calibration of Section 5.8 (the runs used S = 100, so values
+above 100 are not observable and read as the S = 100 result).
+
+## Step 2: same-machine baseline (feeds the design comparison in Section 5.8)
+
+    python3 paper_runs/run_design.py old
+
+Reruns the 2026-09-26 base (physical-unit SOCP, full reorder sets, arithmetic sweep,
+maxIter = 13 000) on the same machine and day, so the comparison with `design_new.csv`
+is clean. About one hour. Report per instance: Objective, t_best, Run, shakes, socp_ms
+for both designs; the cloud numbers in DESIGN.md are for reference only.
+
+## Step 3: parameter grids (Section 5.8), on the five instances where they can matter
+
+    G="R104 (100);RC104 (100);C104 (100);PR15 (240);PR10 (288)"
+    DESIGN_INSTANCES="$G" DESIGN_RCL=10 DESIGN_OUT=_L10 python3 paper_runs/run_design.py new
+    DESIGN_INSTANCES="$G" DESIGN_RCL=40 DESIGN_OUT=_L40 python3 paper_runs/run_design.py new
+    DESIGN_INSTANCES="$G" DESIGN_RCL=0  DESIGN_OUT=_Lall python3 paper_runs/run_design.py new
+    DESIGN_INSTANCES="$G" DESIGN_CAPDIV=6 DESIGN_OUT=_D6 python3 paper_runs/run_design.py new
+
+L_r = 20 and D = 3 are the main campaign. The `_Lall` grid (no restriction) is the
+ablation that justifies L_r; expect it to be slower with a similar objective on the
+first four and much slower on C104. The co-monotone instances are not needed here:
+their reorder sets hold a handful of moves and the list is not binding.
+
+## Step 4: acceptance rate by rank (the evidence for L_r, Section 5.8)
+
+    python3 paper_runs/analyze_traces.py ranks animation/traces
+
+uses the move traces of the 2026-09-26 base already on disk (the statistic is a
+property of the operators and weights, which the new design keeps). Report one row per
+operator class for two or three instances (e.g. R104, PR15, C104): accepted/drawn per
+rank bucket. To have the same evidence from the new design, run one instance with
+`MOVE_TRACE_TOP=20` and the flags `--route-trace <f>_route.csv --move-trace <f>_moves.csv`
+added to the new configuration, then point the script at that directory.
+
+## Step 5: value of speed and of loitering (Tables 10 and 5.10)
+
+    DESIGN_EXTRA="--fixed-speed" DESIGN_OUT=_fixed   python3 paper_runs/run_design.py new
+    DESIGN_EXTRA="--no-loiter"   DESIGN_OUT=_noloiter python3 paper_runs/run_design.py new
+
+Both use the new design. The scaled SOCP takes the speed envelope from the drone at
+solve time, so `--fixed-speed` pins v_min = v_max = v_mr correctly (fixed 2026-09-27;
+check one instance: the Tour column must drop against `design_new.csv`).
+
+## Step 6: initial-tour table (Table 8), only if it is to be refreshed
+
+The driver has no start option; run `experiments/run_ils_time_matched.py` directly
+with the new flags, `--init R1|R2|R3 --init-seed s`, the env of Step 0.2 with
+`ILS_SHAKE_STALL=0`, and collect the "best obj ... found at" lines as
+`paper_runs/run_initial_tours.py` did.
+
+## Then edit Section 5 (text only; Section 4 is final)
+
+1. 5.8 parameter analysis: remove the sentences on `stall = 1000` and `maxIter = 13 000`;
+   the parameters are D, L_r and S. Add: the S calibration (Step 1), the L_r grid and the
+   no-restriction ablation (Step 3), the acceptance-by-rank table (Step 4), the SOCP
+   iterations and time physical vs scaled (Step 0.3), and the same-machine comparison
+   old vs new (Step 2: objective, t_best, run time, shakes per instance). Section 4
+   refers to 5.8 for all of these by `\ref{subsec:parameter-analysis}`.
+2. Table 9 (cap divisor) was produced with the old design; either replace it by the
+   D grid of Step 3 or state in its caption which design it belongs to.
+3. Table 5.9 (matheuristic vs exact): ILS columns from `design_new.csv`; caption: the
+   run ends after S = 100 shakes without an improvement, t_best and Run as before.
+4. Figure 5: regenerate from `design_traces/*_new.csv` (`paper_runs/make_convergence_figure.py`
+   reads the old trace location; point it at the new files).
+5. Table 10 and the loitering table 5.10 from Step 5; the pending caption text of 5.10 is
+   already drafted in the tex as a comment.
+6. Section 5.1 (datasets) still says "Section 4.3 quantifies how often they can be
+   applied", which is unchanged and fine.
+7. Recompile `paper/ArXiv-version.tex` (pdflatex, bibtex, pdflatex x2). The three figure
+   files under `fig/` are not in the repository; copy them from the paper folder.
+
+## Known caveats to keep in mind (not to fix now)
+
+* The energy tie-break coefficient 1e-5 is below the barrier tolerance on objectives
+  of order 2e4, so the returned energy among information-equivalent schedules is
+  solver noise on degenerate routes; the capacity tie-break of the reorder acceptance
+  reads that noise. Same in the old design.
+* In scaled mode the energy post-check accepts an excess of up to 1e-5 of the budget
+  (measured at most 1.7e-6, cone slack on very short legs).
+* Single runs are noisy on the wide-window instances (4 to 20 percent spread across
+  configurations in the September logs). If a design comparison is close, that is
+  within noise; do not over-read it.
+* The enumeration order matters: a level-by-level order lost 3.4 percent on R1_2_1 in
+  the cloud tests before the levels were interleaved. The committed order is the
+  interleaved one.
+
+---
+
 # Rerun campaign plan (September 2026)
 
 Everything after Section 5.3 of the paper is rewritten from the results of

@@ -1,0 +1,61 @@
+% Subsections 5.1 and 5.2 of ArXiv-version.tex, edited 2026-09-27 (submission pass).
+\subsection{Datasets}\label{subsec:solomon}
+
+Our benchmark draws on three standard sources of the OPTW and TOPTW literature. The first is Solomon's VRPTW benchmark~\cite{solomon1987algorithms} in its orienteering adaptation~\cite{righini2009decremental}, whose customer demands serve as visit scores and become our baseline rewards $I_{e_i}$; it provides the \emph{R} family (uniformly random positions), the \emph{C} family (clustered positions), and the mixed \emph{RC} family, each in variants that share the geometry but differ sharply in time-window structure (R101 versus R104, for example). The second is the set of 200-target extensions of the same families by Gehring and Homberger~\cite{gehring1999parallel}, in the orienteering adaptation of \citep{montemanni2009ant}. The third is the Cordeau instance collection~\cite{cordeau1997tabu} in its orienteering adaptation, the sets pr01--pr10 of \citep{montemanni2009ant} and pr11--pr20 of \citep{vansteenwegen2009iterated}, whose wide and heavily overlapping windows come with sizes up to 288 targets. All three sources also specify a service duration per target, which our model does not include, so visits are treated as instantaneous and that column is dropped.
+
+We select fourteen instances by a stratified design rather than at random. The first factor is time-window structure, which decides how far the windows themselves dictate the visiting order: when the window of one target closes before another opens, every feasible route visits them in the same order, whatever the geometry. The second factor is instance size, from 48 to 288 targets, and the spatial families act as a third stratum. Table~\ref{tab:datasets} reports the instances. They fall into three regimes. In the \emph{co-monotone} block the windows are narrow and of near-equal width, so later openings come with later closings and the visiting order is almost fixed. In the \emph{inverted} block, the 104-type variants R104, C104 and RC104, the windows are wide and unequal, so a later opening often comes with an earlier closing and the order becomes a genuine combinatorial decision; R102 sits at the transition. In the \emph{overlapping} block (Cordeau pr) the windows are wide and largely unordered at sizes up to 288 targets. The design makes the operator analysis of Section~\ref{subsec:operators} testable, since the reordering operators should matter exactly where the windows leave the order open, and it spans the size axis within each window regime.
+
+\begin{table}[H]
+\centering
+\caption{Benchmark instances in raw benchmark units, grouped by window regime: from top to bottom the co-monotone, the inverted and the overlapping block. $n$ counts locations including the depot, $T_{\max}$ is the mission horizon and $\bar{\Delta}$ the mean time-window width over the targets.}
+\label{tab:datasets}
+\begin{tabular}{lrrrr}
+\toprule
+Instance & $n$ & $T_{\max}$ & $\bar{\Delta}$ & $\bar{\Delta}/T_{\max}$ \\
+\midrule
+R101 (50)       &  51 &  230 &  10.0 & 0.04 \\
+R101 (100)      & 101 &  230 &  10.0 & 0.04 \\
+R1\_2\_1 (200)  & 201 &  634 &  10.0 & 0.02 \\
+C101 (50)       &  51 & 1236 &  60.1 & 0.05 \\
+C101 (100)      & 101 & 1236 &  60.8 & 0.05 \\
+C1\_2\_1 (200)  & 201 & 1351 &  60.4 & 0.04 \\
+RC1\_2\_1 (200) & 201 &  634 &  30.0 & 0.05 \\
+\midrule
+R102 (100)      & 101 &  230 &  57.4 & 0.25 \\
+R104 (100)      & 101 &  230 & 148.3 & 0.64 \\
+C104 (100)      & 101 & 1236 & 852.9 & 0.69 \\
+RC104 (100)     & 101 &  240 & 154.6 & 0.64 \\
+\midrule
+PR11 (48)       &  49 & 1000 & 272.3 & 0.27 \\
+PR15 (240)      & 241 & 1000 & 269.3 & 0.27 \\
+PR10 (288)      & 289 & 1000 & 135.1 & 0.14 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The regimes load the optimizer differently. Within the co-monotone block, R-type instances expose the time-window tightness directly. A width of $\bar\Delta = 10$~Solomon units leaves little arrival-time slack, but uniform-random positions and a short mission horizon $T_{\max} = 230$ keep the feasible tour set small and the branch-and-bound tree narrow. C-type instances flip both knobs. Windows are six times wider ($\bar\Delta \approx 60$), but target clustering means many feasible permutations have nearly identical spatial cost, and the mission horizon is five times longer ($T_{\max} \approx 1{,}236$\,--\,$1{,}351$), so the combinatorial space the MISOCP has to explore is far larger. Section~\ref{subsec:scalability} shows that this asymmetry, rather than instance size alone, determines whether the exact solver closes. The inverted and overlapping blocks change the problem in a different direction. The windows no longer dictate the visiting order, tours grow long because wide windows admit many targets, and the reordering operators of Section~\ref{subsec:operators} become genuine search moves rather than near-inert ones. The Cordeau block finally probes scale, with up to $288$ candidate targets under windows that barely constrain the order.
+
+The regimes also decide how much work the reordering operators of Section~\ref{subsec:operators} can do. A Swap or a 2-opt move is feasible only if every pair of targets it reorders satisfies the leg condition~\eqref{eq:leg-cond} in the reversed direction, so on the co-monotone instances, where openings and closings rise together, the two operators are rejected most of the time. Measured over $300$ random proposals on tours grown on the co-monotone clustered instances, whose windows are six times wider than those of the R-class, Swap and 2-opt are SOCP-feasible in at most $1.7\%$ of the proposals. This near-inertness is a property of the window structure rather than of the operators, and the inverted and overlapping blocks, whose windows leave the order open, are where the two operators can act.
+
+\subsection{Information decay and growth model}\label{subsec:info-model}
+
+Section~\ref{subsec:problem} defines $I_{e_i}$ and $I_{\ell_i}$ as the information available at the opening and at the closing of the time window~$W_i$. In the experiments we take the visit score that each benchmark instance assigns to a target as its initial information value~$I_{e_i}$, available at the earliest arrival time~$e_i$. The benchmarks contain nothing that can be related to~$I_{\ell_i}$, so the reward trajectory is set by the slope~$\gamma_i$ of Section~\ref{subsec:problem}, the rate at which the information changes within the window, and two conditions at the window close bound the admissible slopes. The reward must stay nonnegative within the window, and it may at most double, so that
+\begin{align}
+    0 \leq r_i(\ell_i) \leq 2\,I_{e_i}. \label{eq:slope-bounds}
+\end{align}
+With $\Delta_i = \ell_i - e_i$ the width of the window, the bounds~\eqref{eq:slope-bounds} are equivalent to $|\gamma_i| \le I_{e_i}/\Delta_i$. Drawing $\gamma_i$ uniformly from that interval would place much of the probability mass near $\gamma_i = 0$, where the reward profile collapses to the static case, so we sample the sign and the magnitude independently as
+\begin{equation}\label{eq:gamma-sampling}
+\mathrm{sign}(\gamma_i) \;\sim\; \mathcal{U}\{-1,\, +1\},
+\qquad
+|\gamma_i| \;\sim\; \mathcal{U}\!\left( \tfrac{1}{2}\,\frac{I_{e_i}}{\Delta_i},\; \frac{I_{e_i}}{\Delta_i} \right),
+\end{equation}
+for every target $i \in N \setminus \{0\}$. The reward of every target at the window close then differs from its baseline $I_{e_i}$ by at least half of $I_{e_i}$, in either direction, so the time dependence is active across the whole instance.
+
+Four slope regimes isolate the effect of the information dynamics on the solution structure.
+\begin{enumerate}
+    \item \textbf{Mixed decay and growth.} Slopes drawn by~\eqref{eq:gamma-sampling}, so that information grows at about half of the targets and decays at the others. This is the regime of every experiment unless stated otherwise.
+    \item \textbf{Growth only.} Slopes drawn from $\mathcal{U}(0,\; I_{e_i}/\Delta_i)$, so that information can only increase over time.
+    \item \textbf{Decay only.} Slopes drawn from $\mathcal{U}(-I_{e_i}/\Delta_i,\; 0)$, so that information can only decrease over time.
+    \item \textbf{Static information.} All slopes set to $\gamma_i = 0$, which reduces the objective to the time-independent reward of the classical orienteering problem with time windows.
+\end{enumerate}
+
