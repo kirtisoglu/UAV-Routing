@@ -1,0 +1,15 @@
+  R101 (50)       obj    11902.02  wall      2 s  shakes   100  socp_us      529128
+  R101 (100)      obj    22884.44  wall      4 s  shakes   100  socp_us     2646629
+  R1_2_1 (200)    obj    16586.35  wall     18 s  shakes   167  socp_us    14247773
+  C101 (50)       obj     8591.92  wall     35 s  shakes   101  socp_us    28901409
+  C101 (100)      obj    11324.41  wall    158 s  shakes   318  socp_us   132494312
+  C1_2_1 (200)    obj    11146.32  wall    148 s  shakes   235  socp_us   123715471
+  RC1_2_1 (200)   obj    17973.77  wall     95 s  shakes   293  socp_us    81176032
+  R102 (100)      obj    30443.78  wall     63 s  shakes   317  socp_us    52262123
+  R104 (100)      obj    38105.79  wall     61 s  shakes   262  socp_us    47153512
+  C104 (100)      obj    18414.60  wall    324 s  shakes   381  socp_us   238109880
+  RC104 (100)     obj    36231.33  wall     29 s  shakes   203  socp_us    22751017
+  PR11 (48)       obj     6473.95  wall     18 s  shakes   146  socp_us    13829525
+  PR15 (240)      obj    19639.68  wall    736 s  shakes   691  socp_us   572045849
+  PR10 (288)      obj    16696.23  wall    206 s  shakes   311  socp_us   165887874
+ANIM_COMPLETE

@@ -18,7 +18,8 @@ import matplotlib.pyplot as plt
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RES = os.path.join(HERE, "results")
-TDIR = os.path.join(RES, "details", "capdiv_traces")
+# the design of run_design.py new writes its best-seen traces here
+TDIR = os.path.join(RES, "details", "design_traces")
 OUT = os.path.join(RES, "figures", "meta_convergence_timematched.png")
 FIG_DIRS = ["/Users/kirtisoglu/GitHub/Brain/40-Papers/uav-routing/fig"]
 ORDER = ["R101 (50)", "R101 (100)", "R1_2_1 (200)", "C101 (50)", "C101 (100)",
@@ -28,12 +29,12 @@ rd = lambda p: list(csv.DictReader(open(p)))
 stem_of = lambda n: re.sub(r"[^a-z0-9]+", "_", n.lower()).strip("_")
 
 mis = {r["Instance"]: (float(r["Objective"]), float(r["Gap (%)"])) for r in rd(os.path.join(RES, "misocp_s1.csv"))}
-ends = {r["Instance"]: float(r["Wall (s)"]) for r in rd(os.path.join(RES, "capdiv.csv"))
-        if int(r["cap_div"]) == 3}
+ends = {r["Instance"]: float(r["Wall (s)"])
+        for r in rd(os.path.join(RES, "design_new.csv"))}   # one row per instance
 
 fig, axes = plt.subplots(3, 5, figsize=(22, 11), squeeze=False)
 for ax, name in zip(axes.flat, ORDER):
-    p = os.path.join(TDIR, f"{stem_of(name)}_d3.csv")
+    p = os.path.join(TDIR, f"{stem_of(name)}_new.csv")
     if os.path.exists(p):
         rows = rd(p)
         w = [float(r["wall_s"]) for r in rows]

@@ -59,13 +59,16 @@ COMBOS = {
     "BH":             {"BarHomogeneous": 1},
     "P0+BH+NF1":      {"Presolve": 0, "BarHomogeneous": 1, "NumericFocus": 1},
 }
-for stem, name in {"r102_100": "R102 (100)", "rc104_100": "RC104 (100)", "r101_100": "R101 (100)"}.items():
+for stem, name in {"r102_100": "R102 (100)", "rc104_100": "RC104 (100)", "r101_100": "R101 (100)",
+                   "pr15_240": "PR15 (240)", "c104_100": "C104 (100)"}.items():
     inst, graph, drone = make_instance(PATHS[name]); env = gp.Env(params={"OutputFlag": 0})
     rows = list(csv.DictReader(open(f'animation/traces/{stem}_route.csv')))
     routes = []; seen = set()
     for r in rows:
         rt = tuple(int(x) for x in r['route'].split('-'))
-        if rt not in seen and len(rt) - 1 <= 32: seen.add(rt); routes.append(list(rt))
+        # the 32-target cap was the cloud's pip-license limit; this machine has the
+        # full license, and the long routes are the ones worth testing
+        if rt not in seen: seen.add(rt); routes.append(list(rt))
     random.Random(2).shuffle(routes); routes = routes[:40]
     phys = []; taut = []
     for route in routes:

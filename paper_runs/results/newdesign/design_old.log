@@ -1,0 +1,13 @@
+[plan] old: 14 runs, 1 at a time; L_R=20 S=100 D=3 budget 14400s extra=[]
+[saved] R101 (50): obj=11902.02 tour=10 t_best=0.6 wall=17.5 shakes=284 stop=max_iter
+[saved] R101 (100): obj=22884.32 tour=16 t_best=1.1 wall=24.5 shakes=102 stop=max_iter
+[saved] R1_2_1 (200): obj=16586.21 tour=30 t_best=26.3 wall=80.1 shakes=119 stop=max_iter
+[saved] C101 (50): obj=8591.92 tour=42 t_best=38.9 wall=239.6 shakes=76 stop=max_iter
+[saved] C101 (100): obj=11153.74 tour=49 t_best=184.7 wall=278.3 shakes=88 stop=max_iter
+[saved] C1_2_1 (200): obj=11083.27 tour=52 t_best=39.2 wall=188.7 shakes=43 stop=max_iter
+[saved] RC1_2_1 (200): obj=17669.96 tour=40 t_best=64.5 wall=194.5 shakes=103 stop=max_iter
+[saved] R102 (100): obj=30443.78 tour=27 t_best=61.2 wall=135.5 shakes=92 stop=max_iter
+[saved] R104 (100): obj=38060.94 tour=39 t_best=168.2 wall=239.5 shakes=193 stop=max_iter
+[saved] C104 (100): obj=18233.89 tour=91 t_best=376.1 wall=584.2 shakes=36 stop=max_iter
+[saved] RC104 (100): obj=35809.19 tour=30 t_best=45.7 wall=156.1 shakes=143 stop=max_iter
+[saved] PR11 (48): obj=6519.29 tour=34 t_best=133.1 wall=228.0 shakes=295 stop=max_iter
