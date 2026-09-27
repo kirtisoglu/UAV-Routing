@@ -446,3 +446,38 @@ and counted as infeasible, so R1_2_1 is not a clean comparison; single runs, see
 Time per SOCP solve in the loop: 20-40 ms physical (NumericFocus 3) vs 3.6-7 ms scaled.
 The long-route instances (C104, PR15, PR10), where the O(1) construction matters most,
 exceed the license here and are to be run with `paper_runs/run_design.py` on the licensed machine.
+
+## Long-route check of the scaled SOCP (local, 2026-09-27)
+
+Step 0.3 of `experiments/RERUN_PLAN.md` run on this machine with the full Gurobi
+licence. The script filtered routes to at most 32 targets, which was the cloud's
+pip-licence limit; with that filter PR15 and C104 contributed only short routes
+(C104 contributed none at all, so it printed "0 routes"). The filter is removed.
+
+On genuinely long routes the picture is not the clean 40/40 of the short ones:
+
+| instance | routes | phys feasible | combo | agree w/ physical | false-infeas vs taut | ms/solve |
+|---|---|---|---|---|---|---|
+| PR15 (240) | 40 | 22 | default | 40/40 | 0 | 13.3 |
+| | | | P0 | 40/40 | 0 | 12.8 |
+| | | | **P0+BH** | **39/40** | **1** | **7.1** |
+| | | | P0+BH+NF3 | 40/40 | 0 | 20.1 |
+| C104 (100) | 40 | 16 | default | 39/40 | 0 | 23.7 |
+| | | | P0 | 39/40 | 0 | 23.7 |
+| | | | **P0+BH** | **39/40** | **0** | **5.5** |
+| | | | P0+BH+NF3 | 38/40 | 1 | 16.7 |
+
+Reading. On C104 the taut string calls 17 routes feasible and the physical model
+only 16, so the single "disagreement" of P0+BH is the route where the *physical*
+model is the outlier; P0+BH matches the taut string on all 40 there. On PR15 the
+physical model and the taut string agree exactly, and P0+BH is genuinely wrong on
+one route in forty, a false infeasibility -- the same class as the
+`socp_numeric_infeasible` counter of the old design (93 occurrences on C101 (100)).
+
+The speed argument for P0+BH is strong and is what the long routes show best:
+5.5 ms against 23.7 ms on C104 (4.3x) and 7.1 ms against 12.8 ms on PR15 (1.8x).
+NumericFocus 3 removes the PR15 miss but costs 3x on C104 and is worse there.
+
+Not changed: the design keeps P0+BH, per the rule of the rerun plan. Recorded so
+that Section 5.8 can state the false-infeasibility rate rather than imply 40/40,
+and so the caveat list carries a measured number for long routes.

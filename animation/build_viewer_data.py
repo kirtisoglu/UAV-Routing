@@ -24,19 +24,6 @@ MAX_CANDS = int(os.environ.get("VIEWER_CANDS", 12))
 
 
 
-def _clean_wall(name):
-    """The run time the paper reports for this instance, or None."""
-    f = "paper_runs/results/final.csv"
-    if not os.path.exists(f):
-        return None
-    for r in csv.DictReader(open(f)):
-        if r["Instance"] == name:
-            try:
-                return float(r["Wall (s)"])
-            except (KeyError, ValueError):
-                return None
-    return None
-
 def main():
     rt, mt, name, out = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
     log = sys.argv[5] if len(sys.argv) > 5 else None      # run log, for the counters
@@ -85,19 +72,6 @@ def main():
         return T / T_max, E / E_max, max(T / T_max, E / E_max)
 
     rows = list(csv.DictReader(open(rt)))
-    # A trace recorded while other runs held the machine carries wall times far
-    # above what the same run takes alone -- C1_2_1 (200) ran 14,637 s against
-    # the 187 s of the clean run. The search is deterministic, so the iterations
-    # and the objectives are unaffected and only the clock has to be put back on
-    # scale: stretch it onto the clean run time the paper reports.
-    ref = _clean_wall(name)
-    if ref and rows:
-        seen = max(float(r["wall_s"]) for r in rows)
-        if seen > 0 and abs(seen - ref) / ref > 0.05:
-            k = ref / seen
-            for r in rows:
-                r["wall_s"] = str(float(r["wall_s"]) * k)
-            print(f"  clock rescaled x{k:.4f}: {seen:,.0f} s -> {ref:,.0f} s", flush=True)
     totals = {"accepted": 0, "shake": 0, "refused": 0, "infeasible": 0}
     for r in rows:
         if r["verdict"] in totals:

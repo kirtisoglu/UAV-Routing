@@ -1,0 +1,299 @@
+\providecommand{\bysame}{\leavevmode\hbox to3em{\hrulefill}\thinspace}
+\providecommand{\MR}{\relax\ifhmode\unskip\space\fi MR }
+% \MRhref is called by the amsart/book/proc definition of \MR.
+\providecommand{\MRhref}[2]{%
+  \href{http://www.ams.org/mathscinet-getitem?mr=#1}{#2}
+}
+\providecommand{\href}[2]{#2}
+\begin{thebibliography}{10}
+
+\bibitem{afsar2013team}
+H~Murat Afsar and Nacima Labadie, \emph{Team orienteering problem with
+  decreasing profits}, Electronic Notes in Discrete Mathematics \textbf{41}
+  (2013), 285--293.
+
+\bibitem{anderson_aerodynamics}
+John~D. Anderson, \emph{Fundamentals of aerodynamics}, 6th ed., McGraw-Hill
+  Education, New York, NY, 2016, Standard reference for Aspect Ratio (AR) and
+  wing geometry relations.
+
+\bibitem{baykar_tb2}
+{Baykar Technology}, \emph{Bayraktar tb2 tactical uav system: Technical
+  specifications}, Tech. report, Baykar Makina, 2025, Accessed: 2025-12-19.
+
+\bibitem{boyd2004convex}
+Stephen Boyd and Lieven Vandenberghe, \emph{Convex optimization}, Cambridge
+  University Press, Cambridge, UK, 2004.
+
+\bibitem{cheng2020drone}
+Chun Cheng, Yossiri Adulyasak, and Louis-Martin Rousseau, \emph{Drone routing
+  with energy function: Formulation and exact algorithm}, Transportation
+  Research Part B: Methodological \textbf{139} (2020), 364--387.
+
+\bibitem{cordeau1997tabu}
+Jean-Fran{\c{c}}ois Cordeau, Michel Gendreau, and Gilbert Laporte, \emph{A tabu
+  search heuristic for periodic and multi-depot vehicle routing problems},
+  Networks \textbf{30} (1997), no.~2, 105--119.
+
+\bibitem{dasdemir2022uav}
+Erdi Dasdemir, Rajan Batta, Murat K{\"o}ksalan, and Diclehan~Tezcaner
+  {\"O}zt{\"u}rk, \emph{Uav routing for reconnaissance mission: A
+  multi-objective orienteering problem with time-dependent prizes and multiple
+  connections}, Computers \& Operations Research \textbf{145} (2022), 105882.
+
+\bibitem{desrochers1991improvements}
+Martin Desrochers and Gilbert Laporte, \emph{Improvements and extensions to the
+  miller-tucker-zemlin subtour elimination constraints}, Operations Research
+  Letters \textbf{10} (1991), no.~1, 27--36.
+
+\bibitem{di2016modelling}
+Luigi Di~Puglia~Pugliese, Francesca Guerriero, Dimitrios Zorbas, and Tahiry
+  Razafindralambo, \emph{Modelling the mobile target covering problem using
+  flying drones}, Optimization Letters \textbf{10} (2016), no.~5, 1021--1052.
+
+\bibitem{dorling2016vehicle}
+Kevin Dorling, Jordan Heinrichs, Geoffrey~G Messier, and Sebastian Magierowski,
+  \emph{Vehicle routing problems for drone delivery}, IEEE Transactions on
+  Systems, Man, and Cybernetics: Systems \textbf{47} (2016), no.~1, 70--85.
+
+\bibitem{dukkanci2021minimizing}
+Okan Dukkanci, Bahar~Y Kara, and Tolga Bekta{\c{s}}, \emph{Minimizing energy
+  and cost in range-limited drone deliveries with speed optimization},
+  Transportation Research Part C: Emerging Technologies \textbf{125} (2021),
+  102985.
+
+\bibitem{ekici2013multiple}
+Ali Ekici and Anand Retharekar, \emph{Multiple agents maximum collection
+  problem with time dependent rewards}, Computers \& Industrial Engineering
+  \textbf{64} (2013), no.~4, 1009--1018.
+
+\bibitem{erkut1996maximum}
+Erhan Erkut and J~Zhang, \emph{The maximum collection problem with
+  time-dependent rewards}, Naval Research Logistics (NRL) \textbf{43} (1996),
+  no.~5, 749--763.
+
+\bibitem{evers2014online}
+Lanah Evers, Ana~Isabel Barros, Herman Monsuur, and Albert Wagelmans,
+  \emph{Online stochastic uav mission planning with time windows and
+  time-sensitive targets}, European Journal of Operational Research
+  \textbf{238} (2014), no.~1, 348--362.
+
+\bibitem{evers2014robust}
+Lanah Evers, Twan Dollevoet, Ana~Isabel Barros, and Herman Monsuur,
+  \emph{Robust uav mission planning}, Annals of operations research
+  \textbf{222} (2014), no.~1, 293--315.
+
+\bibitem{gavalas2014survey}
+Damianos Gavalas, Vlasios Kasapakis, Grammati Pantziou, and Nikolaos Vathis,
+  \emph{A survey on algorithmic approaches for solving tourist trip design
+  problems}, European Journal of Operational Research \textbf{236} (2014),
+  no.~1, 1--14.
+
+\bibitem{gedik2017constraint}
+Ridvan Gedik, Emre Kirac, Ashlea~Bennet Milburn, and Chase Rainwater, \emph{A
+  constraint programming approach for the team orienteering problem with time
+  windows}, Computers \& Industrial Engineering \textbf{107} (2017), 178--195.
+
+\bibitem{gehring1999parallel}
+Hermann Gehring and J{\"o}rg Homberger, \emph{A parallel hybrid evolutionary
+  metaheuristic for the vehicle routing problem with time windows}, Proceedings
+  of EUROGEN99, vol.~2, 1999, pp.~57--64.
+
+\bibitem{goldberg1989genetic}
+David~E. Goldberg, \emph{Genetic algorithms in search, optimization, and
+  machine learning}, Addison-Wesley, Reading, MA, 1989.
+
+\bibitem{guerriero2014multi}
+Francesca Guerriero, Rosario Surace, Valeria Loscri, and Enrico Natalizio,
+  \emph{A multi-objective approach for unmanned aerial vehicle routing problem
+  with soft time windows constraints}, Applied Mathematical Modelling
+  \textbf{38} (2014), no.~3, 839--852.
+
+\bibitem{gunawan2015iterated}
+Aldy Gunawan, Hoong~Chuin Lau, and Kun Lu, \emph{An iterated local search
+  algorithm for solving the orienteering problem with time windows}, European
+  conference on evolutionary computation in combinatorial optimization,
+  Springer, 2015, pp.~61--73.
+
+\bibitem{gunawan2016orienteering}
+Aldy Gunawan, Hoong~Chuin Lau, and Pieter Vansteenwegen, \emph{Orienteering
+  problem: A survey of recent variants, solution approaches and applications},
+  European journal of operational research \textbf{255} (2016), no.~2,
+  315--332.
+
+\bibitem{gunawan2017well}
+Aldy Gunawan, Hoong~Chuin Lau, Pieter Vansteenwegen, and Kun Lu,
+  \emph{Well-tuned algorithms for the team orienteering problem with time
+  windows}, Journal of the Operational Research Society \textbf{68} (2017),
+  no.~8, 861--876.
+
+\bibitem{hu2014iterative}
+Qian Hu and Andrew Lim, \emph{An iterative three-component heuristic for the
+  team orienteering problem with time windows}, European Journal of Operational
+  Research \textbf{232} (2014), no.~2, 276--286.
+
+\bibitem{icao_standard_atmosphere}
+{International Civil Aviation Organization}, \emph{Manual of the icao standard
+  atmosphere (extended to 80 kilometres)}, Tech. Report Doc 7488/3, ICAO, 1993,
+  Primary source for Sea Level air density $\rho = 1.225$ kg/m$^3$.
+
+\bibitem{kantor1992}
+Marisa~G. Kantor and Moshe~B. Rosenwein, \emph{The orienteering problem with
+  time windows}, The Journal of the Operational Research Society \textbf{43}
+  (1992), no.~6, 629--635.
+
+\bibitem{khoufi2019survey}
+Ines Khoufi, Anis Laouiti, and Cedric Adjih, \emph{A survey of recent extended
+  variants of the traveling salesman and vehicle routing problems for unmanned
+  aerial vehicles}, Drones \textbf{3} (2019), no.~3, 66.
+
+\bibitem{kyriakakis2023grasp}
+Nikolaos~A Kyriakakis, Stylianos Aronis, Magdalene Marinaki, and Yannis
+  Marinakis, \emph{A grasp/vnd algorithm for the energy minimizing drone
+  routing problem with pickups and deliveries}, Computers \& Industrial
+  Engineering \textbf{182} (2023), 109340.
+
+\bibitem{labadie2012team}
+Nacima Labadie, Renata Mansini, Jan Melechovsk{\`y}, and Roberto~Wolfler Calvo,
+  \emph{The team orienteering problem with time windows: An lp-based granular
+  variable neighborhood search}, European journal of operational research
+  \textbf{220} (2012), no.~1, 15--27.
+
+\bibitem{liu2022hybrid}
+Wei Liu, Tao Zhang, Shengjun Huang, and Kaiwen Li, \emph{A hybrid optimization
+  framework for uav reconnaissance mission planning}, Computers \& Industrial
+  Engineering \textbf{173} (2022), 108653.
+
+\bibitem{macrina2020drone}
+Giusy Macrina, Luigi Di~Puglia Pugliese, Francesca Guerriero, and Gilbert
+  Laporte, \emph{Drone-aided routing: A literature review}, Transportation
+  Research Part C: Emerging Technologies \textbf{120} (2020), 102762.
+
+\bibitem{montemanni2009ant}
+Roberto Montemanni and Luca~Maria Gambardella, \emph{An ant colony system for
+  team orienteering problems with time windows}, Foundations of Computing and
+  Decision Sciences \textbf{34} (2009), no.~4, 287--306.
+
+\bibitem{moskal2019adaptive}
+Michael~D Moskal and Rajan Batta, \emph{Adaptive unmanned aerial vehicle
+  surveillance using a prize-collecting vertex routing model}, Military
+  Operations Research \textbf{24} (2019), no.~4, 5--22.
+
+\bibitem{mufalli2012simultaneous}
+Frank Mufalli, Rajan Batta, and Rakesh Nagi, \emph{Simultaneous sensor
+  selection and routing of unmanned aerial vehicles for complex mission plans},
+  Computers \& Operations Research \textbf{39} (2012), no.~11, 2787--2799.
+
+\bibitem{otto2018optimization}
+Alena Otto, Nils Agatz, James Campbell, Bruce Golden, and Erwin Pesch,
+  \emph{Optimization models for civil applications of unmanned aerial vehicles
+  (uavs): A survey}, European Journal of Operational Research \textbf{268}
+  (2018), no.~2, 401--419.
+
+\bibitem{peng2019agile}
+Guansheng Peng, Reginald Dewil, C{\'e}dric Verbeeck, Aldy Gunawan, Lining Xing,
+  and Pieter Vansteenwegen, \emph{Agile earth observation satellite scheduling:
+  An orienteering problem with time-dependent profits and travel times},
+  Computers \& Operations Research \textbf{111} (2019), 84--98.
+
+\bibitem{peng2020exact}
+Guansheng Peng, Guopeng Song, Lining Xing, Aldy Gunawan, and Pieter
+  Vansteenwegen, \emph{An exact algorithm for agile earth observation satellite
+  scheduling with time-dependent profits}, Computers \& Operations Research
+  \textbf{120} (2020), 104946.
+
+\bibitem{raj2020multiple}
+Ritwik Raj and Chase Murray, \emph{The multiple flying sidekicks traveling
+  salesman problem with variable drone speeds}, Transportation Research Part C:
+  Emerging Technologies \textbf{120} (2020), 102813.
+
+\bibitem{righini2009decremental}
+Giovanni Righini and Matteo Salani, \emph{Decremental state space relaxation
+  strategies and initialization heuristics for solving the orienteering problem
+  with time windows with dynamic programming}, Computers \& operations research
+  \textbf{36} (2009), no.~4, 1191--1203.
+
+\bibitem{rojas2021unmanned}
+Daniela Rojas~Viloria, Elyn~L Solano-Charris, Andr{\'e}s Mu{\~n}oz-Villamizar,
+  and Jairo~R Montoya-Torres, \emph{Unmanned aerial vehicles/drones in vehicle
+  routing problems: a literature review}, International Transactions in
+  Operational Research \textbf{28} (2021), no.~4, 1626--1657.
+
+\bibitem{savelsbergh1992vehicle}
+Martin W.~P. Savelsbergh, \emph{The vehicle routing problem with time windows:
+  Minimizing route duration}, ORSA Journal on Computing \textbf{4} (1992),
+  no.~2, 146--154.
+
+\bibitem{schmid2017effective}
+Verena Schmid and Jan~Fabian Ehmke, \emph{An effective large neighborhood
+  search for the team orienteering problem with time windows}, International
+  Conference on Computational Logistics, Springer, 2017, pp.~3--18.
+
+\bibitem{solomon1987algorithms}
+Marius~M Solomon, \emph{Algorithms for the vehicle routing and scheduling
+  problems with time window constraints}, Operations research \textbf{35}
+  (1987), no.~2, 254--265.
+
+\bibitem{tamke2023vehicle}
+Felix Tamke and Udo Buscher, \emph{The vehicle routing problem with drones and
+  drone speed selection}, Computers \& Operations Research \textbf{152} (2023),
+  106112.
+
+\bibitem{troudi2018sizing}
+Asma Troudi, Sid-Ali Addouche, Sofiene Dellagi, and Abderrahman~El Mhamedi,
+  \emph{Sizing of the drone delivery fleet considering energy autonomy},
+  Sustainability \textbf{10} (2018), no.~9, 3344.
+
+\bibitem{tsiligirides1984heuristic}
+Theodore Tsiligirides, \emph{Heuristic methods for the orienteering problem},
+  Journal of the Operational Research Society \textbf{35} (1984), no.~9,
+  797--809.
+
+\bibitem{vansteenwegen2011orienteering}
+Pieter Vansteenwegen, Wouter Souffriau, and Dirk Van~Oudheusden, \emph{The
+  orienteering problem: A survey}, European Journal of Operational Research
+  \textbf{209} (2011), no.~1, 1--10.
+
+\bibitem{vansteenwegen2009iterated}
+Pieter Vansteenwegen, Wouter Souffriau, Greet Vanden~Berghe, and Dirk
+  Van~Oudheusden, \emph{Iterated local search for the team orienteering problem
+  with time windows}, Computers \& Operations Research \textbf{36} (2009),
+  no.~12, 3281--3290.
+
+\bibitem{vincent2019team}
+F~Yu Vincent, Parida Jewpanya, Shih-Wei Lin, and AAN~Perwira Redi, \emph{Team
+  orienteering problem with time windows and time-dependent scores}, Computers
+  \& Industrial Engineering \textbf{127} (2019), 213--224.
+
+\bibitem{wu2024energy}
+Kunpeng Wu, Shaofeng Lu, Haoqin Chen, Minling Feng, and Zenghao Lu, \emph{An
+  energy-efficient logistic drone routing method considering dynamic drone
+  speed and payload}, Sustainability \textbf{16} (2024), no.~12, 4995.
+
+\bibitem{yang2025bi}
+Ying Yang, Jiaxin Liu, and Shuaian Wang, \emph{A bi-objective optimisation
+  model for the drone scheduling problem in island delivery}, International
+  Journal of Production Research \textbf{63} (2025), no.~19, 7174--7195.
+
+\bibitem{zeng2019energy}
+Yong Zeng, Jie Xu, and Rui Zhang, \emph{Energy minimization for wireless
+  communication with rotary-wing uav}, IEEE transactions on wireless
+  communications \textbf{18} (2019), no.~4, 2329--2345.
+
+\bibitem{zeng2017energy}
+Yong Zeng and Rui Zhang, \emph{Energy-efficient uav communication with
+  trajectory optimization}, IEEE Transactions on Wireless Communications
+  \textbf{16} (2017), no.~6, 3747--3760.
+
+\bibitem{zhen2019vehicle}
+Lu~Zhen, Miao Li, Gilbert Laporte, and Wencheng Wang, \emph{A vehicle routing
+  problem arising in unmanned aerial monitoring}, Computers \& Operations
+  Research \textbf{105} (2019), 1--11.
+
+\bibitem{zorbas2016optimal}
+Dimitrios Zorbas, Luigi Di~Puglia Pugliese, Tahiry Razafindralambo, and
+  Francesca Guerriero, \emph{Optimal drone placement and cost-efficient target
+  coverage}, Journal of Network and Computer Applications \textbf{75} (2016),
+  16--31.
+
+\end{thebibliography}

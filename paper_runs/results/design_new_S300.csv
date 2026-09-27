@@ -1,0 +1,2 @@
+Instance,design,Objective,Tour,t_best (s),Wall (s),stop,iterations,shakes,shake_of_best,accepted,socp_calls,socp_ms,reorder_trimmed,socp_numeric_infeasible,Route
+PR11 (48),new,6473.95,33,6.5,36.1,max_idle_shakes,346,346,,4331,11576,2.67,24414,0,0-34-42-3-45-10-32-41-31-36-14-20-33-8-5-29-16-26-23-2-30-39-43-21-12-38-40-47-24-9-35-37-22-28
