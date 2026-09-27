@@ -57,7 +57,9 @@ def _check_feasible(tour_nodes, graph, instance, gurobi_env):
     if not _screen(tour_nodes, graph, instance):
         return False
     tour = directed_cycle(tour_nodes, graph)
-    solver = Solver(tour, instance, _gurobi_env=gurobi_env)
+    # the construction evaluates under the same subproblem as the search that follows
+    # (a run with --no-loiter pins L_ij = d_ij here too, or its start could be infeasible)
+    solver = Solver(tour, instance, no_loiter=getattr(instance, "no_loiter", False), _gurobi_env=gurobi_env)
     return solver.solution is not None
 
 
@@ -213,7 +215,8 @@ def build_R4(instance, n_target=None):
             if not _screen(tour + [v], graph, instance):
                 continue          # the subproblem would return infeasible
             candidate_tour = directed_cycle(tour + [v], graph)
-            solver = Solver(candidate_tour, instance, _gurobi_env=env)
+            solver = Solver(candidate_tour, instance, no_loiter=getattr(instance, "no_loiter", False),
+                            _gurobi_env=env)
             if solver.solution is None:
                 continue
             td = solver.get_tour_data()

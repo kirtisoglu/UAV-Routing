@@ -35,9 +35,9 @@ TW = [
     ("PR15 (240), overlapping",  "datasets/pr11_20/pr15.txt"),
 ]
 
-OUT_DIR = "fig"
-PAPER_DIR = "/tmp/UAV-Paper/fig"
-BRAIN_DIR = "/Users/kirtisoglu/GitHub/Brain/40-Papers/uav-routing/fig"
+OUT_DIR = "paper/fig"                       # the manuscript's figure directory
+# extra copies, e.g. the author's paper folder: PAPER_FIG_DIRS=/path/one:/path/two
+EXTRA_DIRS = [d for d in os.environ.get("PAPER_FIG_DIRS", "").split(":") if d]
 
 
 # ---- Figure 2: spatial layout (2x2 panels) ----
@@ -90,8 +90,8 @@ print(f"Saved {out3}")
 plt.close(fig)
 
 
-# Copy to paper + brain
-for dst_dir in [PAPER_DIR, BRAIN_DIR]:
+# extra copies (PAPER_FIG_DIRS)
+for dst_dir in EXTRA_DIRS:
     if os.path.exists(dst_dir):
         for src in [out2, out3]:
             shutil.copy(src, os.path.join(dst_dir, os.path.basename(src)))

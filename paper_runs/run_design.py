@@ -1,42 +1,47 @@
-"""Section 4 design campaign: the matheuristic of Section 4 on all fourteen
-instances, one single-start run from R4 per instance, and optionally the
-previous design (paper_runs/campaign/final_run.py) for a same-machine
-comparison.
+"""Campaign driver: every matheuristic number of Section 5 comes from this script.
 
-Configurations
-  new   --fast-sets --scaled-socp --reorder-rcl L_R --sweep enum
-        --max-idle-shakes S            (the design of Section 4)
-  old   the 2026-09-26 base: roulette over the full reorder sets, physical-unit
-        SOCP, (post, cons) arithmetic sweep, stop after maxIter = 13000
-        iterations without an improvement
+One run of experiments/run_ils_time_matched.py per instance at the design of
+Section 4 (--fast-sets --scaled-socp --reorder-rcl L_r --sweep enum
+--max-idle-shakes S, cap divisor D, single start), the result appended to a CSV
+under paper_runs/results and the best-seen trace copied next to it. The tables
+are then written into the manuscript by paper_runs/fill_tables.py.
 
-Both use the env of final_run.py (ILS_INSERT_RATIO=1 ILS_SHAKE_KNAP=6
-ILS_NO_RETURN=2 ILS_REORDER_W=exch) and the same seed, cap divisor and
-initial tour.  The stall safeguard (ILS_SHAKE_STALL) is kept for the old
-design as it was run, and set to 0 for the new one, whose reorder sets are
-bounded so that exhaustion fires by itself.
+    python3 paper_runs/run_design.py new     -> results/design_new.csv   (the reference run)
+    python3 paper_runs/run_design.py old     -> results/design_old.csv   (previous design, comparison only)
 
-  python3 paper_runs/run_design.py new            # -> results/design_new.csv
-  python3 paper_runs/run_design.py old            # -> results/design_old.csv
-  DESIGN_INSTANCES="R104 (100);PR15 (240)" python3 paper_runs/run_design.py new
+Knobs (environment variables; every one defaults to the paper's setting):
+  DESIGN_INSTANCES  "R104 (100);PR15 (240)"   instances to run (default: all fourteen)
+  DESIGN_OUT        suffix of the CSV and trace names so that a variant does not
+                    overwrite the reference run: _fixed, _noloiter, _D6, _R1, ...
+  DESIGN_EXTRA      flags appended to every run: "--fixed-speed" or "--no-loiter"
+  DESIGN_CAPDIV     D   (default 3)          DESIGN_RCL   L_r (default 20)
+  DESIGN_IDLE       S   (default 100)
+  DESIGN_INIT       start heuristic R1|R2|R3|R4 (default R4)
+  DESIGN_INIT_SEED  seed of the random start R3 (default 1)
+  DESIGN_DYNAMICS   1 = also write the per-iteration trace (iter, wall_s, f_curr,
+                    f_best, kick) to results/details/dynamics/<stem>_<design><OUT>.csv,
+                    the input of the perturbation figure (fig:ils-capdiv)
+  DESIGN_BUDGET     wall-clock safeguard per run, seconds (default 14400)
+  DESIGN_WORKERS    parallel runs (default 1; keep 1 whenever t_best or Run is reported)
 
-Environment knobs: DESIGN_RCL (L_R, default 20), DESIGN_IDLE (S, default 100),
-DESIGN_CAPDIV (D, default 3), DESIGN_BUDGET (wall-clock safeguard, default
-14400 s), DESIGN_WORKERS (parallel runs; keep at 1 for timings that are
-comparable with the MISOCP's), DESIGN_OUT (suffix of the CSV and trace names,
-so that a parameter grid or a variant does not overwrite the main campaign,
-e.g. DESIGN_OUT=_L10), DESIGN_EXTRA (flags appended to every run, e.g.
-"--fixed-speed" for the value-of-speed table or "--no-loiter" for the
-value-of-loitering table).
+Which run fills which table (the exact commands are in experiments/RERUN_PLAN.md):
+  design_new.csv                  tab:matheuristic-vs-exact, fig:ils-convergence, the
+                                  D = 3 block of tab:theta, the R4 column of
+                                  tab:initial-tour, the "variable speed" block of
+                                  tab:fixed-speed, the "loitering allowed" block of tab:coverage
+  design_new_fixed.csv            tab:fixed-speed   (DESIGN_EXTRA="--fixed-speed" DESIGN_OUT=_fixed)
+  design_new_noloiter.csv         tab:coverage      (DESIGN_EXTRA="--no-loiter"   DESIGN_OUT=_noloiter)
+  design_new_D6.csv, _D12.csv     tab:theta         (DESIGN_CAPDIV=6 DESIGN_OUT=_D6, DESIGN_CAPDIV=12 DESIGN_OUT=_D12)
+  design_new_R1.csv, _R2.csv,     tab:initial-tour  (DESIGN_INIT=R1 DESIGN_OUT=_R1, ...;
+  _R3s1.csv, _R3s2.csv, _R3s3.csv                    R3 with DESIGN_INIT_SEED=1, 2, 3 and DESIGN_OUT=_R3s1, ...)
+  details/dynamics/pr15_240_new_D{3,6,12}dyn.csv    fig:ils-capdiv
+                                  (DESIGN_INSTANCES="PR15 (240)" DESIGN_DYNAMICS=1 DESIGN_CAPDIV=D DESIGN_OUT=_D{D}dyn)
 
-  DESIGN_RCL=10 DESIGN_OUT=_L10 DESIGN_INSTANCES="R104 (100);RC104 (100);PR15 (240);PR10 (288)" \
-      python3 paper_runs/run_design.py new
-  DESIGN_EXTRA="--fixed-speed" DESIGN_OUT=_fixed python3 paper_runs/run_design.py new
-
-Finished runs are appended to the CSV at once
-and a re-run resumes from it.  The best-seen trace of a run is kept for the
-convergence figure and for reading the objective and stopping time of any
-other S from one run (experiments/tm_ils_<stem>_<tag>_trace.csv).
+Finished runs are appended to the CSV at once and a re-run resumes from it, so an
+interrupted campaign is simply restarted. A CSV written by an earlier version of
+this script (other columns) is kept as <name>.v1.csv and a fresh file is started.
+Every row records the git commit the run was made with. ILS_LICENSE_GUARD must not
+be set: it was a workaround for a size-limited license and silently drops routes.
 """
 import os, sys, csv, re, ast, shutil, subprocess, time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -56,25 +61,42 @@ WORKERS = int(os.environ.get("DESIGN_WORKERS", 1))
 RCL = int(os.environ.get("DESIGN_RCL", 20))
 IDLE = int(os.environ.get("DESIGN_IDLE", 100))
 CAPDIV = int(os.environ.get("DESIGN_CAPDIV", 3))
+INIT = os.environ.get("DESIGN_INIT", "R4")
+INIT_SEED = int(os.environ.get("DESIGN_INIT_SEED", 1))
+DYNAMICS = os.environ.get("DESIGN_DYNAMICS", "") not in ("", "0")
 OUT = os.environ.get("DESIGN_OUT", "")
 EXTRA = os.environ.get("DESIGN_EXTRA", "").split()
 TRACE_DIR = os.path.join(HERE, "results", "details", "design_traces")
-COLS = ["Instance", "design", "Objective", "Tour", "t_best (s)", "Wall (s)", "stop", "iterations",
-        "shakes", "iter_of_best", "accepted", "socp_calls", "socp_ms", "reorder_trimmed",
-        "socp_numeric_infeasible", "Route"]
+DYN_DIR = os.path.join(HERE, "results", "details", "dynamics")
+COLS = ["Instance", "design", "init", "init_seed", "D", "L_r", "S", "extra", "commit",
+        "init_obj", "init_size", "Objective", "Tour", "flown_km", "energy_pct", "time_s",
+        "t_best (s)", "Wall (s)", "stop", "iterations", "shakes", "iter_of_best", "accepted",
+        "socp_calls", "socp_ms", "reorder_trimmed", "socp_numeric_infeasible", "Route"]
 
 
 def stem_of(name):
     return re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
 
 
+def git_commit():
+    try:
+        return subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True,
+                              text=True, cwd=REPO).stdout.strip()
+    except Exception:
+        return ""
+
+
+COMMIT = git_commit()
+
+
 def run_one(name, design):
     env = dict(os.environ, ILS_INSERT_RATIO="1", ILS_SHAKE_KNAP="6", ILS_NO_RETURN="2",
                ILS_REORDER_W="exch")
     tag = f"design_{design}{OUT}"
+    stem = stem_of(name)
     args = [sys.executable, "experiments/run_ils_time_matched.py", "--instance", name,
-            "--budget", str(BUDGET), "--init", "R4", "--shake-return", "--shake-backtrack",
-            "--sweep-cap-div", str(CAPDIV), "--tag", tag]
+            "--budget", str(BUDGET), "--init", INIT, "--init-seed", str(INIT_SEED),
+            "--shake-return", "--shake-backtrack", "--sweep-cap-div", str(CAPDIV), "--tag", tag]
     if design == "new":
         env["ILS_SHAKE_STALL"] = "0"
         args += ["--fast-sets", "--scaled-socp", "--reorder-rcl", str(RCL), "--sweep", "enum",
@@ -82,16 +104,24 @@ def run_one(name, design):
     else:
         env["ILS_SHAKE_STALL"] = "1000"
         args += ["--max-iter", "13000"]
+    if DYNAMICS:
+        os.makedirs(DYN_DIR, exist_ok=True)
+        args += ["--dynamics-out", os.path.join(DYN_DIR, f"{stem}_{design}{OUT}.csv")]
     args += EXTRA
     t0 = time.time()
     out = subprocess.run(args, capture_output=True, text=True, env=env).stdout
     wall = time.time() - t0
-    stem = stem_of(name)
+    if "--seed-offset" in EXTRA:                # the runner suffixes its own tag with the offset
+        off = int(EXTRA[EXTRA.index("--seed-offset") + 1])
+        if off:
+            tag = f"{tag}_w{off}"
     prefix = f"experiments/tm_ils_{stem}_{tag}"
     if os.path.exists(prefix + "_trace.csv"):
         os.makedirs(TRACE_DIR, exist_ok=True)
         shutil.copy(prefix + "_trace.csv", os.path.join(TRACE_DIR, f"{stem}_{design}{OUT}.csv"))
     m = re.search(r"best obj ([\d.]+)\s+size (\d+)\s+found at ([\d.]+) s \(iter (\d+)\)", out)
+    init = re.search(r"init obj ([\d.]+) size (\d+)", out)
+    phys = re.search(r"best flown ([\d.]+) m\s+energy ([\d.]+) J \(([\d.]+)% of budget\)\s+time ([\d.]+) s", out)
     stop = re.search(r"stopped by (\w+)", out)
     itr = re.search(r"(\d+) iterations at", out)
     route = re.search(r"best route: \[([^\]]*)\]", out)
@@ -101,7 +131,14 @@ def run_one(name, design):
         print(out[-3000:])
         return None
     socp_ms = (cnt.get("socp_us", 0) / 1000.0 / cnt["socp_calls"]) if cnt.get("socp_calls") else ""
-    return {"Instance": name, "design": design, "Objective": float(m.group(1)), "Tour": int(m.group(2)),
+    return {"Instance": name, "design": design, "init": INIT, "init_seed": INIT_SEED if INIT == "R3" else "",
+            "D": CAPDIV, "L_r": RCL if design == "new" else "", "S": IDLE if design == "new" else "",
+            "extra": " ".join(EXTRA), "commit": COMMIT,
+            "init_obj": float(init.group(1)) if init else "", "init_size": int(init.group(2)) if init else "",
+            "Objective": float(m.group(1)), "Tour": int(m.group(2)),
+            "flown_km": round(float(phys.group(1)) / 1000.0, 2) if phys else "",
+            "energy_pct": float(phys.group(3)) if phys else "",
+            "time_s": round(float(phys.group(4)), 1) if phys else "",
             "t_best (s)": round(float(m.group(3)), 1), "Wall (s)": round(wall, 1),
             "stop": stop.group(1) if stop else "", "iterations": int(itr.group(1)) if itr else "",
             "shakes": cnt.get("kicks", 0), "iter_of_best": int(m.group(4)),
@@ -112,22 +149,45 @@ def run_one(name, design):
             "Route": "-".join(x.strip() for x in route.group(1).split(",")) if route else ""}
 
 
-def main():
-    design = sys.argv[1] if len(sys.argv) > 1 else "new"
-    assert design in ("new", "old")
-    csv_path = os.path.join(HERE, "results", f"design_{design}{OUT}.csv")
+def open_csv(csv_path):
+    """Rows already on disk, after moving aside a file with another column set."""
     if os.path.exists(csv_path):
-        done = {r["Instance"] for r in csv.DictReader(open(csv_path))}
-        print(f"[resume] {len(done)} runs on disk", flush=True)
-    else:
-        done = set()
-        with open(csv_path, "w", newline="") as f:
-            csv.DictWriter(f, fieldnames=COLS).writeheader()
+        with open(csv_path, newline="") as f:
+            header = next(csv.reader(f), [])
+        if header == COLS:
+            done = {r["Instance"] for r in csv.DictReader(open(csv_path))}
+            print(f"[resume] {len(done)} runs on disk", flush=True)
+            return done
+        k = 1
+        while os.path.exists(csv_path.replace(".csv", f".v{k}.csv")):
+            k += 1
+        old = csv_path.replace(".csv", f".v{k}.csv")
+        shutil.move(csv_path, old)
+        print(f"[note] {os.path.basename(csv_path)} had the columns of an earlier driver; "
+              f"kept as {os.path.basename(old)}, starting a fresh file", flush=True)
+    with open(csv_path, "w", newline="") as f:
+        csv.DictWriter(f, fieldnames=COLS).writeheader()
+    return set()
+
+
+def main():
+    if os.environ.get("ILS_LICENSE_GUARD"):
+        raise SystemExit("ILS_LICENSE_GUARD is set: it drops long routes silently. Unset it.")
+    design = sys.argv[1] if len(sys.argv) > 1 else "new"
+    assert design in ("new", "old"), "usage: run_design.py new|old"
+    assert INIT in ("R1", "R2", "R3", "R4"), "DESIGN_INIT must be R1, R2, R3 or R4"
+    csv_path = os.path.join(HERE, "results", f"design_{design}{OUT}.csv")
+    done = open_csv(csv_path)
     order = ([n.strip() for n in os.environ["DESIGN_INSTANCES"].split(";")]
              if os.environ.get("DESIGN_INSTANCES") else ORDER)
+    for n in order:
+        if n not in PATHS:
+            raise SystemExit(f"unknown instance {n!r}; known: {', '.join(ORDER)}")
     jobs = [n for n in order if n not in done]
-    print(f"[plan] {design}{OUT}: {len(jobs)} runs, {WORKERS} at a time; L_R={RCL} S={IDLE} D={CAPDIV} "
-          f"budget {BUDGET:.0f}s extra={EXTRA}", flush=True)
+    print(f"[plan] {design}{OUT}: {len(jobs)} runs, {WORKERS} at a time; start {INIT}"
+          f"{' seed ' + str(INIT_SEED) if INIT == 'R3' else ''}, L_r={RCL} S={IDLE} D={CAPDIV} "
+          f"budget {BUDGET:.0f}s extra={EXTRA} dynamics={'on' if DYNAMICS else 'off'} commit {COMMIT}",
+          flush=True)
     with ThreadPoolExecutor(max_workers=WORKERS) as ex:
         futs = {ex.submit(run_one, n, design): n for n in jobs}
         for fut in as_completed(futs):

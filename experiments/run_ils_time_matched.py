@@ -662,6 +662,7 @@ class TimedILS:
         self.counters = Counter()
         self.best_obj = -float('inf')
         self.best_route = None
+        self.best_len_m = self.best_energy_j = self.best_time_s = None
         self.best_wall = None
         self.best_iter = None
         self.t_beat_target = None
@@ -1075,9 +1076,16 @@ class TimedILS:
         self.cache[key] = obj
         return new_state, obj, "feasible"
 
-    def _record_best(self, obj, route):
+    def _record_best(self, obj, route, state=None):
         self.best_obj = obj
         self.best_route = list(route)
+        if state is not None and state.solver is not None and state.solver.solution:
+            # physical quantities of the best route's schedule, for the value-of-loitering
+            # and value-of-speed tables (flown length, energy, mission time)
+            td = state.solver.get_tour_data()
+            self.best_len_m = sum(td.lengths.values())
+            self.best_energy_j = td.total_energy
+            self.best_time_s = sum(td.times.values())
         self.idle = 0                       # an improvement restarts the stopping counter
         self.idle_shakes = 0
         self.best_wall = self.elapsed()
@@ -1560,7 +1568,7 @@ class TimedILS:
         state.parent = None
         self.cache[tuple(state.solver.tour_nodes)] = state.value
         if state.value > self.best_obj:
-            self._record_best(state.value, state.solver.tour_nodes)
+            self._record_best(state.value, state.solver.tour_nodes, state)
         print(f"[{self.name}] start {start_idx} ({forced}, paper) init obj "
               f"{state.value:.2f} size {len(state.solver.tour_nodes) - 1} at {self.elapsed():.0f} s", flush=True)
 
@@ -1906,7 +1914,7 @@ class TimedILS:
                         self._mkey = None    # the route changed: rebuild the sets
                         self._record_route("shake", state.solver.tour_nodes, obj, "shake", state)
                         if obj > self.best_obj:
-                            self._record_best(obj, state.solver.tour_nodes)
+                            self._record_best(obj, state.solver.tour_nodes, state)
                             self.sweep_R = 1; self._cons, self._hold, self._noimp_lo = 1, 0, 0
                 continue
 
@@ -2109,9 +2117,12 @@ class TimedILS:
             if cached_set is None and self.reorder_rcl and op in ("swap", "two_opt") \
                     and len(moves) > self.reorder_rcl:
                 # restricted candidate list: only the L_r reorderings of largest exchange
-                # value are offered to the roulette (their acceptance rate decays with rank)
+                # value are offered to the roulette (their acceptance rate decays with rank).
+                # Ties go to the larger distance saving (-dd): with static rewards every
+                # exchange value is zero, and without the tie-break nlargest would keep
+                # the first L_r pairs in construction order, all sharing position p = 1.
                 self.counters["reorder_trimmed"] += len(moves) - self.reorder_rcl
-                moves = heapq.nlargest(self.reorder_rcl, moves, key=lambda m: m[0])
+                moves = heapq.nlargest(self.reorder_rcl, moves, key=lambda m: (m[0], -m[2]))
             if cached_set is None:
                 random.shuffle(moves)          # break ties between equal weights
                 self._msets[op] = moves
@@ -2352,7 +2363,7 @@ class TimedILS:
                 self.counters["accepted"] += 1; self.counters[f"acc_{op}"] += 1
                 self._record_route(op, state.solver.tour_nodes, obj, "accepted", state)
                 if obj > self.best_obj:
-                    self._record_best(obj, state.solver.tour_nodes)
+                    self._record_best(obj, state.solver.tour_nodes, state)
                     self.sweep_R = 1; self._cons, self._hold, self._noimp_lo = 1, 0, 0
             else:
                 count += 1
@@ -2401,6 +2412,11 @@ class TimedILS:
               f"size {len(self.best_route) - 1 if self.best_route else 0}  "
               f"found at {self.best_wall:.1f} s (iter {self.best_iter})",
               flush=True)
+        if self.best_len_m is not None:
+            # read by paper_runs/run_design.py (columns flown_km, energy_pct, time_s)
+            print(f"[{self.name}] best flown {self.best_len_m:.1f} m  "
+                  f"energy {self.best_energy_j:.1f} J ({100.0 * self.best_energy_j / self.E_max:.2f}% of budget)  "
+                  f"time {self.best_time_s:.1f} s", flush=True)
         if self.target is not None:
             beat = (f"{self.t_beat_target:.0f} s" if self.t_beat_target
                     else "never")

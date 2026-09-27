@@ -13,3 +13,22 @@ experiments/runner/*.parquet
 # Claude Code personal settings
 .claude/settings.local.json
 paper_runs/__pycache__/
+
+# outputs of experiments/run_ils_time_matched.py; the campaign driver copies what
+# the paper needs into paper_runs/results
+experiments/tm_ils_*
+# per-iteration dynamics traces (large; regenerated deterministically by the driver)
+paper_runs/results/details/dynamics/*.csv
+# raw recordings of the route viewer; the packed pages live in animation/datasets
+animation/traces/
+animation/out/
+# LaTeX build products
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
+texput.log

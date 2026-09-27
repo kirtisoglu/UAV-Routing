@@ -1,14 +1,18 @@
-"""Perturbation-dynamics figure for the shake cap divisor (paper Figure 2, next to Table 9).
+"""Perturbation-dynamics figure (fig:ils-capdiv): PR15 (240), one panel per cap divisor.
 
-One 600 s single-start ILS run from R4 on PR15 (240) per cap divisor
-D in {3, 6, 12}, each recorded step by step with
-run_ils_time_matched.py --dynamics-out. Style of the earlier figure: one panel
-per D, the current objective in grey, the best-seen objective in color, every
-shake step as a vertical line, and the exact solver's one-hour incumbent as a
-dashed line.
+Inputs are the per-iteration traces the campaign driver writes with DESIGN_DYNAMICS=1:
 
-Inputs:  paper_runs/results/details/dynamics/pr15_d<D>.csv
-Output:  paper_runs/results/figures/ils_capdiv.png (copied to both papers)
+    for D in 3 6 12; do
+      DESIGN_INSTANCES="PR15 (240)" DESIGN_DYNAMICS=1 DESIGN_CAPDIV=$D DESIGN_OUT=_D${D}dyn \\
+          python3 paper_runs/run_design.py new
+    done
+    python3 paper_runs/make_capdiv_figure.py
+
+  paper_runs/results/details/dynamics/pr15_240_new_D{3,6,12}dyn.csv   (iter, wall_s, f_curr, f_best, kick)
+  paper_runs/results/misocp_s1.csv                                   (the dashed incumbent)
+Output: paper/fig/ils_capdiv.png, plus copies to the directories in PAPER_FIG_DIRS
+(colon separated) if set. FIG_MAX_IT (default 15000) is the iteration window shown.
+The run is deterministic given the seed, so the D = 3 panel is the run of Table 5.9.
 """
 import os, csv, shutil
 
@@ -18,13 +22,12 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(HERE)
 DYN = os.path.join(HERE, "results", "details", "dynamics")
-OUT = os.path.join(HERE, "results", "figures", "ils_capdiv.png")
-PAPER_FIGS = [
-    "/Users/kirtisoglu/GitHub/Brain/40-Papers/uav-routing/fig",
-]   # the arXiv paper only; the submission keeps the earlier design
-INSTANCE = "PR15 (240)"
-MAX_IT = 15000        # the window the figure shows
+OUT = os.path.join(REPO, "paper", "fig", "ils_capdiv.png")
+EXTRA_DIRS = [d for d in os.environ.get("PAPER_FIG_DIRS", "").split(":") if d]
+INSTANCE, STEM = "PR15 (240)", "pr15_240"
+MAX_IT = int(os.environ.get("FIG_MAX_IT", 15000))
 DIVS = (3, 6, 12)
 MISOCP_CSV = os.path.join(HERE, "results", "misocp_s1.csv")
 
@@ -40,15 +43,16 @@ def load(path):
 def main():
     target = next(float(r["Objective"]) for r in csv.DictReader(open(MISOCP_CSV))
                   if r["Instance"] == INSTANCE)
-    fig, axes = plt.subplots(1, len(DIVS), figsize=(6 * len(DIVS), 4.8),
-                             sharey=True, squeeze=False)
+    fig, axes = plt.subplots(1, len(DIVS), figsize=(6 * len(DIVS), 4.8), sharey=True, squeeze=False)
     colors = cm.viridis([0.1, 0.5, 0.9])
+    missing = []
     for c, D in enumerate(DIVS):
         ax = axes[0][c]; color = colors[c]
-        p = os.path.join(DYN, f"pr15_d{D}.csv")
+        p = os.path.join(DYN, f"{STEM}_new_D{D}dyn.csv")
         if not os.path.exists(p):
-            ax.set_title(f"$c=\\lceil k/{D} \\rceil$ (missing)"); continue
+            ax.set_title(f"$c=\\lceil k/{D} \\rceil$ (trace missing)"); missing.append(p); continue
         it, curr, best, kick = load(p)
+        total_kicks = sum(kick)
         n = sum(1 for v in it if v <= MAX_IT) or len(it)
         it, curr, best, kick = it[:n], curr[:n], best[:n], kick[:n]
         step = max(1, len(it) // 20000)
@@ -56,28 +60,24 @@ def main():
         for i, k in enumerate(kick):
             if k:
                 ax.axvline(it[i], color="orange", linewidth=0.8, alpha=0.5, zorder=1,
-                           label="perturbation" if first else None)
+                           label="shake" if first else None)
                 first = False
         ax.plot(it[::step], curr[::step], color="grey", linewidth=0.7, alpha=0.8,
-                label=r"$f_{\mathrm{curr}}$", zorder=2)
+                label=r"$f(R_{\mathrm{curr}})$", zorder=2)
         ax.plot(it[::step], best[::step], color=color, linewidth=2.2,
-                label=r"$f_{\mathrm{best}}$", zorder=3)
-        ax.axhline(target, color="red", linestyle="--", linewidth=1.2,
-                   label="MISOCP incumbent", zorder=4)
-        ax.set_title(f"$c=\\lceil k/{D} \\rceil$  ({sum(kick)} perturbations)")
-        ax.set_xlim(0, MAX_IT)
-        ax.set_xlabel("ILS iteration")
-        ax.set_ylabel("Objective")
-        ax.grid(True, alpha=0.3)
-        ax.legend(loc="lower right", fontsize=9)
-    fig.suptitle(f"ILS perturbation dynamics on {INSTANCE}")
+                label=r"$f(R_{\mathrm{best}})$", zorder=3)
+        ax.axhline(target, color="red", linestyle="--", linewidth=1.2, label="MISOCP incumbent", zorder=4)
+        ax.set_title(f"$c=\\lceil k/{D} \\rceil$  ({sum(kick)} shakes shown, {total_kicks} in the run)")
+        ax.set_xlim(0, MAX_IT); ax.set_xlabel("iteration"); ax.set_ylabel("objective")
+        ax.grid(True, alpha=0.3); ax.legend(loc="lower right", fontsize=9)
+    fig.suptitle(f"Perturbation dynamics on {INSTANCE}")
     fig.tight_layout()
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     fig.savefig(OUT, dpi=150, bbox_inches="tight")
-    for d in PAPER_FIGS:
+    for d in EXTRA_DIRS:
         if os.path.isdir(d):
             shutil.copy(OUT, os.path.join(d, os.path.basename(OUT)))
-    print(f"wrote {OUT}")
+    print(f"wrote {OUT}" + (f"; missing traces: {missing}" if missing else ""))
 
 
 if __name__ == "__main__":
