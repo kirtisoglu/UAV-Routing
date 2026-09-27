@@ -23,7 +23,17 @@ bounded so that exhaustion fires by itself.
 Environment knobs: DESIGN_RCL (L_R, default 20), DESIGN_IDLE (S, default 100),
 DESIGN_CAPDIV (D, default 3), DESIGN_BUDGET (wall-clock safeguard, default
 14400 s), DESIGN_WORKERS (parallel runs; keep at 1 for timings that are
-comparable with the MISOCP's).  Finished runs are appended to the CSV at once
+comparable with the MISOCP's), DESIGN_OUT (suffix of the CSV and trace names,
+so that a parameter grid or a variant does not overwrite the main campaign,
+e.g. DESIGN_OUT=_L10), DESIGN_EXTRA (flags appended to every run, e.g.
+"--fixed-speed" for the value-of-speed table or "--no-loiter" for the
+value-of-loitering table).
+
+  DESIGN_RCL=10 DESIGN_OUT=_L10 DESIGN_INSTANCES="R104 (100);RC104 (100);PR15 (240);PR10 (288)" \
+      python3 paper_runs/run_design.py new
+  DESIGN_EXTRA="--fixed-speed" DESIGN_OUT=_fixed python3 paper_runs/run_design.py new
+
+Finished runs are appended to the CSV at once
 and a re-run resumes from it.  The best-seen trace of a run is kept for the
 convergence figure and for reading the objective and stopping time of any
 other S from one run (experiments/tm_ils_<stem>_<tag>_trace.csv).
@@ -46,6 +56,8 @@ WORKERS = int(os.environ.get("DESIGN_WORKERS", 1))
 RCL = int(os.environ.get("DESIGN_RCL", 20))
 IDLE = int(os.environ.get("DESIGN_IDLE", 100))
 CAPDIV = int(os.environ.get("DESIGN_CAPDIV", 3))
+OUT = os.environ.get("DESIGN_OUT", "")
+EXTRA = os.environ.get("DESIGN_EXTRA", "").split()
 TRACE_DIR = os.path.join(HERE, "results", "details", "design_traces")
 COLS = ["Instance", "design", "Objective", "Tour", "t_best (s)", "Wall (s)", "stop", "iterations",
         "shakes", "shake_of_best", "accepted", "socp_calls", "socp_ms", "reorder_trimmed",
@@ -59,7 +71,7 @@ def stem_of(name):
 def run_one(name, design):
     env = dict(os.environ, ILS_INSERT_RATIO="1", ILS_SHAKE_KNAP="6", ILS_NO_RETURN="2",
                ILS_REORDER_W="exch")
-    tag = f"design_{design}"
+    tag = f"design_{design}{OUT}"
     args = [sys.executable, "experiments/run_ils_time_matched.py", "--instance", name,
             "--budget", str(BUDGET), "--init", "R4", "--shake-return", "--shake-backtrack",
             "--sweep-cap-div", str(CAPDIV), "--tag", tag]
@@ -70,6 +82,7 @@ def run_one(name, design):
     else:
         env["ILS_SHAKE_STALL"] = "1000"
         args += ["--max-iter", "13000"]
+    args += EXTRA
     t0 = time.time()
     out = subprocess.run(args, capture_output=True, text=True, env=env).stdout
     wall = time.time() - t0
@@ -77,7 +90,7 @@ def run_one(name, design):
     prefix = f"experiments/tm_ils_{stem}_{tag}"
     if os.path.exists(prefix + "_trace.csv"):
         os.makedirs(TRACE_DIR, exist_ok=True)
-        shutil.copy(prefix + "_trace.csv", os.path.join(TRACE_DIR, f"{stem}_{design}.csv"))
+        shutil.copy(prefix + "_trace.csv", os.path.join(TRACE_DIR, f"{stem}_{design}{OUT}.csv"))
     m = re.search(r"best obj ([\d.]+)\s+size (\d+)\s+found at ([\d.]+) s \(iter (\d+)\)", out)
     stop = re.search(r"stopped by (\w+)", out)
     itr = re.search(r"after (\d+) (?:shakes and \d+ )?iterations at", out)
@@ -102,7 +115,7 @@ def run_one(name, design):
 def main():
     design = sys.argv[1] if len(sys.argv) > 1 else "new"
     assert design in ("new", "old")
-    csv_path = os.path.join(HERE, "results", f"design_{design}.csv")
+    csv_path = os.path.join(HERE, "results", f"design_{design}{OUT}.csv")
     if os.path.exists(csv_path):
         done = {r["Instance"] for r in csv.DictReader(open(csv_path))}
         print(f"[resume] {len(done)} runs on disk", flush=True)
@@ -113,8 +126,8 @@ def main():
     order = ([n.strip() for n in os.environ["DESIGN_INSTANCES"].split(";")]
              if os.environ.get("DESIGN_INSTANCES") else ORDER)
     jobs = [n for n in order if n not in done]
-    print(f"[plan] {design}: {len(jobs)} runs, {WORKERS} at a time; L_R={RCL} S={IDLE} D={CAPDIV} "
-          f"budget {BUDGET:.0f}s", flush=True)
+    print(f"[plan] {design}{OUT}: {len(jobs)} runs, {WORKERS} at a time; L_R={RCL} S={IDLE} D={CAPDIV} "
+          f"budget {BUDGET:.0f}s extra={EXTRA}", flush=True)
     with ThreadPoolExecutor(max_workers=WORKERS) as ex:
         futs = {ex.submit(run_one, n, design): n for n in jobs}
         for fut in as_completed(futs):

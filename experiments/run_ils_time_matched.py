@@ -1082,7 +1082,7 @@ class TimedILS:
         self.idle_shakes = 0
         self.best_wall = self.elapsed()
         self.best_iter = self.iter_global
-        self.trace.append((self.best_wall, self.iter_global, obj))
+        self.trace.append((self.best_wall, self.iter_global, obj, self.counters["kicks"]))
         if (self.target is not None and self.t_beat_target is None
                 and obj > self.target):
             self.t_beat_target = self.best_wall
@@ -2435,9 +2435,9 @@ def write_outputs(run, tag):
     prefix = f"experiments/tm_ils_{safe}_{tag}"
     with open(prefix + "_trace.csv", "w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["wall_s", "iter", "best_obj"])
+        w.writerow(["wall_s", "iter", "best_obj", "shakes"])
         for row in run.trace:
-            w.writerow([f"{row[0]:.2f}", row[1], f"{row[2]:.4f}"])
+            w.writerow([f"{row[0]:.2f}", row[1], f"{row[2]:.4f}", row[3] if len(row) > 3 else ""])
     with open(prefix + "_summary.csv", "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["instance", "budget_s", "best_obj", "best_wall_s",

@@ -276,7 +276,9 @@ class Solver:
         base  = drone.base
         if self.scaled:
             dn, tn, E1 = self._dn, self._tn, self._E1
-            v_lo, v_hi = self.instance.speed_min_s, self.instance.speed_max_s
+            # from the drone at solve time, not from the instance's stored normalization,
+            # so that a speed envelope pinned after the instance was built is honoured
+            v_lo, v_hi = drone.speed_min / drone.optimum_speed, drone.speed_max / drone.optimum_speed
             c0, c1, c2 = drone.c_0 * tn / E1, drone.c_1 * dn ** 3 / (tn ** 2 * E1), drone.c_2 * tn ** 2 / (dn * E1)
             E_max = self.instance.max_energy / E1
             T_max = self.instance.T_max_s
