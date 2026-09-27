@@ -1,0 +1,18 @@
+[plan] noloiter: 14 runs, 1 at a time, 3600s each, theta=1000000000000
+[warn] R101 (50): no result parsed
+[warn] R101 (100): no result parsed
+[warn] R1_2_1 (200): no result parsed
+[warn] C101 (50): no result parsed
+[warn] C101 (100): no result parsed
+[warn] C1_2_1 (200): no result parsed
+[warn] RC1_2_1 (200): no result parsed
+[warn] R102 (100): no result parsed
+[saved 1/14] R104 (100): obj=37841.77 tour=39 t_best=1315
+[warn] C104 (100): no result parsed
+[saved 2/14] RC104 (100): obj=36242.76 tour=31 t_best=816
+[warn] PR11 (48): no result parsed
+[warn] PR15 (240): no result parsed
+[warn] PR10 (288): no result parsed
+
+==============================================================
+DONE -> /Users/kirtisoglu/GitHub/UAV-Routing/paper_runs/results/ils_noloiter.csv

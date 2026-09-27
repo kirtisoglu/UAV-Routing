@@ -41,6 +41,7 @@ class State:
                  "solver",
                  "tour",
                  "is_perturbation",
+                 "last_operator",
                  "instance",
                 )
     default_updaters = {}
@@ -74,11 +75,13 @@ class State:
     def _first_time(self, instance, initial_tour, warm_start):
         """Initialize the root state (no parent)."""
         self.is_perturbation = False
+        self.last_operator = None
         self.parent = None
         self.instance = instance
-        self.tour = initial_tour    
+        self.tour = initial_tour
 
         self.solver = Solver(tour=initial_tour,
+                             no_loiter=getattr(instance, 'no_loiter', False),
                             instance=instance,
                             warm_start=warm_start,
                             )
@@ -90,6 +93,7 @@ class State:
     def _from_parent(self, parent: "State", tour):
         """Initialize a child state from a parent, reusing the Gurobi environment."""
         self.is_perturbation = False
+        self.last_operator = None
         self.parent = parent
         self.tour = tour
         self.instance = parent.instance

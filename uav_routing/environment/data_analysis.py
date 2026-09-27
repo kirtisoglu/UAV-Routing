@@ -133,7 +133,7 @@ def plot_binned_tw_open(sources, n_bins=4, figsize=(5, 4)):
             bin_data.append(opens[mask])
             bin_labels.append(f'Q{i+1}\n[{lo:.1f},{hi:.1f}]')
 
-        ax.boxplot(bin_data, tick_labels=bin_labels, patch_artist=True,
+        ax.boxplot(bin_data, labels=bin_labels, patch_artist=True,
                    boxprops=dict(facecolor='steelblue', alpha=0.6),
                    medianprops=dict(color='tomato', linewidth=2))
         ax.set_title(label, fontsize=10)

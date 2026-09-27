@@ -1,0 +1,5 @@
+### C101 (100)
+[C101 (100)] best obj 11209.37  size 48  found at 247 s (iter 21845)
+[C101 (100)] counters: {'prop_add': 85787, 'sets_built': 27836, 'eval_add': 84220, 'socp_calls': 91618, 'accepted': 24827, 'acc_add': 13483, 'prop_replace': 85041, 'gain_excluded': 3394468, 'eval_replace': 54500, 'acc_replace': 9071, 'prop_two_opt': 85579, 'saturated': 156251, 'label_excluded': 3528614, 'prop_swap': 86452, 'eval_swap': 22466, 'worse': 63081, 'worse_swap': 17749, 'worse_add': 9940, 'cache_excluded': 27129, 'acc_swap': 1238, 'worse_replace': 15685, 'eval_two_opt': 25422, 'worse_two_opt': 19707, 'ts_reject': 98021, 'reject_replace': 29744, 'reject_add': 60797, 'lo_total': 3031, 'kicks': 3031, 'socp_numeric_infeasible': 2804, 'socp_infeas': 701, 'reject_two_opt': 4680, 'reject_swap': 3479, 'acc_two_opt': 1035, 'floor_excluded': 17186, 'lo_repeat': 22, 'cache_feas': 9, 'chk1_fb_excluded': 0, 'chk2_cascade_rejected': 0, 'chk2_cascade_passed': 0}
+### R104 (100)
+stopped after C101

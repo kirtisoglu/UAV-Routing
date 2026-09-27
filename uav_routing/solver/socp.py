@@ -12,6 +12,7 @@ Used both standalone (for evaluating candidate tours in local search)
 and as a feasibility checker in the initial tour heuristics.
 """
 
+import os
 import gurobipy as gp
 from gurobipy import GRB
 
@@ -76,6 +77,7 @@ class Solver:
                  threads=1,
                  time_limit=None,
                  log_output=False,
+                 no_loiter=False,
                  _gurobi_env=None):
         """Initialize and solve the SOCP for a given tour.
 
@@ -101,6 +103,7 @@ class Solver:
         self.log_output  = log_output
         self.warm_start  = warm_start
         self.threads     = threads
+        self.no_loiter   = no_loiter
         self.time_limit  = time_limit
         self.instance    = instance
         self.graph       = instance.graph
@@ -125,6 +128,7 @@ class Solver:
             threads=self.threads,
             time_limit=self.time_limit,
             log_output=self.log_output,
+            no_loiter=self.no_loiter,
             _gurobi_env=self._gurobi_env,
         )
 
@@ -145,6 +149,17 @@ class Solver:
         if not self.log_output:
             self.model.Params.OutputFlag = 0
         self.model.Params.Threads = self.threads
+        # Presolve declares feasible routes infeasible on this cone model: its
+        # coefficient ranges span 1e4 to 2e8 in physical units and the
+        # tolerance-based reductions prove false infeasibilities ("Barrier
+        # performed 0 iterations, Model is infeasible"). Validated 2026-09-14
+        # on 120 such routes with an explicit feasible schedule: presolve off
+        # with the homogeneous barrier recovers all of them.
+        self.model.Params.Presolve = 0
+        self.model.Params.BarHomogeneous = 1
+        self.model.Params.NumericFocus = int(
+            os.environ.get("UAV_NUMERIC_FOCUS",
+                           globals().get("NUMERIC_FOCUS_OVERRIDE", 3)))
         if self.time_limit:
             self.model.Params.TimeLimit = self.time_limit
 
@@ -157,12 +172,39 @@ class Solver:
 
         self.model.optimize()
 
-        if self.model.SolCount > 0:
-            self.solution  = True
-            self.obj_value = self.model.ObjVal
-        else:
+        self.failure_reason = None
+        self.physical_energy = None
+        if self.model.SolCount == 0:
             self.solution  = None
             self.obj_value = None
+            self.failure_reason = "cone_no_solution"
+        else:
+            E_phys = self._compute_physical_energy()
+            self.physical_energy = E_phys
+            if E_phys <= self.instance.max_energy:
+                self.solution  = True
+                self.obj_value = self.model.ObjVal
+            else:
+                self.solution  = None
+                self.obj_value = None
+                self.failure_reason = "physical_energy"
+
+
+    def _compute_physical_energy(self) -> float:
+        """Compute physical energy from cone-tight formula E = c_0*t +
+        c_1*L*v^2 + c_2*t/v with v = L/t. Used both to enforce the
+        post-check and to expose the value for diagnostics.
+        """
+        drone = self.drone
+        E_phys = 0.0
+        for e in self.tour_edges:
+            t_val = self.var_time[e].X
+            L_val = self.var_length[e].X
+            if t_val <= 0.0 or L_val <= 0.0:
+                continue
+            v = L_val / t_val
+            E_phys += drone.c_0 * t_val + drone.c_1 * L_val * v * v + drone.c_2 * t_val / v
+        return E_phys
 
 
     # --------------------- Build Methods ---------------------
@@ -190,7 +232,10 @@ class Solver:
         for e in self.tour_edges:
             d = self.graph[e[0]][e[1]]['distance']
             self.var_time[e]   = mdl.addVar(lb=0.0, name=f"t_{e}")
-            self.var_length[e] = mdl.addVar(lb=d,   name=f"L_{e}")   # eq 25
+            # lb = d is constraint (25); pinning ub = d forbids loitering, leaving
+            # the speed within [v_min, v_max] as the only way to retime a leg
+            self.var_length[e] = mdl.addVar(
+                lb=d, ub=(d if self.no_loiter else float("inf")), name=f"L_{e}")   # eq 25
             self.var_s[e]      = mdl.addVar(lb=0.0, name=f"s_{e}")   # eq 30
             self.var_y[e]      = mdl.addVar(lb=0.0, name=f"y_{e}")   # eq 30
             self.var_z[e]      = mdl.addVar(lb=0.0, name=f"z_{e}")   # eq 30
@@ -249,17 +294,36 @@ class Solver:
 
 
     def _build_objective(self):
-        """Objective (eq 31): max sum_i (gamma_i * a_i - gamma_i * e_i + I_{e_i})."""
-        base = self.drone.base
+        """Objective (eq 31): max sum_i (gamma_i * a_i - gamma_i * e_i + I_{e_i})
+        minus a tiny tie-breaker on total energy.
+
+        The penalty matches the one in uav_routing/solver/exact.py: scaled
+        by 1e-5 / E_max so its absolute magnitude is at most 1e-5 (orders
+        of magnitude below any per-node info reward), but still drives the
+        solver to pick the minimum-energy solution within an info-tie. Keep
+        all three model files (exact.py, analysis.solve_with_gap_log, this
+        one) in sync.
+        """
+        base  = self.drone.base
+        drone = self.drone
+        E_max = self.instance.max_energy
 
         obj_expr = 0
         for n in self.tour_nodes:
             if n == base:
                 continue
             e_i  = self.graph.nodes[n]['time_window'][0]
-            slope      = self.graph.nodes[n]['info_slope']
+            slope       = self.graph.nodes[n]['info_slope']
             info_lowest = self.graph.nodes[n]['info_at_lowest']
             obj_expr += slope * (self.var_arrival[n] - e_i) + info_lowest
+
+        energy_expr = gp.quicksum(
+            drone.c_0 * self.var_time[e] +
+            drone.c_1 * self.var_y[e] +
+            drone.c_2 * self.var_z[e]
+            for e in self.tour_edges
+        )
+        obj_expr = obj_expr - 0.00001 * (energy_expr / E_max)
 
         self.model.setObjective(obj_expr, GRB.MAXIMIZE)
 

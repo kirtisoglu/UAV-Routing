@@ -1,0 +1,2 @@
+instance,budget_s,best_obj,best_wall_s,best_iter,tour_size,starts,target,t_beat_target_s,socp_calls,cache_feas,cache_infeas,lb_reject,kicks,best_route
+R102 (100),14400.0,30592.2711,211.4,16051,27,1,,,9172,8992,0,0,219,0-52-31-7-48-47-82-83-5-61-16-85-37-87-2-21-72-54-68-12-26-95-100-98-93-59-96-94

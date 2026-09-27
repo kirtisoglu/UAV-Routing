@@ -1,0 +1,11 @@
+/private/tmp/claude-501/-Users-kirtisoglu-GitHub-UAV-Routing/ae8e4fb8-3edb-42f4-ac0c-605798f83a5b/scratchpad/e2.sh: line 4: export: `experiments/run_ils_time_matched.py': not a valid identifier
+/private/tmp/claude-501/-Users-kirtisoglu-GitHub-UAV-Routing/ae8e4fb8-3edb-42f4-ac0c-605798f83a5b/scratchpad/e2.sh: line 4: export: `--instance': not a valid identifier
+/private/tmp/claude-501/-Users-kirtisoglu-GitHub-UAV-Routing/ae8e4fb8-3edb-42f4-ac0c-605798f83a5b/scratchpad/e2.sh: line 4: export: `C1_2_1 (200)': not a valid identifier
+/private/tmp/claude-501/-Users-kirtisoglu-GitHub-UAV-Routing/ae8e4fb8-3edb-42f4-ac0c-605798f83a5b/scratchpad/e2.sh: line 4: export: `--max-iter': not a valid identifier
+/private/tmp/claude-501/-Users-kirtisoglu-GitHub-UAV-Routing/ae8e4fb8-3edb-42f4-ac0c-605798f83a5b/scratchpad/e2.sh: line 4: export: `15000': not a valid identifier
+/private/tmp/claude-501/-Users-kirtisoglu-GitHub-UAV-Routing/ae8e4fb8-3edb-42f4-ac0c-605798f83a5b/scratchpad/e2.sh: line 4: export: `--budget': not a valid identifier
+/private/tmp/claude-501/-Users-kirtisoglu-GitHub-UAV-Routing/ae8e4fb8-3edb-42f4-ac0c-605798f83a5b/scratchpad/e2.sh: line 4: export: `14400': not a valid identifier
+/private/tmp/claude-501/-Users-kirtisoglu-GitHub-UAV-Routing/ae8e4fb8-3edb-42f4-ac0c-605798f83a5b/scratchpad/e2.sh: line 4: export: `--init': not a valid identifier
+/private/tmp/claude-501/-Users-kirtisoglu-GitHub-UAV-Routing/ae8e4fb8-3edb-42f4-ac0c-605798f83a5b/scratchpad/e2.sh: line 4: export: `--shake-return': not a valid identifier
+/private/tmp/claude-501/-Users-kirtisoglu-GitHub-UAV-Routing/ae8e4fb8-3edb-42f4-ac0c-605798f83a5b/scratchpad/e2.sh: line 4: export: `--shake-backtrack': not a valid identifier
+/private/tmp/claude-501/-Users-kirtisoglu-GitHub-UAV-Routing/ae8e4fb8-3edb-42f4-ac0c-605798f83a5b/scratchpad/e2.sh: line 4: export: `--tag': not a valid identifier

@@ -1,0 +1,2 @@
+instance,budget_s,best_obj,best_wall_s,best_iter,tour_size,starts,target,t_beat_target_s,socp_calls,cache_feas,cache_infeas,lb_reject,kicks,best_route
+RC104 (100),14400.0,32699.7693,34.6,5040,30,1,,,4984,4450,0,0,180,0-90-68-61-70-42-44-43-39-38-37-35-36-40-41-72-54-81-96-94-80-91-56-64-20-49-19-22-24-66-65

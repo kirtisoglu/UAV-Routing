@@ -1,0 +1,12 @@
+### D=12 seed 1
+[R104 (100)] best obj 37729.30  size 37  found at 269 s (iter 45752)
+### D=12 seed 2
+[R104 (100)] best obj 37377.77  size 39  found at 15 s (iter 1919)
+### D=12 seed 3
+[R104 (100)] best obj 37081.27  size 40  found at 80 s (iter 19771)
+### D=6 seed 1
+[R104 (100)] best obj 37196.19  size 38  found at 20 s (iter 2219)
+### D=6 seed 2
+[R104 (100)] best obj 37815.31  size 38  found at 299 s (iter 59389)
+### D=6 seed 3
+[R104 (100)] best obj 37454.84  size 37  found at 288 s (iter 68441)

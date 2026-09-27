@@ -6,3 +6,10 @@ __pycache__/
 *.pyc
 
 experiments/results
+experiments/runner/results/
+experiments/runner/logs/
+experiments/runner/summary.csv
+experiments/runner/*.parquet
+# Claude Code personal settings
+.claude/settings.local.json
+paper_runs/__pycache__/

@@ -1,0 +1,403 @@
+[C101 (100)] start 0 (R4, paper) init obj 3776.53 size 10 at 1 s
+[C101 (100)] start 0 (R4) local optimum 9402.24 size 47 after 842 iterations at 9 s
+[C101 (100)] start 0 (R4, paper) done after 842 iterations (9 s elapsed)
+[C101 (100)] start 1 (R3, paper) init obj 532.23 size 4 at 9 s
+[C101 (100)] start 1 (R3) local optimum 9049.67 size 46 after 965 iterations at 19 s
+[C101 (100)] start 1 (R3, paper) done after 965 iterations (19 s elapsed)
+[C101 (100)] start 2 (R3, paper) init obj 396.60 size 4 at 19 s
+[C101 (100)] start 2 (R3) local optimum 10114.49 size 49 after 1022 iterations at 31 s
+[C101 (100)] start 2 (R3, paper) done after 1022 iterations (31 s elapsed)
+[C101 (100)] start 3 (R3, paper) init obj 537.17 size 4 at 31 s
+[C101 (100)] start 3 (R3) local optimum 9759.36 size 46 after 940 iterations at 42 s
+[C101 (100)] start 3 (R3, paper) done after 940 iterations (42 s elapsed)
+[C101 (100)] start 4 (R3, paper) init obj 570.89 size 4 at 42 s
+[C101 (100)] start 4 (R3) local optimum 9552.51 size 49 after 674 iterations at 51 s
+[C101 (100)] start 4 (R3, paper) done after 674 iterations (51 s elapsed)
+[C101 (100)] start 5 (R3, paper) init obj 1007.96 size 4 at 51 s
+[C101 (100)] start 5 (R3) local optimum 10754.16 size 49 after 1224 iterations at 61 s
+[C101 (100)] start 5 (R3, paper) done after 1224 iterations (61 s elapsed)
+[C101 (100)] start 6 (R3, paper) init obj 718.06 size 4 at 61 s
+[C101 (100)] start 6 (R3) local optimum 10959.51 size 49 after 971 iterations at 71 s
+[C101 (100)] start 6 (R3, paper) done after 971 iterations (71 s elapsed)
+[C101 (100)] start 7 (R3, paper) init obj 921.72 size 4 at 71 s
+[C101 (100)] start 7 (R3) local optimum 10428.85 size 48 after 693 iterations at 80 s
+[C101 (100)] start 7 (R3, paper) done after 693 iterations (80 s elapsed)
+[C101 (100)] start 8 (R3, paper) init obj 801.16 size 3 at 80 s
+[C101 (100)] start 8 (R3) local optimum 10616.56 size 48 after 979 iterations at 89 s
+[C101 (100)] start 8 (R3, paper) done after 979 iterations (89 s elapsed)
+[C101 (100)] start 9 (R3, paper) init obj 796.08 size 4 at 89 s
+[C101 (100)] start 9 (R3) local optimum 10090.70 size 46 after 956 iterations at 106 s
+[C101 (100)] start 9 (R3, paper) done after 956 iterations (106 s elapsed)
+[C101 (100)] start 10 (R3, paper) init obj 1248.46 size 4 at 106 s
+[C101 (100)] start 10 (R3) local optimum 10070.71 size 49 after 833 iterations at 115 s
+[C101 (100)] start 10 (R3, paper) done after 833 iterations (115 s elapsed)
+[C101 (100)] start 11 (R3, paper) init obj 674.08 size 4 at 115 s
+[C101 (100)] start 11 (R3) local optimum 10985.14 size 49 after 1194 iterations at 126 s
+[C101 (100)] start 11 (R3, paper) done after 1194 iterations (126 s elapsed)
+[C101 (100)] start 12 (R3, paper) init obj 779.77 size 4 at 126 s
+[C101 (100)] start 12 (R3) local optimum 9186.20 size 46 after 891 iterations at 135 s
+[C101 (100)] start 12 (R3, paper) done after 891 iterations (135 s elapsed)
+[C101 (100)] start 13 (R3, paper) init obj 477.60 size 4 at 135 s
+[C101 (100)] start 13 (R3) local optimum 9840.82 size 47 after 385 iterations at 140 s
+[C101 (100)] start 13 (R3, paper) done after 385 iterations (140 s elapsed)
+[C101 (100)] start 14 (R3, paper) init obj 308.22 size 2 at 140 s
+[C101 (100)] start 14 (R3) local optimum 10342.98 size 47 after 1359 iterations at 150 s
+[C101 (100)] start 14 (R3, paper) done after 1359 iterations (150 s elapsed)
+[C101 (100)] start 15 (R3, paper) init obj 746.23 size 4 at 150 s
+[C101 (100)] start 15 (R3) local optimum 8881.44 size 49 after 585 iterations at 158 s
+[C101 (100)] start 15 (R3, paper) done after 585 iterations (158 s elapsed)
+[C101 (100)] start 16 (R3, paper) init obj 366.43 size 3 at 158 s
+[C101 (100)] start 16 (R3) local optimum 10537.78 size 48 after 1167 iterations at 173 s
+[C101 (100)] start 16 (R3, paper) done after 1167 iterations (173 s elapsed)
+[C101 (100)] start 17 (R3, paper) init obj 858.84 size 4 at 173 s
+[C101 (100)] start 17 (R3) local optimum 9766.48 size 48 after 755 iterations at 181 s
+[C101 (100)] start 17 (R3, paper) done after 755 iterations (181 s elapsed)
+[C101 (100)] start 18 (R3, paper) init obj 571.20 size 4 at 181 s
+[C101 (100)] start 18 (R3) local optimum 10163.75 size 48 after 730 iterations at 189 s
+[C101 (100)] start 18 (R3, paper) done after 730 iterations (189 s elapsed)
+[C101 (100)] start 19 (R3, paper) init obj 885.23 size 4 at 189 s
+[C101 (100)] start 19 (R3) local optimum 10348.58 size 49 after 517 iterations at 197 s
+[C101 (100)] start 19 (R3, paper) done after 517 iterations (197 s elapsed)
+[C101 (100)] start 20 (R3, paper) init obj 472.59 size 4 at 197 s
+[C101 (100)] start 20 (R3) local optimum 10478.77 size 47 after 719 iterations at 203 s
+[C101 (100)] start 20 (R3, paper) done after 719 iterations (203 s elapsed)
+[C101 (100)] start 21 (R3, paper) init obj 529.21 size 4 at 203 s
+[C101 (100)] start 21 (R3) local optimum 10754.07 size 49 after 1093 iterations at 215 s
+[C101 (100)] start 21 (R3, paper) done after 1093 iterations (215 s elapsed)
+[C101 (100)] start 22 (R3, paper) init obj 907.89 size 4 at 215 s
+[C101 (100)] start 22 (R3) local optimum 10521.12 size 49 after 637 iterations at 222 s
+[C101 (100)] start 22 (R3, paper) done after 637 iterations (222 s elapsed)
+[C101 (100)] start 23 (R3, paper) init obj 468.12 size 3 at 222 s
+[C101 (100)] start 23 (R3) local optimum 10510.75 size 45 after 696 iterations at 233 s
+[C101 (100)] start 23 (R3, paper) done after 696 iterations (233 s elapsed)
+[C101 (100)] start 24 (R3, paper) init obj 676.53 size 4 at 233 s
+[C101 (100)] start 24 (R3) local optimum 9874.47 size 48 after 593 iterations at 238 s
+[C101 (100)] start 24 (R3, paper) done after 593 iterations (238 s elapsed)
+[C101 (100)] start 25 (R3, paper) init obj 897.23 size 4 at 238 s
+[C101 (100)] start 25 (R3) local optimum 10611.21 size 48 after 753 iterations at 245 s
+[C101 (100)] start 25 (R3, paper) done after 753 iterations (245 s elapsed)
+[C101 (100)] start 26 (R3, paper) init obj 1323.23 size 4 at 245 s
+[C101 (100)] start 26 (R3) local optimum 10984.42 size 48 after 1099 iterations at 257 s
+[C101 (100)] start 26 (R3, paper) done after 1099 iterations (257 s elapsed)
+[C101 (100)] start 27 (R3, paper) init obj 605.71 size 4 at 257 s
+[C101 (100)] start 27 (R3) local optimum 10516.13 size 48 after 568 iterations at 265 s
+[C101 (100)] start 27 (R3, paper) done after 568 iterations (265 s elapsed)
+[C101 (100)] start 28 (R3, paper) init obj 349.51 size 4 at 265 s
+[C101 (100)] start 28 (R3) local optimum 9733.68 size 46 after 878 iterations at 276 s
+[C101 (100)] start 28 (R3, paper) done after 878 iterations (276 s elapsed)
+[C101 (100)] start 29 (R3, paper) init obj 509.41 size 4 at 276 s
+[C101 (100)] start 29 (R3) local optimum 10467.71 size 45 after 743 iterations at 286 s
+[C101 (100)] start 29 (R3, paper) done after 743 iterations (286 s elapsed)
+[C101 (100)] start 30 (R3, paper) init obj 742.15 size 4 at 286 s
+[C101 (100)] start 30 (R3) local optimum 10338.30 size 49 after 600 iterations at 295 s
+[C101 (100)] start 30 (R3, paper) done after 600 iterations (295 s elapsed)
+[C101 (100)] start 31 (R3, paper) init obj 893.66 size 4 at 295 s
+[C101 (100)] start 31 (R3) local optimum 10118.47 size 49 after 713 iterations at 302 s
+[C101 (100)] start 31 (R3, paper) done after 713 iterations (302 s elapsed)
+[C101 (100)] start 32 (R3, paper) init obj 574.70 size 4 at 302 s
+[C101 (100)] start 32 (R3) local optimum 10540.47 size 48 after 1057 iterations at 315 s
+[C101 (100)] start 32 (R3, paper) done after 1057 iterations (315 s elapsed)
+[C101 (100)] start 33 (R3, paper) init obj 1434.31 size 4 at 315 s
+[C101 (100)] start 33 (R3) local optimum 10576.03 size 49 after 927 iterations at 325 s
+[C101 (100)] start 33 (R3, paper) done after 927 iterations (325 s elapsed)
+[C101 (100)] start 34 (R3, paper) init obj 1574.26 size 4 at 325 s
+[C101 (100)] start 34 (R3) local optimum 10156.23 size 47 after 1376 iterations at 345 s
+[C101 (100)] start 34 (R3, paper) done after 1376 iterations (345 s elapsed)
+[C101 (100)] start 35 (R3, paper) init obj 384.01 size 4 at 345 s
+[C101 (100)] start 35 (R3) local optimum 10526.00 size 46 after 1178 iterations at 353 s
+[C101 (100)] start 35 (R3, paper) done after 1178 iterations (353 s elapsed)
+[C101 (100)] start 36 (R3, paper) init obj 963.95 size 4 at 353 s
+[C101 (100)] start 36 (R3) local optimum 10421.14 size 47 after 631 iterations at 361 s
+[C101 (100)] start 36 (R3, paper) done after 631 iterations (361 s elapsed)
+[C101 (100)] start 37 (R3, paper) init obj 753.83 size 4 at 361 s
+[C101 (100)] start 37 (R3) local optimum 10606.15 size 50 after 819 iterations at 371 s
+[C101 (100)] start 37 (R3, paper) done after 819 iterations (371 s elapsed)
+[C101 (100)] start 38 (R3, paper) init obj 446.63 size 4 at 371 s
+[C101 (100)] start 38 (R3) local optimum 9948.76 size 48 after 1040 iterations at 382 s
+[C101 (100)] start 38 (R3, paper) done after 1040 iterations (382 s elapsed)
+[C101 (100)] start 39 (R3, paper) init obj 457.29 size 4 at 382 s
+[C101 (100)] start 39 (R3) local optimum 10019.00 size 50 after 1079 iterations at 394 s
+[C101 (100)] start 39 (R3, paper) done after 1079 iterations (394 s elapsed)
+[C101 (100)] start 40 (R3, paper) init obj 482.98 size 3 at 394 s
+[C101 (100)] start 40 (R3) local optimum 10616.23 size 49 after 895 iterations at 404 s
+[C101 (100)] start 40 (R3, paper) done after 895 iterations (404 s elapsed)
+[C101 (100)] start 41 (R3, paper) init obj 675.93 size 4 at 404 s
+[C101 (100)] start 41 (R3) local optimum 8891.54 size 46 after 627 iterations at 410 s
+[C101 (100)] start 41 (R3, paper) done after 627 iterations (410 s elapsed)
+[C101 (100)] start 42 (R3, paper) init obj 979.48 size 4 at 410 s
+[C101 (100)] start 42 (R3) local optimum 9660.19 size 49 after 1032 iterations at 418 s
+[C101 (100)] start 42 (R3, paper) done after 1032 iterations (418 s elapsed)
+[C101 (100)] start 43 (R3, paper) init obj 565.12 size 4 at 418 s
+[C101 (100)] start 43 (R3) local optimum 11076.91 size 47 after 1120 iterations at 427 s
+[C101 (100)] start 43 (R3, paper) done after 1120 iterations (427 s elapsed)
+[C101 (100)] start 44 (R3, paper) init obj 459.03 size 4 at 427 s
+[C101 (100)] start 44 (R3) local optimum 10434.16 size 48 after 1137 iterations at 439 s
+[C101 (100)] start 44 (R3, paper) done after 1137 iterations (439 s elapsed)
+[C101 (100)] start 45 (R3, paper) init obj 424.30 size 3 at 439 s
+[C101 (100)] start 45 (R3) local optimum 10339.25 size 45 after 868 iterations at 447 s
+[C101 (100)] start 45 (R3, paper) done after 868 iterations (447 s elapsed)
+[C101 (100)] start 46 (R3, paper) init obj 1011.08 size 4 at 447 s
+[C101 (100)] start 46 (R3) local optimum 9703.22 size 48 after 774 iterations at 456 s
+[C101 (100)] start 46 (R3, paper) done after 774 iterations (456 s elapsed)
+[C101 (100)] start 47 (R3, paper) init obj 947.28 size 4 at 456 s
+[C101 (100)] start 47 (R3) local optimum 10736.83 size 47 after 692 iterations at 463 s
+[C101 (100)] start 47 (R3, paper) done after 692 iterations (463 s elapsed)
+[C101 (100)] start 48 (R3, paper) init obj 621.69 size 4 at 463 s
+[C101 (100)] start 48 (R3) local optimum 9879.83 size 48 after 1004 iterations at 476 s
+[C101 (100)] start 48 (R3, paper) done after 1004 iterations (476 s elapsed)
+[C101 (100)] start 49 (R3, paper) init obj 249.54 size 2 at 476 s
+[C101 (100)] start 49 (R3) local optimum 10305.28 size 46 after 941 iterations at 483 s
+[C101 (100)] start 49 (R3, paper) done after 941 iterations (483 s elapsed)
+[C101 (100)] start 50 (R3, paper) init obj 474.99 size 3 at 483 s
+[C101 (100)] start 50 (R3) local optimum 9730.44 size 48 after 685 iterations at 490 s
+[C101 (100)] start 50 (R3, paper) done after 685 iterations (490 s elapsed)
+[C101 (100)] start 51 (R3, paper) init obj 657.74 size 4 at 490 s
+[C101 (100)] start 51 (R3) local optimum 10324.77 size 49 after 689 iterations at 497 s
+[C101 (100)] start 51 (R3, paper) done after 689 iterations (497 s elapsed)
+[C101 (100)] start 52 (R3, paper) init obj 629.71 size 4 at 497 s
+[C101 (100)] start 52 (R3) local optimum 10652.30 size 47 after 513 iterations at 505 s
+[C101 (100)] start 52 (R3, paper) done after 513 iterations (505 s elapsed)
+[C101 (100)] start 53 (R3, paper) init obj 581.11 size 4 at 505 s
+[C101 (100)] start 53 (R3) local optimum 9764.38 size 47 after 814 iterations at 512 s
+[C101 (100)] start 53 (R3, paper) done after 814 iterations (512 s elapsed)
+[C101 (100)] start 54 (R3, paper) init obj 552.29 size 4 at 512 s
+[C101 (100)] start 54 (R3) local optimum 10707.52 size 47 after 920 iterations at 522 s
+[C101 (100)] start 54 (R3, paper) done after 920 iterations (522 s elapsed)
+[C101 (100)] start 55 (R3, paper) init obj 453.81 size 4 at 522 s
+[C101 (100)] start 55 (R3) local optimum 10077.25 size 46 after 903 iterations at 531 s
+[C101 (100)] start 55 (R3, paper) done after 903 iterations (531 s elapsed)
+[C101 (100)] start 56 (R3, paper) init obj 511.68 size 4 at 531 s
+[C101 (100)] start 56 (R3) local optimum 10078.08 size 50 after 625 iterations at 538 s
+[C101 (100)] start 56 (R3, paper) done after 625 iterations (538 s elapsed)
+[C101 (100)] start 57 (R3, paper) init obj 548.36 size 4 at 538 s
+[C101 (100)] start 57 (R3) local optimum 10802.33 size 46 after 1184 iterations at 550 s
+[C101 (100)] start 57 (R3, paper) done after 1184 iterations (550 s elapsed)
+[C101 (100)] start 58 (R3, paper) init obj 649.74 size 4 at 550 s
+[C101 (100)] start 58 (R3) local optimum 10478.90 size 45 after 883 iterations at 560 s
+[C101 (100)] start 58 (R3, paper) done after 883 iterations (560 s elapsed)
+[C101 (100)] start 59 (R3, paper) init obj 563.40 size 4 at 560 s
+[C101 (100)] start 59 (R3) local optimum 9428.25 size 48 after 567 iterations at 567 s
+[C101 (100)] start 59 (R3, paper) done after 567 iterations (567 s elapsed)
+[C101 (100)] start 60 (R3, paper) init obj 842.13 size 4 at 567 s
+[C101 (100)] start 60 (R3) local optimum 10888.46 size 47 after 825 iterations at 578 s
+[C101 (100)] start 60 (R3, paper) done after 825 iterations (578 s elapsed)
+[C101 (100)] start 61 (R3, paper) init obj 688.01 size 4 at 578 s
+[C101 (100)] start 61 (R3) local optimum 10200.35 size 48 after 885 iterations at 586 s
+[C101 (100)] start 61 (R3, paper) done after 885 iterations (586 s elapsed)
+[C101 (100)] start 62 (R3, paper) init obj 453.80 size 4 at 586 s
+[C101 (100)] start 62 (R3) local optimum 10259.04 size 50 after 885 iterations at 596 s
+[C101 (100)] start 62 (R3, paper) done after 885 iterations (596 s elapsed)
+[C101 (100)] start 63 (R3, paper) init obj 1060.43 size 4 at 596 s
+[C101 (100)] start 63 (R3) local optimum 9609.65 size 45 after 618 iterations at 602 s
+[C101 (100)] start 63 (R3, paper) done after 618 iterations (602 s elapsed)
+[C101 (100)] start 64 (R3, paper) init obj 955.97 size 4 at 602 s
+[C101 (100)] start 64 (R3) local optimum 10458.05 size 49 after 695 iterations at 611 s
+[C101 (100)] start 64 (R3, paper) done after 695 iterations (611 s elapsed)
+[C101 (100)] start 65 (R3, paper) init obj 424.30 size 3 at 611 s
+[C101 (100)] start 65 (R3) local optimum 10484.50 size 46 after 783 iterations at 622 s
+[C101 (100)] start 65 (R3, paper) done after 783 iterations (622 s elapsed)
+[C101 (100)] start 66 (R3, paper) init obj 595.15 size 4 at 622 s
+[C101 (100)] start 66 (R3) local optimum 10460.69 size 44 after 869 iterations at 628 s
+[C101 (100)] start 66 (R3, paper) done after 869 iterations (628 s elapsed)
+[C101 (100)] start 67 (R3, paper) init obj 1126.67 size 4 at 628 s
+[C101 (100)] start 67 (R3) local optimum 9740.08 size 45 after 666 iterations at 636 s
+[C101 (100)] start 67 (R3, paper) done after 666 iterations (636 s elapsed)
+[C101 (100)] start 68 (R3, paper) init obj 786.40 size 4 at 636 s
+[C101 (100)] start 68 (R3) local optimum 9714.71 size 48 after 1111 iterations at 647 s
+[C101 (100)] start 68 (R3, paper) done after 1111 iterations (647 s elapsed)
+[C101 (100)] start 69 (R3, paper) init obj 590.93 size 4 at 647 s
+[C101 (100)] start 69 (R3) local optimum 10055.64 size 47 after 1014 iterations at 656 s
+[C101 (100)] start 69 (R3, paper) done after 1014 iterations (656 s elapsed)
+[C101 (100)] start 70 (R3, paper) init obj 443.90 size 4 at 656 s
+[C101 (100)] start 70 (R3) local optimum 9751.54 size 44 after 882 iterations at 667 s
+[C101 (100)] start 70 (R3, paper) done after 882 iterations (667 s elapsed)
+[C101 (100)] start 71 (R3, paper) init obj 846.62 size 4 at 667 s
+[C101 (100)] start 71 (R3) local optimum 9901.77 size 44 after 1182 iterations at 679 s
+[C101 (100)] start 71 (R3, paper) done after 1182 iterations (679 s elapsed)
+[C101 (100)] start 72 (R3, paper) init obj 975.92 size 4 at 679 s
+[C101 (100)] start 72 (R3) local optimum 10322.70 size 46 after 1187 iterations at 694 s
+[C101 (100)] start 72 (R3, paper) done after 1187 iterations (694 s elapsed)
+[C101 (100)] start 73 (R3, paper) init obj 1334.34 size 4 at 694 s
+[C101 (100)] start 73 (R3) local optimum 10565.66 size 45 after 1176 iterations at 706 s
+[C101 (100)] start 73 (R3, paper) done after 1176 iterations (706 s elapsed)
+[C101 (100)] start 74 (R3, paper) init obj 418.11 size 4 at 706 s
+[C101 (100)] start 74 (R3) local optimum 10252.61 size 50 after 566 iterations at 713 s
+[C101 (100)] start 74 (R3, paper) done after 566 iterations (713 s elapsed)
+[C101 (100)] start 75 (R3, paper) init obj 574.24 size 4 at 713 s
+[C101 (100)] start 75 (R3) local optimum 10536.21 size 45 after 1318 iterations at 727 s
+[C101 (100)] start 75 (R3, paper) done after 1318 iterations (727 s elapsed)
+[C101 (100)] start 76 (R3, paper) init obj 408.75 size 4 at 727 s
+[C101 (100)] start 76 (R3) local optimum 10841.23 size 47 after 993 iterations at 737 s
+[C101 (100)] start 76 (R3, paper) done after 993 iterations (737 s elapsed)
+[C101 (100)] start 77 (R3, paper) init obj 451.89 size 4 at 737 s
+[C101 (100)] start 77 (R3) local optimum 9460.16 size 47 after 663 iterations at 748 s
+[C101 (100)] start 77 (R3, paper) done after 663 iterations (748 s elapsed)
+[C101 (100)] start 78 (R3, paper) init obj 475.07 size 4 at 748 s
+[C101 (100)] start 78 (R3) local optimum 10262.46 size 43 after 706 iterations at 755 s
+[C101 (100)] start 78 (R3, paper) done after 706 iterations (755 s elapsed)
+[C101 (100)] start 79 (R3, paper) init obj 657.74 size 3 at 755 s
+[C101 (100)] start 79 (R3) local optimum 10033.23 size 47 after 849 iterations at 765 s
+[C101 (100)] start 79 (R3, paper) done after 849 iterations (765 s elapsed)
+[C101 (100)] start 80 (R3, paper) init obj 542.89 size 4 at 765 s
+[C101 (100)] start 80 (R3) local optimum 10527.59 size 48 after 1242 iterations at 780 s
+[C101 (100)] start 80 (R3, paper) done after 1242 iterations (780 s elapsed)
+[C101 (100)] start 81 (R3, paper) init obj 733.77 size 4 at 780 s
+[C101 (100)] start 81 (R3) local optimum 10075.15 size 46 after 1511 iterations at 794 s
+[C101 (100)] start 81 (R3, paper) done after 1511 iterations (794 s elapsed)
+[C101 (100)] start 82 (R3, paper) init obj 389.70 size 4 at 794 s
+[C101 (100)] start 82 (R3) local optimum 9843.14 size 50 after 1132 iterations at 805 s
+[C101 (100)] start 82 (R3, paper) done after 1132 iterations (805 s elapsed)
+[C101 (100)] start 83 (R3, paper) init obj 976.32 size 4 at 805 s
+[C101 (100)] start 83 (R3) local optimum 9895.82 size 47 after 1108 iterations at 813 s
+[C101 (100)] start 83 (R3, paper) done after 1108 iterations (813 s elapsed)
+[C101 (100)] start 84 (R3, paper) init obj 429.52 size 4 at 813 s
+[C101 (100)] start 84 (R3) local optimum 10307.90 size 49 after 924 iterations at 823 s
+[C101 (100)] start 84 (R3, paper) done after 924 iterations (823 s elapsed)
+[C101 (100)] start 85 (R3, paper) init obj 935.44 size 4 at 823 s
+[C101 (100)] start 85 (R3) local optimum 9416.72 size 46 after 1000 iterations at 832 s
+[C101 (100)] start 85 (R3, paper) done after 1000 iterations (832 s elapsed)
+[C101 (100)] start 86 (R3, paper) init obj 411.52 size 4 at 832 s
+[C101 (100)] start 86 (R3) local optimum 9803.34 size 46 after 1054 iterations at 843 s
+[C101 (100)] start 86 (R3, paper) done after 1054 iterations (843 s elapsed)
+[C101 (100)] start 87 (R3, paper) init obj 336.92 size 3 at 843 s
+[C101 (100)] start 87 (R3) local optimum 9585.60 size 40 after 551 iterations at 849 s
+[C101 (100)] start 87 (R3, paper) done after 551 iterations (849 s elapsed)
+[C101 (100)] start 88 (R3, paper) init obj 818.50 size 4 at 849 s
+[C101 (100)] start 88 (R3) local optimum 9117.72 size 45 after 1199 iterations at 857 s
+[C101 (100)] start 88 (R3, paper) done after 1199 iterations (857 s elapsed)
+[C101 (100)] start 89 (R3, paper) init obj 1143.85 size 4 at 857 s
+[C101 (100)] start 89 (R3) local optimum 9981.03 size 46 after 822 iterations at 866 s
+[C101 (100)] start 89 (R3, paper) done after 822 iterations (866 s elapsed)
+[C101 (100)] start 90 (R3, paper) init obj 671.64 size 4 at 866 s
+[C101 (100)] start 90 (R3) local optimum 10125.06 size 46 after 914 iterations at 878 s
+[C101 (100)] start 90 (R3, paper) done after 914 iterations (878 s elapsed)
+[C101 (100)] start 91 (R3, paper) init obj 482.98 size 3 at 878 s
+[C101 (100)] start 91 (R3) local optimum 10473.94 size 48 after 1014 iterations at 889 s
+[C101 (100)] start 91 (R3, paper) done after 1014 iterations (889 s elapsed)
+[C101 (100)] start 92 (R3, paper) init obj 592.78 size 4 at 889 s
+[C101 (100)] start 92 (R3) local optimum 9655.55 size 48 after 446 iterations at 893 s
+[C101 (100)] start 92 (R3, paper) done after 446 iterations (893 s elapsed)
+[C101 (100)] start 93 (R3, paper) init obj 1065.80 size 4 at 893 s
+[C101 (100)] start 93 (R3) local optimum 10361.13 size 50 after 1266 iterations at 901 s
+[C101 (100)] start 93 (R3, paper) done after 1266 iterations (901 s elapsed)
+[C101 (100)] start 94 (R3, paper) init obj 802.19 size 4 at 901 s
+[C101 (100)] start 94 (R3) local optimum 9046.31 size 45 after 912 iterations at 910 s
+[C101 (100)] start 94 (R3, paper) done after 912 iterations (910 s elapsed)
+[C101 (100)] start 95 (R3, paper) init obj 617.65 size 4 at 910 s
+[C101 (100)] start 95 (R3) local optimum 10541.20 size 45 after 745 iterations at 921 s
+[C101 (100)] start 95 (R3, paper) done after 745 iterations (921 s elapsed)
+[C101 (100)] start 96 (R3, paper) init obj 740.74 size 4 at 921 s
+[C101 (100)] start 96 (R3) local optimum 10199.00 size 46 after 620 iterations at 927 s
+[C101 (100)] start 96 (R3, paper) done after 620 iterations (927 s elapsed)
+[C101 (100)] start 97 (R3, paper) init obj 422.03 size 4 at 927 s
+[C101 (100)] start 97 (R3) local optimum 9528.24 size 47 after 633 iterations at 932 s
+[C101 (100)] start 97 (R3, paper) done after 633 iterations (932 s elapsed)
+[C101 (100)] start 98 (R3, paper) init obj 536.84 size 4 at 933 s
+[C101 (100)] start 98 (R3) local optimum 10464.36 size 48 after 733 iterations at 941 s
+[C101 (100)] start 98 (R3, paper) done after 733 iterations (941 s elapsed)
+[C101 (100)] start 99 (R3, paper) init obj 436.89 size 4 at 941 s
+[C101 (100)] start 99 (R3) local optimum 9916.12 size 46 after 768 iterations at 946 s
+[C101 (100)] start 99 (R3, paper) done after 768 iterations (946 s elapsed)
+
+[C101 (100)] FINISHED  100 local optima  total 946 s  best 11076.91
+    start 0 (R4): 9402.24 at 9 s
+    start 1 (R3): 9049.67 at 19 s
+    start 2 (R3): 10114.49 at 31 s
+    start 3 (R3): 9759.36 at 42 s
+    start 4 (R3): 9552.51 at 51 s
+    start 5 (R3): 10754.16 at 61 s
+    start 6 (R3): 10959.51 at 71 s
+    start 7 (R3): 10428.85 at 80 s
+    start 8 (R3): 10616.56 at 89 s
+    start 9 (R3): 10090.70 at 106 s
+    start 10 (R3): 10070.71 at 115 s
+    start 11 (R3): 10985.14 at 126 s
+    start 12 (R3): 9186.20 at 135 s
+    start 13 (R3): 9840.82 at 140 s
+    start 14 (R3): 10342.98 at 150 s
+    start 15 (R3): 8881.44 at 158 s
+    start 16 (R3): 10537.78 at 173 s
+    start 17 (R3): 9766.48 at 181 s
+    start 18 (R3): 10163.75 at 189 s
+    start 19 (R3): 10348.58 at 197 s
+    start 20 (R3): 10478.77 at 203 s
+    start 21 (R3): 10754.07 at 215 s
+    start 22 (R3): 10521.12 at 222 s
+    start 23 (R3): 10510.75 at 233 s
+    start 24 (R3): 9874.47 at 238 s
+    start 25 (R3): 10611.21 at 245 s
+    start 26 (R3): 10984.42 at 257 s
+    start 27 (R3): 10516.13 at 265 s
+    start 28 (R3): 9733.68 at 276 s
+    start 29 (R3): 10467.71 at 286 s
+    start 30 (R3): 10338.30 at 295 s
+    start 31 (R3): 10118.47 at 302 s
+    start 32 (R3): 10540.47 at 315 s
+    start 33 (R3): 10576.03 at 325 s
+    start 34 (R3): 10156.23 at 345 s
+    start 35 (R3): 10526.00 at 353 s
+    start 36 (R3): 10421.14 at 361 s
+    start 37 (R3): 10606.15 at 371 s
+    start 38 (R3): 9948.76 at 382 s
+    start 39 (R3): 10019.00 at 394 s
+    start 40 (R3): 10616.23 at 404 s
+    start 41 (R3): 8891.54 at 410 s
+    start 42 (R3): 9660.19 at 418 s
+    start 43 (R3): 11076.91 at 427 s
+    start 44 (R3): 10434.16 at 439 s
+    start 45 (R3): 10339.25 at 447 s
+    start 46 (R3): 9703.22 at 456 s
+    start 47 (R3): 10736.83 at 463 s
+    start 48 (R3): 9879.83 at 476 s
+    start 49 (R3): 10305.28 at 483 s
+    start 50 (R3): 9730.44 at 490 s
+    start 51 (R3): 10324.77 at 497 s
+    start 52 (R3): 10652.30 at 505 s
+    start 53 (R3): 9764.38 at 512 s
+    start 54 (R3): 10707.52 at 522 s
+    start 55 (R3): 10077.25 at 531 s
+    start 56 (R3): 10078.08 at 538 s
+    start 57 (R3): 10802.33 at 550 s
+    start 58 (R3): 10478.90 at 560 s
+    start 59 (R3): 9428.25 at 567 s
+    start 60 (R3): 10888.46 at 578 s
+    start 61 (R3): 10200.35 at 586 s
+    start 62 (R3): 10259.04 at 596 s
+    start 63 (R3): 9609.65 at 602 s
+    start 64 (R3): 10458.05 at 611 s
+    start 65 (R3): 10484.50 at 622 s
+    start 66 (R3): 10460.69 at 628 s
+    start 67 (R3): 9740.08 at 636 s
+    start 68 (R3): 9714.71 at 647 s
+    start 69 (R3): 10055.64 at 656 s
+    start 70 (R3): 9751.54 at 667 s
+    start 71 (R3): 9901.77 at 679 s
+    start 72 (R3): 10322.70 at 694 s
+    start 73 (R3): 10565.66 at 706 s
+    start 74 (R3): 10252.61 at 713 s
+    start 75 (R3): 10536.21 at 727 s
+    start 76 (R3): 10841.23 at 737 s
+    start 77 (R3): 9460.16 at 748 s
+    start 78 (R3): 10262.46 at 755 s
+    start 79 (R3): 10033.23 at 765 s
+    start 80 (R3): 10527.59 at 780 s
+    start 81 (R3): 10075.15 at 794 s
+    start 82 (R3): 9843.14 at 805 s
+    start 83 (R3): 9895.82 at 813 s
+    start 84 (R3): 10307.90 at 823 s
+    start 85 (R3): 9416.72 at 832 s
+    start 86 (R3): 9803.34 at 843 s
+    start 87 (R3): 9585.60 at 849 s
+    start 88 (R3): 9117.72 at 857 s
+    start 89 (R3): 9981.03 at 866 s
+    start 90 (R3): 10125.06 at 878 s
+    start 91 (R3): 10473.94 at 889 s
+    start 92 (R3): 9655.55 at 893 s
+    start 93 (R3): 10361.13 at 901 s
+    start 94 (R3): 9046.31 at 910 s
+    start 95 (R3): 10541.20 at 921 s
+    start 96 (R3): 10199.00 at 927 s
+    start 97 (R3): 9528.24 at 932 s
+    start 98 (R3): 10464.36 at 941 s
+    start 99 (R3): 9916.12 at 946 s
+Wrote experiments/tm_ils_c101_100_noshake_c101_100_trace.csv / _summary.csv / _trace.png

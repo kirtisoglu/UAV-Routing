@@ -81,10 +81,12 @@ def universal_proposal(state):
         methods = [swap_two_nodes, swap_two_opt, remove_random_node]
     
     chosen = random.choice(methods)
-    
+
     # 3. Apply and return a new state
     new_route = chosen(current_route, available_nodes)
-    return state.flip(route_to_nx(new_route))
+    new_state = state.flip(route_to_nx(new_route))
+    new_state.last_operator = chosen.__name__
+    return new_state
 
 
 def random_flip_with_tabu(state, tabu_set: set):
@@ -131,12 +133,14 @@ def random_flip_with_tabu(state, tabu_set: set):
         methods = [swap_two_nodes, swap_two_opt]
     
     chosen = random.choice(methods)
-    
+
     # Apply method (now passing the route list for speed where possible)
     new_route = chosen(current_route, available_nodes)
-    
+
     # Convert list back to graph only once
-    return state.flip(route_to_nx(new_route))
+    new_state = state.flip(route_to_nx(new_route))
+    new_state.last_operator = chosen.__name__
+    return new_state
 
 
 
@@ -169,8 +173,10 @@ def perturb_state(state, k_remove: int, current_iteration: int, tabu_tenure: int
     
     new_route = [n for n in route if n not in nodes_to_remove]
     new_tabu_entries = {n: current_iteration + tabu_tenure for n in nodes_to_remove}
-    
-    return state.flip(route_to_nx(new_route)), new_tabu_entries
+
+    new_state = state.flip(route_to_nx(new_route))
+    new_state.last_operator = "perturbation"
+    return new_state, new_tabu_entries
 
 
 

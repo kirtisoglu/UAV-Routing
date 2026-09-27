@@ -1,0 +1,2 @@
+instance,budget_s,best_obj,best_wall_s,best_iter,tour_size,starts,target,t_beat_target_s,socp_calls,cache_feas,cache_infeas,lb_reject,kicks,best_route
+C101 (50),14400.0,8591.9187,127.8,7490,42,1,,,10372,7463,0,0,115,0-43-32-20-3-13-17-24-42-33-25-7-41-31-40-35-27-8-19-10-15-37-46-38-30-16-9-28-39-14-12-6-26-36-34-23-50-22-2-21-1-49-47

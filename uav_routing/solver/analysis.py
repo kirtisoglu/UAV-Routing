@@ -371,14 +371,27 @@ def _gap_callback(model, where):
 
     Attaches to model._gap_log, which must be initialized as an empty list
     before calling model.optimize(callback=_gap_callback).
+
+    Records a new point only when the gap changes by >= 0.01 percentage
+    points OR at least 0.5 s has elapsed since the last logged point.
+    Without this filter the callback fires on every MIP poll and produces
+    millions of duplicate entries per hour of solve time.
     """
-    if where == GRB.Callback.MIP:
-        runtime = model.cbGet(GRB.Callback.RUNTIME)
-        obj_best = model.cbGet(GRB.Callback.MIP_OBJBST)
-        obj_bound = model.cbGet(GRB.Callback.MIP_OBJBND)
-        if obj_best < GRB.INFINITY and abs(obj_best) > 1e-10:
-            gap = abs(obj_bound - obj_best) / abs(obj_best)
-            model._gap_log.append((runtime, gap * 100))
+    if where != GRB.Callback.MIP:
+        return
+    obj_best = model.cbGet(GRB.Callback.MIP_OBJBST)
+    if obj_best >= GRB.INFINITY or abs(obj_best) <= 1e-10:
+        return
+    obj_bound = model.cbGet(GRB.Callback.MIP_OBJBND)
+    runtime   = model.cbGet(GRB.Callback.RUNTIME)
+    gap_pct   = abs(obj_bound - obj_best) / abs(obj_best) * 100
+
+    log = model._gap_log
+    if log:
+        t_prev, g_prev = log[-1]
+        if abs(gap_pct - g_prev) < 0.01 and (runtime - t_prev) < 0.5:
+            return
+    log.append((runtime, gap_pct))
 
 
 def solve_with_gap_log(instance, seed, time_limit, env, no_loiter=False):
@@ -422,13 +435,9 @@ def solve_with_gap_log(instance, seed, time_limit, env, no_loiter=False):
         w = mdl.addVars(N, vtype=GRB.BINARY, name='w')
         a = mdl.addVars(N, lb=0, ub=T_max, vtype=GRB.CONTINUOUS, name='a')
 
-        obj = gp.quicksum(
-            graph.nodes[i]['info_at_lowest'] * w[i] +
-            graph.nodes[i]['info_slope'] * t_norm * (
-                a[i] - graph.nodes[i]['time_window'][0] / t_norm * w[i])
-            for i in N
-        )
-        mdl.setObjective(obj, GRB.MAXIMIZE)
+        # Objective is set AFTER total_energy is built (see below) so we can
+        # attach the same -1e-5 * total_energy tie-breaker used in
+        # uav_routing/solver/exact.py. Keep both files in sync.
 
         mdl.addConstr(w[base] == 1, name='start_at_depot')
         for i in N:
@@ -468,6 +477,19 @@ def solve_with_gap_log(instance, seed, time_limit, env, no_loiter=False):
             c1_n * y[i, j] + c2_n * z[i, j] for (i, j) in E
         )
         mdl.addConstr(total_energy <= instance.eta, name='energy_budget')
+
+        # Same objective as uav_routing/solver/exact.py:
+        # information reward minus a tiny tie-breaker on total energy. The
+        # 1e-5 weight is large enough to be non-negligible but orders of
+        # magnitude smaller than any per-node info contribution, so it
+        # only affects optima within an info-equivalence class.
+        obj = gp.quicksum(
+            graph.nodes[i]['info_at_lowest'] * w[i] +
+            graph.nodes[i]['info_slope'] * t_norm * (
+                a[i] - graph.nodes[i]['time_window'][0] / t_norm * w[i])
+            for i in N
+        ) - 0.00001 * total_energy
+        mdl.setObjective(obj, GRB.MAXIMIZE)
         mdl.update()
 
         # Attach gap log and solve with callback

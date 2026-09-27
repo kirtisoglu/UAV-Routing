@@ -1,0 +1,144 @@
+[plan] 126 runs, 6 at a time, 600s each, fixed speed
+[saved 1/126] R101 (50) d3/s1: obj=10540.63 tour=9
+[saved 2/126] R101 (50) d3/s0: obj=10540.63 tour=9
+[saved 3/126] R101 (50) d3/s2: obj=10540.63 tour=9
+[saved 4/126] R101 (50) d6/s1: obj=10540.63 tour=9
+[saved 5/126] R101 (50) d6/s0: obj=10540.63 tour=9
+[saved 6/126] R101 (50) d6/s2: obj=10540.63 tour=9
+[saved 7/126] R101 (50) d12/s0: obj=10540.63 tour=9
+[saved 8/126] R101 (50) d12/s2: obj=10540.63 tour=9
+[saved 9/126] R101 (100) d3/s0: obj=19545.23 tour=15
+[saved 10/126] R101 (50) d12/s1: obj=10540.63 tour=9
+[saved 11/126] R101 (100) d3/s1: obj=19545.23 tour=15
+[saved 12/126] R101 (100) d3/s2: obj=19545.23 tour=15
+[saved 13/126] R101 (100) d6/s0: obj=19545.23 tour=15
+[saved 14/126] R101 (100) d6/s1: obj=19545.23 tour=15
+[saved 15/126] R101 (100) d6/s2: obj=19545.23 tour=15
+[saved 16/126] R101 (100) d12/s1: obj=19545.23 tour=15
+[saved 17/126] R101 (100) d12/s0: obj=19545.23 tour=15
+[saved 18/126] R101 (100) d12/s2: obj=19545.23 tour=15
+[saved 19/126] R1_2_1 (200) d3/s0: obj=14174.61 tour=27
+[saved 20/126] R1_2_1 (200) d6/s1: obj=14174.61 tour=27
+[saved 21/126] R1_2_1 (200) d6/s0: obj=14174.61 tour=27
+[saved 22/126] R1_2_1 (200) d3/s1: obj=14174.61 tour=27
+[saved 23/126] R1_2_1 (200) d3/s2: obj=14174.61 tour=27
+[saved 24/126] R1_2_1 (200) d6/s2: obj=14174.61 tour=27
+[saved 25/126] R1_2_1 (200) d12/s0: obj=14174.61 tour=27
+[saved 26/126] C101 (50) d3/s1: obj=7510.49 tour=36
+[saved 27/126] C101 (50) d3/s0: obj=7496.48 tour=36
+[saved 28/126] C101 (50) d3/s2: obj=7479.84 tour=36
+[saved 29/126] R1_2_1 (200) d12/s2: obj=14174.61 tour=27
+[saved 30/126] R1_2_1 (200) d12/s1: obj=14174.61 tour=27
+[saved 31/126] C101 (50) d6/s0: obj=7482.88 tour=36
+[saved 32/126] C101 (50) d12/s1: obj=7510.49 tour=36
+[saved 33/126] C101 (50) d12/s2: obj=7482.88 tour=36
+[saved 34/126] C101 (50) d12/s0: obj=7510.49 tour=36
+[saved 35/126] C101 (50) d6/s2: obj=7479.84 tour=36
+[saved 36/126] C101 (50) d6/s1: obj=7472.34 tour=36
+[saved 37/126] C101 (100) d3/s0: obj=9665.20 tour=38
+[saved 38/126] C101 (100) d6/s1: obj=9820.13 tour=41
+[saved 39/126] C101 (100) d3/s2: obj=9737.17 tour=40
+[saved 40/126] C101 (100) d3/s1: obj=9674.58 tour=39
+[saved 41/126] C101 (100) d6/s0: obj=9661.22 tour=40
+[saved 42/126] C101 (100) d6/s2: obj=9757.65 tour=40
+Python(35998) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[saved 43/126] C101 (100) d12/s0: obj=9749.34 tour=41
+Python(35999) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[saved 44/126] C101 (100) d12/s1: obj=9695.38 tour=41
+Python(36000) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(36001) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[saved 45/126] C101 (100) d12/s2: obj=9770.09 tour=40
+[saved 46/126] C1_2_1 (200) d3/s2: obj=9301.14 tour=36
+[saved 47/126] C1_2_1 (200) d3/s1: obj=9463.72 tour=42
+[saved 48/126] C1_2_1 (200) d3/s0: obj=9371.18 tour=45
+Python(36002) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(36003) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[saved 49/126] C1_2_1 (200) d6/s0: obj=9423.16 tour=46
+Python(36750) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[saved 50/126] C1_2_1 (200) d6/s2: obj=8723.67 tour=40
+[saved 51/126] C1_2_1 (200) d6/s1: obj=9262.04 tour=42
+[saved 52/126] C1_2_1 (200) d12/s1: obj=8726.88 tour=38
+Python(36752) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(36751) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(36753) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[saved 53/126] C1_2_1 (200) d12/s2: obj=9286.92 tour=43
+Python(36754) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[saved 54/126] C1_2_1 (200) d12/s0: obj=8632.68 tour=40
+Python(36755) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[resume] 54 runs on disk
+[plan] 72 runs, 6 at a time, 600s each, fixed speed
+[saved 1/72] RC1_2_1 (200) d3/s1: obj=15527.13 tour=34
+[saved 2/72] RC1_2_1 (200) d3/s2: obj=15569.65 tour=37
+[saved 3/72] RC1_2_1 (200) d6/s0: obj=15387.61 tour=34
+[saved 4/72] RC1_2_1 (200) d3/s0: obj=15657.38 tour=35
+[saved 5/72] RC1_2_1 (200) d6/s2: obj=15602.60 tour=37
+[saved 6/72] RC1_2_1 (200) d6/s1: obj=15420.11 tour=35
+[saved 7/72] RC1_2_1 (200) d12/s0: obj=15368.96 tour=34
+[saved 8/72] RC1_2_1 (200) d12/s1: obj=15506.57 tour=37
+[saved 9/72] R102 (100) d3/s1: obj=28728.43 tour=28
+[saved 10/72] RC1_2_1 (200) d12/s2: obj=15514.99 tour=36
+[saved 11/72] R102 (100) d3/s0: obj=28881.49 tour=27
+[saved 12/72] R102 (100) d3/s2: obj=28722.13 tour=27
+[saved 13/72] R102 (100) d6/s0: obj=28941.00 tour=27
+[saved 14/72] R102 (100) d6/s2: obj=28881.49 tour=27
+[saved 15/72] R102 (100) d12/s2: obj=28748.00 tour=27
+[saved 16/72] R102 (100) d12/s0: obj=28744.23 tour=27
+[saved 17/72] R102 (100) d6/s1: obj=28755.01 tour=27
+[saved 18/72] R102 (100) d12/s1: obj=28748.00 tour=27
+[saved 19/72] R104 (100) d3/s0: obj=35416.16 tour=36
+[saved 20/72] R104 (100) d3/s2: obj=35911.18 tour=35
+[saved 21/72] R104 (100) d3/s1: obj=35640.12 tour=33
+[saved 22/72] R104 (100) d6/s2: obj=35380.78 tour=32
+[saved 23/72] R104 (100) d6/s1: obj=35584.22 tour=35
+[saved 24/72] R104 (100) d6/s0: obj=35465.53 tour=35
+[saved 25/72] R104 (100) d12/s0: obj=34442.40 tour=38
+[saved 26/72] R104 (100) d12/s1: obj=35056.07 tour=38
+[saved 27/72] R104 (100) d12/s2: obj=35402.08 tour=35
+[saved 28/72] C104 (100) d3/s0: obj=17096.45 tour=91
+[saved 29/72] C104 (100) d3/s2: obj=17059.92 tour=91
+[saved 30/72] C104 (100) d3/s1: obj=17081.28 tour=91
+[saved 31/72] C104 (100) d6/s0: obj=17096.45 tour=91
+[saved 32/72] C104 (100) d6/s2: obj=16885.36 tour=89
+[saved 33/72] C104 (100) d6/s1: obj=17110.72 tour=91
+[saved 34/72] C104 (100) d12/s1: obj=16903.99 tour=92
+[saved 35/72] C104 (100) d12/s0: obj=17173.97 tour=91
+[saved 36/72] C104 (100) d12/s2: obj=16938.00 tour=91
+[saved 37/72] RC104 (100) d3/s0: obj=34276.55 tour=30
+[saved 38/72] RC104 (100) d3/s1: obj=34394.40 tour=29
+[saved 39/72] RC104 (100) d6/s0: obj=34405.65 tour=29
+[saved 40/72] RC104 (100) d6/s1: obj=34419.83 tour=30
+[saved 41/72] RC104 (100) d3/s2: obj=34276.55 tour=30
+[saved 42/72] RC104 (100) d6/s2: obj=33776.79 tour=30
+[saved 43/72] RC104 (100) d12/s0: obj=34003.11 tour=30
+[saved 44/72] RC104 (100) d12/s1: obj=34351.33 tour=29
+[saved 45/72] RC104 (100) d12/s2: obj=34394.40 tour=29
+[saved 46/72] PR11 (48) d3/s0: obj=5401.53 tour=26
+[saved 47/72] PR11 (48) d3/s2: obj=5415.58 tour=27
+[saved 48/72] PR11 (48) d3/s1: obj=5401.53 tour=26
+[saved 49/72] PR11 (48) d6/s0: obj=5427.62 tour=28
+[saved 50/72] PR11 (48) d6/s1: obj=5427.62 tour=28
+[saved 51/72] PR11 (48) d6/s2: obj=5401.53 tour=26
+[saved 52/72] PR11 (48) d12/s1: obj=5401.53 tour=26
+[saved 53/72] PR11 (48) d12/s0: obj=5401.53 tour=26
+[saved 54/72] PR11 (48) d12/s2: obj=5427.62 tour=28
+[saved 55/72] PR15 (240) d3/s0: obj=14874.51 tour=85
+[saved 56/72] PR15 (240) d3/s1: obj=14130.69 tour=77
+[saved 57/72] PR15 (240) d3/s2: obj=14024.56 tour=87
+[saved 58/72] PR15 (240) d6/s0: obj=14768.71 tour=85
+[saved 59/72] PR15 (240) d6/s1: obj=14448.34 tour=86
+[saved 60/72] PR15 (240) d6/s2: obj=14859.09 tour=82
+[saved 61/72] PR15 (240) d12/s0: obj=14788.75 tour=90
+[saved 62/72] PR15 (240) d12/s1: obj=14671.62 tour=83
+[saved 63/72] PR15 (240) d12/s2: obj=14530.17 tour=88
+[saved 64/72] PR10 (288) d3/s0: obj=12892.65 tour=60
+[saved 65/72] PR10 (288) d3/s1: obj=13284.86 tour=62
+[saved 66/72] PR10 (288) d3/s2: obj=12964.51 tour=63
+[saved 67/72] PR10 (288) d6/s0: obj=13057.55 tour=61
+[saved 68/72] PR10 (288) d6/s1: obj=13642.19 tour=67
+[saved 69/72] PR10 (288) d12/s0: obj=13281.23 tour=61
+[saved 70/72] PR10 (288) d6/s2: obj=12972.26 tour=57
+[saved 71/72] PR10 (288) d12/s2: obj=13218.35 tour=59
+[saved 72/72] PR10 (288) d12/s1: obj=13781.84 tour=68
+
+==============================================================
+DONE -> /Users/kirtisoglu/GitHub/UAV-Routing/paper_runs/results/capdiv_fixed.csv

@@ -19,7 +19,8 @@ class Graph(nx.Graph):
     Holds raw Solomon data. The instance itself is the graph. 
     Never stores scaled values. Calibration is always applied externally.
     """
-    def __init__(self, path: Optional[str] = None, seed: Optional[int] = None, slope: str = 'random', **kwargs):
+    def __init__(self, path: Optional[str] = None, seed: Optional[int] = None,
+                 slope: str = 'random', slope_strength: float = 1.0, **kwargs):
         """Build a complete graph from a Solomon-format text file.
 
         Parameters
@@ -30,16 +31,35 @@ class Graph(nx.Graph):
             Random seed for slope assignment.
         slope : str
             Information slope regime: 'random', 'positive', 'negative', or 'zero'.
+        slope_strength : float, default 1.0
+            Multiplier ``α`` on the slope sampling range. Slopes are drawn from
+            ``[-α · I_e/Δ, +α · I_e/Δ]`` (or its one-sided variants for
+            positive/negative regimes). After the symmetric calibration
+            (info × time_scale, slope unchanged), the slope-vs-baseline
+            dominance ratio at the TW close is
+
+                γΔ / I_e  ≈  α / 2.
+
+            ``α = 1`` (default) reproduces Eq.~(37) of the paper: slope
+            sampled in ``[-I_e/Δ, +I_e/Δ]``, so the reward at TW close
+            lies in ``[0, 2·I_e]`` and slope contributes ~0.5 × baseline.
+            Larger α gives slope more weight at the cost of MILP solver
+            time (slope creates a clearer top-k node ranking that the LP
+            relaxation can exploit). Smaller α makes slope a near-tiebreaker
+            (approaches classical OPTW). Use this knob to trade off slope
+            influence vs. tractability without re-touching the calibration.
         """
-        
+
         # Initialize the underlying nx.Graph structures
         super().__init__(**kwargs)
-        
+
+        self.slope_strength = float(slope_strength)
+
         if path is not None:
             node_dict, depot = data_to_dict(path)
             self.graph['base'] = int(depot)
             self._build_from_dict(node_dict)
-            
+
             if slope == 'random':
                 self._assign_info_slopes_randomly(seed=seed)
             elif slope == 'positive':
@@ -100,45 +120,49 @@ class Graph(nx.Graph):
     def _assign_info_slopes_positive(self, seed: int = None):
         """
         Assigns a positive random slope to each node, sampled uniformly
-        from [0, I_e / delta_t], so information can only grow over time.
+        from ``[0, α · I_e / Δ]`` where α = ``self.slope_strength``.
         """
         rng = random.Random(seed)
+        alpha = self.slope_strength
 
         for node_id, data in self.nodes(data=True):
             delta_t = data['time_window'][1] - data['time_window'][0]
             if delta_t == 0:
                 self.nodes[node_id]['info_slope'] = 0.0
             else:
-                slope_bound = data['info_at_lowest'] / delta_t
+                slope_bound = alpha * data['info_at_lowest'] / delta_t
                 self.nodes[node_id]['info_slope'] = rng.uniform(0, slope_bound)
 
     def _assign_info_slopes_negative(self, seed: int = None):
         """
         Assigns a negative random slope to each node, sampled uniformly
-        from [-I_e / delta_t, 0], so information can only decay over time.
+        from ``[-α · I_e / Δ, 0]`` where α = ``self.slope_strength``.
         """
         rng = random.Random(seed)
+        alpha = self.slope_strength
 
         for node_id, data in self.nodes(data=True):
             delta_t = data['time_window'][1] - data['time_window'][0]
             if delta_t == 0:
                 self.nodes[node_id]['info_slope'] = 0.0
             else:
-                slope_bound = data['info_at_lowest'] / delta_t
+                slope_bound = alpha * data['info_at_lowest'] / delta_t
                 self.nodes[node_id]['info_slope'] = rng.uniform(-slope_bound, 0)
 
     def _get_random_slope(self, node, time_window, info_at_lowest, seed):
         """
-        Calculates the boundary for the slope and returns a random 
-        value within that boundary uniformly to ensure 0 <= r_i <= 2*I_e.
+        Sample γ from ``[-α · I_e / Δ, +α · I_e / Δ]`` where α =
+        ``self.slope_strength``. With α = 1 the reward at TW close lies
+        in ``[0, 2 · I_e]``; with α < 1 the reward range shrinks (slope
+        becomes a tie-breaker rather than the dominant term).
         """
         delta_t = time_window[1] - time_window[0]
-        
+
         if delta_t == 0:
             print(f"Warning: Time window has zero duration for node {node} with time_window={time_window}. Setting slope to 0.")
             return 0.0
-        
-        slope_bound = info_at_lowest / delta_t
+
+        slope_bound = self.slope_strength * info_at_lowest / delta_t
         return seed.uniform(-slope_bound, slope_bound)
 
 

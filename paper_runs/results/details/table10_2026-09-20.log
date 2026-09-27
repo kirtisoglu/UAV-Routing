@@ -1,0 +1,18 @@
+[plan] variable: 14 runs, 1 at a time, 3600s each, theta=1000000000000
+[saved 1/14] R101 (50): obj=11921.13 tour=10 t_best=7
+[saved 2/14] R101 (100): obj=22884.32 tour=16 t_best=2
+[saved 3/14] R1_2_1 (200): obj=16949.90 tour=32 t_best=605
+[saved 4/14] C101 (50): obj=8591.92 tour=42 t_best=259
+[saved 5/14] C101 (100): obj=11209.37 tour=48 t_best=247
+[saved 6/14] C1_2_1 (200): obj=10969.99 tour=51 t_best=887
+[saved 7/14] RC1_2_1 (200): obj=17743.96 tour=38 t_best=2920
+[saved 8/14] R102 (100): obj=30957.94 tour=28 t_best=2961
+[saved 9/14] R104 (100): obj=37802.10 tour=36 t_best=413
+[saved 10/14] C104 (100): obj=18052.45 tour=94 t_best=2224
+[saved 11/14] RC104 (100): obj=36308.63 tour=32 t_best=1456
+[saved 12/14] PR11 (48): obj=6556.49 tour=34 t_best=969
+[saved 13/14] PR15 (240): obj=19266.23 tour=115 t_best=155
+[saved 14/14] PR10 (288): obj=16498.16 tour=78 t_best=519
+
+==============================================================
+DONE -> /Users/kirtisoglu/GitHub/UAV-Routing/paper_runs/results/ils_variable.csv

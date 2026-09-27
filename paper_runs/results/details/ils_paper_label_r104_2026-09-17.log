@@ -1,0 +1,8 @@
+[R104 (100)] start 0 (R4, paper) init obj 15524.42 size 10 at 4 s
+[R104 (100)] start 0 (R4, paper) done after 243678 iterations (600 s elapsed)
+
+[R104 (100)] FINISHED  budget 600 s  wall 600 s  starts 1
+[R104 (100)] best obj 36720.69  size 37  found at 516 s (iter 206540)
+[R104 (100)] counters: {'prop_add': 60659, 'label_excluded': 542180, 'socp_calls': 13719, 'accepted': 2067, 'acc_add': 802, 'prop_two_opt': 61085, 'worse': 11369, 'prop_replace': 60737, 'ts_reject': 14950, 'prop_swap': 60973, 'acc_swap': 429, 'acc_two_opt': 395, 'acc_replace': 441, 'cache_excluded': 3543633, 'saturated': 215009, 'kicks': 224, 'socp_numeric_infeasible': 240, 'socp_infeas': 60, 'cache_feas': 2, 'chk1_fb_excluded': 0, 'chk2_cascade_rejected': 0, 'chk2_cascade_passed': 0}
+[R104 (100)] best route: [0, 27, 52, 18, 82, 48, 47, 19, 62, 88, 31, 1, 50, 79, 81, 33, 3, 68, 80, 12, 26, 21, 72, 73, 40, 13, 95, 97, 37, 93, 85, 91, 100, 98, 59, 96, 94, 6]
+Wrote experiments/tm_ils_r104_100_paperlabel_r104_trace.csv / _summary.csv / _trace.png

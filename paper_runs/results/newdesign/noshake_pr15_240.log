@@ -1,0 +1,163 @@
+[PR15 (240)] start 0 (R4, paper) init obj 2471.30 size 10 at 3 s
+[PR15 (240)] start 0 (R4) local optimum 14837.94 size 78 after 385 iterations at 14 s
+[PR15 (240)] start 0 (R4, paper) done after 385 iterations (14 s elapsed)
+[PR15 (240)] start 1 (R3, paper) init obj 717.72 size 4 at 14 s
+[PR15 (240)] start 1 (R3) local optimum 13545.37 size 69 after 475 iterations at 24 s
+[PR15 (240)] start 1 (R3, paper) done after 475 iterations (24 s elapsed)
+[PR15 (240)] start 2 (R3, paper) init obj 786.43 size 4 at 24 s
+[PR15 (240)] start 2 (R3) local optimum 14228.64 size 82 after 545 iterations at 37 s
+[PR15 (240)] start 2 (R3, paper) done after 545 iterations (37 s elapsed)
+[PR15 (240)] start 3 (R3, paper) init obj 302.22 size 4 at 37 s
+[PR15 (240)] start 3 (R3) local optimum 12646.10 size 70 after 439 iterations at 50 s
+[PR15 (240)] start 3 (R3, paper) done after 439 iterations (50 s elapsed)
+[PR15 (240)] start 4 (R3, paper) init obj 736.64 size 4 at 50 s
+[PR15 (240)] start 4 (R3) local optimum 14824.20 size 83 after 327 iterations at 59 s
+[PR15 (240)] start 4 (R3, paper) done after 327 iterations (59 s elapsed)
+[PR15 (240)] start 5 (R3, paper) init obj 701.44 size 4 at 59 s
+[PR15 (240)] start 5 (R3) local optimum 13681.14 size 82 after 786 iterations at 83 s
+[PR15 (240)] start 5 (R3, paper) done after 786 iterations (83 s elapsed)
+[PR15 (240)] start 6 (R3, paper) init obj 683.13 size 4 at 83 s
+[PR15 (240)] start 6 (R3) local optimum 14440.98 size 77 after 609 iterations at 98 s
+[PR15 (240)] start 6 (R3, paper) done after 609 iterations (98 s elapsed)
+[PR15 (240)] start 7 (R3, paper) init obj 873.80 size 4 at 98 s
+[PR15 (240)] start 7 (R3) local optimum 15807.55 size 86 after 660 iterations at 118 s
+[PR15 (240)] start 7 (R3, paper) done after 660 iterations (118 s elapsed)
+[PR15 (240)] start 8 (R3, paper) init obj 610.38 size 4 at 118 s
+[PR15 (240)] start 8 (R3) local optimum 12422.47 size 68 after 428 iterations at 126 s
+[PR15 (240)] start 8 (R3, paper) done after 428 iterations (126 s elapsed)
+[PR15 (240)] start 9 (R3, paper) init obj 657.71 size 4 at 126 s
+[PR15 (240)] start 9 (R3) local optimum 14522.71 size 76 after 403 iterations at 137 s
+[PR15 (240)] start 9 (R3, paper) done after 403 iterations (137 s elapsed)
+[PR15 (240)] start 10 (R3, paper) init obj 600.83 size 4 at 137 s
+[PR15 (240)] start 10 (R3) local optimum 14636.21 size 79 after 1277 iterations at 166 s
+[PR15 (240)] start 10 (R3, paper) done after 1277 iterations (166 s elapsed)
+[PR15 (240)] start 11 (R3, paper) init obj 541.79 size 4 at 166 s
+[PR15 (240)] start 11 (R3) local optimum 16559.20 size 90 after 946 iterations at 191 s
+[PR15 (240)] start 11 (R3, paper) done after 946 iterations (191 s elapsed)
+[PR15 (240)] start 12 (R3, paper) init obj 887.85 size 4 at 191 s
+[PR15 (240)] start 12 (R3) local optimum 15305.13 size 81 after 480 iterations at 205 s
+[PR15 (240)] start 12 (R3, paper) done after 480 iterations (205 s elapsed)
+[PR15 (240)] start 13 (R3, paper) init obj 121.60 size 4 at 205 s
+[PR15 (240)] start 13 (R3) local optimum 15625.34 size 84 after 426 iterations at 216 s
+[PR15 (240)] start 13 (R3, paper) done after 426 iterations (216 s elapsed)
+[PR15 (240)] start 14 (R3, paper) init obj 1138.33 size 4 at 216 s
+[PR15 (240)] start 14 (R3) local optimum 14424.95 size 86 after 721 iterations at 239 s
+[PR15 (240)] start 14 (R3, paper) done after 721 iterations (239 s elapsed)
+[PR15 (240)] start 15 (R3, paper) init obj 753.66 size 4 at 239 s
+[PR15 (240)] start 15 (R3) local optimum 15043.45 size 85 after 706 iterations at 262 s
+[PR15 (240)] start 15 (R3, paper) done after 706 iterations (262 s elapsed)
+[PR15 (240)] start 16 (R3, paper) init obj 1052.80 size 4 at 262 s
+[PR15 (240)] start 16 (R3) local optimum 13886.97 size 79 after 703 iterations at 278 s
+[PR15 (240)] start 16 (R3, paper) done after 703 iterations (278 s elapsed)
+[PR15 (240)] start 17 (R3, paper) init obj 848.50 size 4 at 278 s
+[PR15 (240)] start 17 (R3) local optimum 15755.49 size 93 after 504 iterations at 297 s
+[PR15 (240)] start 17 (R3, paper) done after 504 iterations (297 s elapsed)
+[PR15 (240)] start 18 (R3, paper) init obj 614.81 size 4 at 297 s
+[PR15 (240)] start 18 (R3) local optimum 16027.22 size 87 after 617 iterations at 312 s
+[PR15 (240)] start 18 (R3, paper) done after 617 iterations (312 s elapsed)
+[PR15 (240)] start 19 (R3, paper) init obj 656.54 size 4 at 312 s
+[PR15 (240)] start 19 (R3) local optimum 13676.96 size 82 after 563 iterations at 327 s
+[PR15 (240)] start 19 (R3, paper) done after 563 iterations (327 s elapsed)
+[PR15 (240)] start 20 (R3, paper) init obj 1248.46 size 4 at 327 s
+[PR15 (240)] start 20 (R3) local optimum 15162.99 size 86 after 573 iterations at 345 s
+[PR15 (240)] start 20 (R3, paper) done after 573 iterations (345 s elapsed)
+[PR15 (240)] start 21 (R3, paper) init obj 351.41 size 4 at 345 s
+[PR15 (240)] start 21 (R3) local optimum 13414.03 size 73 after 494 iterations at 359 s
+[PR15 (240)] start 21 (R3, paper) done after 494 iterations (359 s elapsed)
+[PR15 (240)] start 22 (R3, paper) init obj 520.51 size 4 at 359 s
+[PR15 (240)] start 22 (R3) local optimum 13726.64 size 83 after 401 iterations at 369 s
+[PR15 (240)] start 22 (R3, paper) done after 401 iterations (369 s elapsed)
+[PR15 (240)] start 23 (R3, paper) init obj 900.12 size 4 at 369 s
+[PR15 (240)] start 23 (R3) local optimum 13691.71 size 73 after 593 iterations at 379 s
+[PR15 (240)] start 23 (R3, paper) done after 593 iterations (379 s elapsed)
+[PR15 (240)] start 24 (R3, paper) init obj 262.87 size 4 at 379 s
+[PR15 (240)] start 24 (R3) local optimum 14853.69 size 80 after 439 iterations at 390 s
+[PR15 (240)] start 24 (R3, paper) done after 439 iterations (390 s elapsed)
+[PR15 (240)] start 25 (R3, paper) init obj 652.70 size 4 at 390 s
+[PR15 (240)] start 25 (R3) local optimum 13949.21 size 74 after 687 iterations at 409 s
+[PR15 (240)] start 25 (R3, paper) done after 687 iterations (409 s elapsed)
+[PR15 (240)] start 26 (R3, paper) init obj 504.24 size 4 at 409 s
+[PR15 (240)] start 26 (R3) local optimum 13794.85 size 81 after 488 iterations at 422 s
+[PR15 (240)] start 26 (R3, paper) done after 488 iterations (422 s elapsed)
+[PR15 (240)] start 27 (R3, paper) init obj 534.76 size 4 at 422 s
+[PR15 (240)] start 27 (R3) local optimum 14366.78 size 79 after 574 iterations at 441 s
+[PR15 (240)] start 27 (R3, paper) done after 574 iterations (441 s elapsed)
+[PR15 (240)] start 28 (R3, paper) init obj 828.56 size 4 at 441 s
+[PR15 (240)] start 28 (R3) local optimum 12255.15 size 68 after 444 iterations at 452 s
+[PR15 (240)] start 28 (R3, paper) done after 444 iterations (452 s elapsed)
+[PR15 (240)] start 29 (R3, paper) init obj 883.17 size 4 at 452 s
+[PR15 (240)] start 29 (R3) local optimum 13815.88 size 74 after 711 iterations at 467 s
+[PR15 (240)] start 29 (R3, paper) done after 711 iterations (467 s elapsed)
+[PR15 (240)] start 30 (R3, paper) init obj 1091.10 size 4 at 467 s
+[PR15 (240)] start 30 (R3) local optimum 15859.83 size 90 after 394 iterations at 479 s
+[PR15 (240)] start 30 (R3, paper) done after 394 iterations (479 s elapsed)
+[PR15 (240)] start 31 (R3, paper) init obj 892.93 size 4 at 479 s
+[PR15 (240)] start 31 (R3) local optimum 12891.07 size 73 after 513 iterations at 487 s
+[PR15 (240)] start 31 (R3, paper) done after 513 iterations (487 s elapsed)
+[PR15 (240)] start 32 (R3, paper) init obj 577.32 size 4 at 487 s
+[PR15 (240)] start 32 (R3) local optimum 11379.67 size 75 after 730 iterations at 509 s
+[PR15 (240)] start 32 (R3, paper) done after 730 iterations (509 s elapsed)
+[PR15 (240)] start 33 (R3, paper) init obj 390.01 size 4 at 509 s
+[PR15 (240)] start 33 (R3) local optimum 14487.64 size 80 after 1946 iterations at 534 s
+[PR15 (240)] start 33 (R3, paper) done after 1946 iterations (534 s elapsed)
+[PR15 (240)] start 34 (R3, paper) init obj 638.84 size 4 at 534 s
+[PR15 (240)] start 34 (R3) local optimum 14296.23 size 81 after 607 iterations at 554 s
+[PR15 (240)] start 34 (R3, paper) done after 607 iterations (554 s elapsed)
+[PR15 (240)] start 35 (R3, paper) init obj 662.30 size 4 at 554 s
+[PR15 (240)] start 35 (R3) local optimum 14923.38 size 87 after 543 iterations at 571 s
+[PR15 (240)] start 35 (R3, paper) done after 543 iterations (571 s elapsed)
+[PR15 (240)] start 36 (R3, paper) init obj 976.58 size 4 at 571 s
+[PR15 (240)] start 36 (R3) local optimum 14817.39 size 86 after 688 iterations at 593 s
+[PR15 (240)] start 36 (R3, paper) done after 688 iterations (593 s elapsed)
+[PR15 (240)] start 37 (R3, paper) init obj 244.68 size 4 at 593 s
+[PR15 (240)] start 37 (R3) local optimum 14648.29 size 89 after 651 iterations at 617 s
+[PR15 (240)] start 37 (R3, paper) done after 651 iterations (617 s elapsed)
+[PR15 (240)] start 38 (R3, paper) init obj 936.02 size 4 at 617 s
+[PR15 (240)] start 38 (R3) local optimum 14992.27 size 88 after 819 iterations at 644 s
+[PR15 (240)] start 38 (R3, paper) done after 819 iterations (644 s elapsed)
+[PR15 (240)] start 39 (R3, paper) init obj 479.83 size 4 at 644 s
+[PR15 (240)] start 39 (R3) local optimum 14242.75 size 79 after 451 iterations at 658 s
+[PR15 (240)] start 39 (R3, paper) done after 451 iterations (658 s elapsed)
+[PR15 (240)] start 40 (R3, paper) init obj 553.38 size 4 at 658 s
+[PR15 (240)] start 40 (R3) local optimum 14935.59 size 90 after 521 iterations at 686 s
+[PR15 (240)] start 40 (R3, paper) done after 521 iterations (686 s elapsed)
+[PR15 (240)] start 41 (R3, paper) init obj 796.32 size 4 at 686 s
+[PR15 (240)] start 41 (R3) local optimum 13047.99 size 77 after 557 iterations at 702 s
+[PR15 (240)] start 41 (R3, paper) done after 557 iterations (702 s elapsed)
+[PR15 (240)] start 42 (R3, paper) init obj 743.84 size 4 at 702 s
+[PR15 (240)] start 42 (R3) local optimum 14132.36 size 81 after 614 iterations at 719 s
+[PR15 (240)] start 42 (R3, paper) done after 614 iterations (719 s elapsed)
+[PR15 (240)] start 43 (R3, paper) init obj 278.62 size 4 at 720 s
+[PR15 (240)] start 43 (R3) local optimum 14625.38 size 86 after 575 iterations at 743 s
+[PR15 (240)] start 43 (R3, paper) done after 575 iterations (743 s elapsed)
+[PR15 (240)] start 44 (R3, paper) init obj 879.07 size 4 at 743 s
+[PR15 (240)] start 44 (R3) local optimum 14828.18 size 86 after 505 iterations at 755 s
+[PR15 (240)] start 44 (R3, paper) done after 505 iterations (755 s elapsed)
+[PR15 (240)] start 45 (R3, paper) init obj 594.37 size 4 at 755 s
+[PR15 (240)] start 45 (R3) local optimum 12502.53 size 73 after 470 iterations at 765 s
+[PR15 (240)] start 45 (R3, paper) done after 470 iterations (765 s elapsed)
+[PR15 (240)] start 46 (R3, paper) init obj 1088.39 size 4 at 765 s
+[PR15 (240)] start 46 (R3) local optimum 12510.21 size 62 after 545 iterations at 777 s
+[PR15 (240)] start 46 (R3, paper) done after 545 iterations (777 s elapsed)
+[PR15 (240)] start 47 (R3, paper) init obj 876.34 size 4 at 777 s
+[PR15 (240)] start 47 (R3) local optimum 14646.73 size 82 after 476 iterations at 792 s
+[PR15 (240)] start 47 (R3, paper) done after 476 iterations (792 s elapsed)
+[PR15 (240)] start 48 (R3, paper) init obj 546.00 size 4 at 792 s
+[PR15 (240)] start 48 (R3) local optimum 13747.14 size 89 after 559 iterations at 809 s
+[PR15 (240)] start 48 (R3, paper) done after 559 iterations (809 s elapsed)
+[PR15 (240)] start 49 (R3, paper) init obj 317.52 size 4 at 809 s
+[PR15 (240)] start 49 (R3) local optimum 14890.13 size 84 after 803 iterations at 837 s
+[PR15 (240)] start 49 (R3, paper) done after 803 iterations (837 s elapsed)
+[PR15 (240)] start 50 (R3, paper) init obj 710.61 size 4 at 837 s
+[PR15 (240)] start 50 (R3) local optimum 14358.78 size 78 after 639 iterations at 849 s
+[PR15 (240)] start 50 (R3, paper) done after 639 iterations (849 s elapsed)
+[PR15 (240)] start 51 (R3, paper) init obj 722.21 size 4 at 850 s
+[PR15 (240)] start 51 (R3) local optimum 11976.37 size 68 after 763 iterations at 868 s
+[PR15 (240)] start 51 (R3, paper) done after 763 iterations (868 s elapsed)
+[PR15 (240)] start 52 (R3, paper) init obj 1416.70 size 4 at 868 s
+[PR15 (240)] start 52 (R3) local optimum 10733.17 size 60 after 415 iterations at 874 s
+[PR15 (240)] start 52 (R3, paper) done after 415 iterations (874 s elapsed)
+[PR15 (240)] start 53 (R3, paper) init obj 602.70 size 4 at 874 s
+[PR15 (240)] start 53 (R3) local optimum 11902.97 size 74 after 674 iterations at 893 s
+[PR15 (240)] start 53 (R3, paper) done after 674 iterations (893 s elapsed)
+[PR15 (240)] start 54 (R3, paper) init obj 1002.73 size 4 at 893 s

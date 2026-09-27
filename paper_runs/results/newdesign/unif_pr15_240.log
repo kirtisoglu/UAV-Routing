@@ -1,0 +1,10 @@
+[PR15 (240)] start 0 (R4, paper) init obj 2471.30 size 10 at 5 s
+[PR15 (240)] stopped by max_iter=15000 after 42636 iterations at 1056 s (best 18654.17 found at 952 s)
+[PR15 (240)] start 0 (R4, paper) done after 42636 iterations (1056 s elapsed)
+
+[PR15 (240)] FINISHED  budget 14400 s  wall 1056 s  starts 1  stopped by max_iter at 1056 s
+[PR15 (240)] best obj 18654.17  size 110  found at 952 s (iter 27636)
+[PR15 (240)] counters: {'prop_add': 10737, 'sets_built': 2576, 'label_excluded': 53343266, 'eval_add': 1201, 'socp_calls': 13499, 'accepted': 2394, 'acc_add': 1113, 'prop_replace': 10482, 'eval_replace': 4002, 'worse': 22833, 'worse_replace': 3610, 'prop_swap': 10603, 'eval_swap': 9767, 'acc_swap': 490, 'prop_two_opt': 10633, 'eval_two_opt': 10435, 'worse_two_opt': 9956, 'acc_two_opt': 459, 'cache_feas': 12341, 'cache_worse': 11911, 'floor_excluded': 1348855, 'worse_swap': 9257, 'acc_replace': 332, 'saturated': 17050, 'ts_reject': 176, 'reject_two_opt': 20, 'lo_total': 181, 'ref_improved': 21, 'kicks': 181, 'shake_returns': 110, 'lo_repeat': 50, 'worse_add': 10, 'reject_replace': 60, 'reject_add': 78, 'cache_excluded': 15, 'socp_numeric_infeasible': 2, 'reject_swap': 20, 'chk1_fb_excluded': 0, 'chk2_cascade_rejected': 0, 'chk2_cascade_passed': 0}
+[PR15 (240)] best route: [0, 235, 213, 132, 153, 143, 239, 215, 68, 47, 216, 40, 233, 218, 229, 196, 23, 163, 238, 18, 54, 165, 148, 59, 115, 125, 188, 151, 29, 102, 81, 55, 20, 80, 177, 197, 135, 28, 230, 83, 181, 66, 73, 24, 185, 112, 206, 9, 12, 32, 170, 166, 5, 145, 3, 10, 205, 107, 13, 156, 111, 175, 108, 118, 62, 77, 136, 113, 87, 49, 208, 240, 201, 123, 34, 99, 237, 43, 72, 221, 85, 182, 198, 64, 106, 30, 162, 207, 121, 212, 225, 100, 101, 35, 105, 227, 79, 141, 67, 119, 63, 127, 27, 122, 110, 2, 204, 179, 36, 133, 193]
+[PR15 (240)] route trace written
+Wrote experiments/tm_ils_pr15_240_unif_pr15_240_trace.csv / _summary.csv / _trace.png

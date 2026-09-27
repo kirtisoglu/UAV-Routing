@@ -214,25 +214,40 @@ def _callibrate_data(graph, spatial_scale, time_scale):
         New graph with calibrated attributes.
     """
     new_graph = graph.copy()
-    
-    # 1. Scale Time Windows and add info_slope based on the scaled time windows
+
+    # 1. Scale Time Windows and Information consistently.
+    #
+    # We treat the (time, info) plane as a single coordinate system. When we
+    # stretch the time axis by `time_scale`, we stretch the info axis by the
+    # SAME factor so the reward graph keeps its shape — every (time, info)
+    # point in raw units maps to (time*time_scale, info*time_scale) in
+    # calibrated units. Because the slope is rise-over-run, scaling both
+    # axes by the same factor leaves the slope NUMERICALLY UNCHANGED:
+    #
+    #   info_cal = info_raw * time_scale
+    #   tw_cal   = tw_raw   * time_scale
+    #   gamma_cal = gamma_raw          (units: info_cal / time_cal = info_raw / time_raw)
+    #
+    # This fixes the previous asymmetric scaling, in which info was left
+    # in raw Solomon units while the slope and time window were both
+    # multiplied by time_scale. That made the slope contribution
+    # gamma*Delta dominate the baseline I_e by a factor of time_scale**2/2,
+    # so the optimizer's node selection was driven almost entirely by
+    # slope and the baseline information became negligible.
     for node in graph.nodes:
         tw = graph.nodes[node]['time_window']
-        slope = graph.nodes[node]['info_slope']
-        scaled_tw = (tw[0] * time_scale, tw[1] * time_scale)
-        new_graph.nodes[node]['time_window'] = scaled_tw
-        new_slope = slope * time_scale
-        new_graph.nodes[node]['info_slope'] =  new_slope  
-        
-        if node == graph.graph['base']: continue
-        info_at_earliest  = new_graph.nodes[node]['info_at_lowest']
-        info_at_latest  = new_slope * (scaled_tw[1] - scaled_tw[0]) + info_at_earliest
-    
+        new_graph.nodes[node]['time_window'] = (tw[0] * time_scale, tw[1] * time_scale)
+        new_graph.nodes[node]['info_at_lowest'] = (
+            graph.nodes[node]['info_at_lowest'] * time_scale
+        )
+        # info_slope is unchanged: both axes scale by the same factor.
+        new_graph.nodes[node]['info_slope'] = graph.nodes[node]['info_slope']
+
     # 2. Scale Distances
     for edge in graph.edges:
         dist = graph.edges[edge]['distance']
         new_graph.edges[edge]['distance'] = dist * spatial_scale
-        
+
     return new_graph
 
 

@@ -1,0 +1,6 @@
+[PR15 (240)] start 0 (R4, paper) init obj 2471.30 size 10 at 9 s
+[PR15 (240)] best obj 18576.32  size 114  found at 444 s (iter 10427)
+[PR15 (240)] counters: {'prop_add': 3284, 'sets_built': 1261, 'label_excluded': 21506772, 'socp_calls': 6784, 'accepted': 1187, 'acc_add': 536, 'prop_replace': 3195, 'worse': 5518, 'prop_two_opt': 3316, 'acc_two_opt': 195, 'prop_swap': 3180, 'acc_swap': 240, 'acc_replace': 216, 'floor_excluded': 1440277, 'cache_excluded': 1959, 'ts_reject': 2330, 'socp_numeric_infeasible': 24, 'socp_infeas': 6, 'saturated': 3934, 'kicks': 73, 'chk1_fb_excluded': 0, 'chk2_cascade_rejected': 0, 'chk2_cascade_passed': 0}
+[R104 (100)] start 0 (R4, paper) init obj 15524.42 size 10 at 4 s
+[R104 (100)] best obj 36750.79  size 37  found at 94 s (iter 12954)
+[R104 (100)] counters: {'prop_add': 17236, 'sets_built': 4345, 'floor_excluded': 11622316, 'label_excluded': 64586, 'socp_calls': 23444, 'accepted': 3909, 'acc_add': 1591, 'prop_two_opt': 16885, 'worse': 18983, 'prop_replace': 17026, 'ts_reject': 28528, 'prop_swap': 16904, 'acc_swap': 742, 'acc_two_opt': 701, 'cache_excluded': 9337, 'acc_replace': 875, 'saturated': 16515, 'kicks': 436, 'socp_numeric_infeasible': 468, 'socp_infeas': 117, 'cache_feas': 3, 'chk1_fb_excluded': 0, 'chk2_cascade_rejected': 0, 'chk2_cascade_passed': 0}

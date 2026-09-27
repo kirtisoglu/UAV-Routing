@@ -1,0 +1,20 @@
+[R101 (100)] start 0 (R4, paper) init obj 8830.33 size 5 at 1 s
+[R101 (100)] FINISHED  budget 600 s  wall 600 s  starts 1
+[R101 (100)] best obj 22884.32  size 16  found at 9 s (iter 9040)
+[R101 (100)] counters: {'prop_add': 213974, 'socp_calls': 47229, 'accepted': 3206, 'acc_add': 1667, 'prop_two_opt': 214262, 'worse': 27883, 'prop_swap': 214007, 'cache_excluded': 9528519, 'saturated': 799561, 'ts_reject': 10425, 'prop_replace': 214156, 'acc_replace': 1068, 'socp_infeas': 15327, 'acc_two_opt': 234, 'kicks': 816, 'acc_swap': 237, 'socp_numeric_infeasible': 308, 'cache_feas': 64, 'chk1_fb_excluded': 0, 'chk2_cascade_rejected': 0, 'chk2_cascade_passed': 0}
+[C101 (100)] start 0 (R4, paper) init obj 3776.53 size 10 at 2 s
+[C101 (100)] FINISHED  budget 600 s  wall 600 s  starts 1
+[C101 (100)] best obj 10966.07  size 50  found at 211 s (iter 17089)
+[C101 (100)] counters: {'prop_add': 12196, 'socp_calls': 23023, 'accepted': 331, 'acc_add': 150, 'prop_replace': 12083, 'worse': 3115, 'prop_swap': 12013, 'prop_two_opt': 12050, 'socp_infeas': 19543, 'acc_replace': 91, 'acc_two_opt': 48, 'cache_excluded': 2141566, 'acc_swap': 42, 'ts_reject': 3958, 'socp_numeric_infeasible': 72, 'saturated': 21395, 'kicks': 34, 'cache_feas': 3, 'chk1_fb_excluded': 0, 'chk2_cascade_rejected': 0, 'chk2_cascade_passed': 0}
+[RC1_2_1 (200)] start 0 (R4, paper) init obj 4198.18 size 4 at 2 s
+[RC1_2_1 (200)] FINISHED  budget 600 s  wall 600 s  starts 1
+[RC1_2_1 (200)] best obj 17186.66  size 36  found at 598 s (iter 95742)
+[RC1_2_1 (200)] counters: {'prop_add': 23806, 'socp_calls': 27195, 'accepted': 630, 'acc_add': 297, 'prop_replace': 24142, 'worse': 5957, 'prop_swap': 24003, 'saturated': 67001, 'prop_two_opt': 23816, 'cache_excluded': 3349003, 'acc_replace': 126, 'acc_swap': 102, 'socp_infeas': 20529, 'acc_two_opt': 105, 'ts_reject': 1650, 'socp_numeric_infeasible': 100, 'kicks': 79, 'cache_feas': 2, 'chk1_fb_excluded': 0, 'chk2_cascade_rejected': 0, 'chk2_cascade_passed': 0}
+[R104 (100)] start 0 (R4, paper) init obj 15524.42 size 10 at 4 s
+[R104 (100)] FINISHED  budget 600 s  wall 600 s  starts 1
+[R104 (100)] best obj 37513.04  size 38  found at 351 s (iter 169095)
+[R104 (100)] counters: {'prop_add': 72852, 'socp_calls': 16160, 'accepted': 2332, 'acc_add': 999, 'prop_two_opt': 72839, 'acc_two_opt': 338, 'worse': 9736, 'socp_infeas': 3826, 'prop_swap': 72938, 'prop_replace': 73162, 'ts_reject': 16363, 'acc_replace': 549, 'acc_swap': 446, 'cache_excluded': 3905907, 'saturated': 259538, 'socp_numeric_infeasible': 280, 'kicks': 270, 'cache_feas': 2, 'chk1_fb_excluded': 0, 'chk2_cascade_rejected': 0, 'chk2_cascade_passed': 0}
+[PR15 (240)] start 0 (R4, paper) init obj 2471.30 size 10 at 9 s
+[PR15 (240)] FINISHED  budget 600 s  wall 600 s  starts 1
+[PR15 (240)] best obj 15800.30  size 77  found at 538 s (iter 15107)
+[PR15 (240)] counters: {'prop_add': 4100, 'socp_calls': 16379, 'socp_infeas': 15797, 'prop_swap': 4174, 'accepted': 184, 'acc_swap': 40, 'prop_two_opt': 4233, 'acc_two_opt': 35, 'worse': 396, 'prop_replace': 4093, 'acc_add': 69, 'acc_replace': 40, 'cache_excluded': 410, 'ts_reject': 223, 'kicks': 2, 'chk1_fb_excluded': 0, 'chk2_cascade_rejected': 0, 'chk2_cascade_passed': 0}

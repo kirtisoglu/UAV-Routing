@@ -1,0 +1,57 @@
+[resume] 18 runs on disk
+[plan] 52 runs, 4 at a time, maxIter 13000
+[saved 1/52] C101 (100) R1: obj=11251.59 tour=48
+[saved 2/52] C101 (50) R3/2: obj=8591.92 tour=42
+[saved 3/52] C101 (100) R2/1: obj=11314.57 tour=48
+[saved 4/52] C101 (50) R3/3: obj=8591.92 tour=42
+[saved 5/52] C101 (100) R3/1: obj=11298.54 tour=47
+[saved 6/52] C101 (100) R3/3: obj=11290.87 tour=48
+[saved 7/52] C1_2_1 (200) R2/1: obj=11127.63 tour=48
+[saved 8/52] C1_2_1 (200) R3/1: obj=11081.70 tour=51
+[saved 9/52] C101 (100) R3/2: obj=11322.68 tour=48
+[saved 10/52] C1_2_1 (200) R1: obj=11040.42 tour=49
+[saved 11/52] C1_2_1 (200) R3/2: obj=11127.63 tour=48
+[saved 12/52] RC1_2_1 (200) R1: obj=17982.71 tour=39
+[saved 13/52] RC1_2_1 (200) R2/1: obj=17425.98 tour=40
+[saved 14/52] C1_2_1 (200) R3/3: obj=10965.91 tour=47
+[saved 15/52] RC1_2_1 (200) R3/1: obj=17608.01 tour=38
+[saved 16/52] RC1_2_1 (200) R3/2: obj=17425.98 tour=40
+[saved 17/52] R102 (100) R1: obj=30443.78 tour=27
+[saved 18/52] RC1_2_1 (200) R3/3: obj=16365.77 tour=41
+[saved 19/52] R102 (100) R2/1: obj=30592.27 tour=27
+[saved 20/52] R102 (100) R3/3: obj=30443.78 tour=27
+[saved 21/52] R102 (100) R3/1: obj=30399.78 tour=26
+[saved 22/52] R104 (100) R3/1: obj=33726.84 tour=36
+[saved 23/52] R102 (100) R3/2: obj=30088.50 tour=27
+[saved 24/52] R104 (100) R2/1: obj=37308.91 tour=34
+[saved 25/52] R104 (100) R1: obj=37764.30 tour=40
+[saved 26/52] R104 (100) R3/3: obj=36004.13 tour=34
+[saved 27/52] R104 (100) R3/2: obj=37709.97 tour=38
+[saved 28/52] C104 (100) R1: obj=18148.46 tour=91
+[saved 29/52] C104 (100) R2/1: obj=18378.28 tour=92
+[saved 30/52] C104 (100) R3/1: obj=18283.14 tour=92
+[saved 31/52] C104 (100) R3/2: obj=18474.25 tour=91
+[saved 32/52] RC104 (100) R1: obj=34308.86 tour=34
+[saved 33/52] RC104 (100) R3/2: obj=31803.98 tour=33
+[saved 34/52] RC104 (100) R2/1: obj=36308.63 tour=32
+[saved 35/52] RC104 (100) R3/1: obj=35823.25 tour=31
+[saved 36/52] C104 (100) R3/3: obj=18391.82 tour=90
+[saved 37/52] PR11 (48) R3/1: obj=6546.66 tour=34
+[saved 38/52] PR11 (48) R2/1: obj=6442.34 tour=32
+[saved 39/52] RC104 (100) R3/3: obj=34308.86 tour=34
+[saved 40/52] PR11 (48) R1: obj=6486.93 tour=34
+[saved 41/52] PR11 (48) R3/3: obj=6518.48 tour=33
+[saved 42/52] PR11 (48) R3/2: obj=6590.66 tour=36
+[saved 43/52] PR15 (240) R2/1: obj=18194.37 tour=98
+[saved 44/52] PR15 (240) R3/1: obj=18189.55 tour=105
+[saved 45/52] PR15 (240) R1: obj=18173.90 tour=106
+[saved 46/52] PR15 (240) R3/2: obj=19907.37 tour=106
+[saved 47/52] PR15 (240) R3/3: obj=18100.48 tour=102
+[saved 48/52] PR10 (288) R2/1: obj=16508.00 tour=81
+[saved 49/52] PR10 (288) R3/1: obj=16022.70 tour=79
+[saved 50/52] PR10 (288) R1: obj=16780.49 tour=74
+[saved 51/52] PR10 (288) R3/3: obj=16803.47 tour=79
+[saved 52/52] PR10 (288) R3/2: obj=17445.05 tour=77
+
+==============================================================
+DONE -> /Users/kirtisoglu/GitHub/UAV-Routing/paper_runs/results/initial_tours.csv

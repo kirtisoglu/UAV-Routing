@@ -1,0 +1,12 @@
+### R104 (100)  set-cache ON
+[R104 (100)] best obj 37257.18  size 38  found at 85 s (iter 21382)
+[R104 (100)] counters: {'prop_add': 23463, 'sets_built': 8379, 'floor_excluded': 10890967, 'label_excluded': 154903, 'eval_add': 20641, 'socp_calls': 11313, 'accepted': 7192, 'acc_add': 4064, 'prop_two_opt': 23391, 'set_excluded': 21115, 'prop_replace': 23067, 'gain_excluded': 5633952, 'eval_replace': 12899, 'acc_replace': 2678, 'worse': 2877, 'worse_add': 1038, 'prop_swap': 23292, 'ts_reject': 24342, 'reject_add': 15539, 'worse_replace': 1399, 'reject_replace': 8822, 'cache_excluded': 704, 'saturated': 37634, 'lo_total': 1191, 'kicks': 1191, 'eval_two_opt': 494, 'acc_two_opt': 226, 'eval_swap': 430, 'acc_swap': 224, 'reject_two_opt': 26, 'worse_two_opt': 242, 'reject_swap': 8, 'worse_swap': 198, 'socp_numeric_infeasible': 228, 'socp_infeas': 57, 'cache_feas': 10, 'lo_repeat': 4, 'chk1_fb_excluded': 0, 'chk2_cascade_rejected': 0, 'chk2_cascade_passed': 0}
+wrote animation/out/r104_300s_setcache.json  frames 1188  size 1.07 MB
+Traceback (most recent call last):
+  File "/Users/kirtisoglu/GitHub/UAV-Routing/animation/build_html.py", line 32, in <module>
+    main()
+  File "/Users/kirtisoglu/GitHub/UAV-Routing/animation/build_html.py", line 20, in main
+    body = open(TEMPLATE).read()
+           ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/kirtisoglu/GitHub/UAV-Routing/animation/viewer_template.html'
+done

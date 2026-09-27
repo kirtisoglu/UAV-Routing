@@ -1,0 +1,114 @@
+[fail] R101 (50): animation/build_html.py
+32, in <module>
+    main()
+  File "/Users/kirtisoglu/GitHub/UAV-Routing/animation/build_html.py", line 20, in main
+    body = open(TEMPLATE).read()
+           ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/kirtisoglu/GitHub/UAV-Routing/animation/viewer_template.html'
+
+[fail] R101 (100): animation/build_html.py
+32, in <module>
+    main()
+  File "/Users/kirtisoglu/GitHub/UAV-Routing/animation/build_html.py", line 20, in main
+    body = open(TEMPLATE).read()
+           ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/kirtisoglu/GitHub/UAV-Routing/animation/viewer_template.html'
+
+[fail] R1_2_1 (200): animation/build_html.py
+32, in <module>
+    main()
+  File "/Users/kirtisoglu/GitHub/UAV-Routing/animation/build_html.py", line 20, in main
+    body = open(TEMPLATE).read()
+           ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/kirtisoglu/GitHub/UAV-Routing/animation/viewer_template.html'
+
+[fail] C101 (50): animation/build_html.py
+32, in <module>
+    main()
+  File "/Users/kirtisoglu/GitHub/UAV-Routing/animation/build_html.py", line 20, in main
+    body = open(TEMPLATE).read()
+           ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/kirtisoglu/GitHub/UAV-Routing/animation/viewer_template.html'
+
+[fail] C101 (100): animation/build_html.py
+32, in <module>
+    main()
+  File "/Users/kirtisoglu/GitHub/UAV-Routing/animation/build_html.py", line 20, in main
+    body = open(TEMPLATE).read()
+           ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/kirtisoglu/GitHub/UAV-Routing/animation/viewer_template.html'
+
+[fail] C1_2_1 (200): animation/build_html.py
+32, in <module>
+    main()
+  File "/Users/kirtisoglu/GitHub/UAV-Routing/animation/build_html.py", line 20, in main
+    body = open(TEMPLATE).read()
+           ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/kirtisoglu/GitHub/UAV-Routing/animation/viewer_template.html'
+
+[fail] RC1_2_1 (200): animation/build_html.py
+32, in <module>
+    main()
+  File "/Users/kirtisoglu/GitHub/UAV-Routing/animation/build_html.py", line 20, in main
+    body = open(TEMPLATE).read()
+           ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/kirtisoglu/GitHub/UAV-Routing/animation/viewer_template.html'
+
+[fail] R102 (100): animation/build_html.py
+32, in <module>
+    main()
+  File "/Users/kirtisoglu/GitHub/UAV-Routing/animation/build_html.py", line 20, in main
+    body = open(TEMPLATE).read()
+           ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/kirtisoglu/GitHub/UAV-Routing/animation/viewer_template.html'
+
+[fail] R104 (100): animation/build_html.py
+32, in <module>
+    main()
+  File "/Users/kirtisoglu/GitHub/UAV-Routing/animation/build_html.py", line 20, in main
+    body = open(TEMPLATE).read()
+           ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/kirtisoglu/GitHub/UAV-Routing/animation/viewer_template.html'
+
+[fail] C104 (100): animation/build_html.py
+32, in <module>
+    main()
+  File "/Users/kirtisoglu/GitHub/UAV-Routing/animation/build_html.py", line 20, in main
+    body = open(TEMPLATE).read()
+           ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/kirtisoglu/GitHub/UAV-Routing/animation/viewer_template.html'
+
+[fail] RC104 (100): animation/build_html.py
+32, in <module>
+    main()
+  File "/Users/kirtisoglu/GitHub/UAV-Routing/animation/build_html.py", line 20, in main
+    body = open(TEMPLATE).read()
+           ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/kirtisoglu/GitHub/UAV-Routing/animation/viewer_template.html'
+
+[fail] PR11 (48): animation/build_html.py
+32, in <module>
+    main()
+  File "/Users/kirtisoglu/GitHub/UAV-Routing/animation/build_html.py", line 20, in main
+    body = open(TEMPLATE).read()
+           ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/kirtisoglu/GitHub/UAV-Routing/animation/viewer_template.html'
+
+[fail] PR15 (240): animation/build_html.py
+32, in <module>
+    main()
+  File "/Users/kirtisoglu/GitHub/UAV-Routing/animation/build_html.py", line 20, in main
+    body = open(TEMPLATE).read()
+           ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/kirtisoglu/GitHub/UAV-Routing/animation/viewer_template.html'
+
+[fail] PR10 (288): animation/build_html.py
+32, in <module>
+    main()
+  File "/Users/kirtisoglu/GitHub/UAV-Routing/animation/build_html.py", line 20, in main
+    body = open(TEMPLATE).read()
+           ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/kirtisoglu/GitHub/UAV-Routing/animation/viewer_template.html'
+
+
+0 of 14 recorded -> /Users/kirtisoglu/GitHub/UAV-Routing/animation/datasets

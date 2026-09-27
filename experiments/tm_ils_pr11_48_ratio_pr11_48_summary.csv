@@ -1,0 +1,2 @@
+instance,budget_s,best_obj,best_wall_s,best_iter,tour_size,starts,target,t_beat_target_s,socp_calls,cache_feas,cache_infeas,lb_reject,kicks,best_route
+PR11 (48),14400.0,6368.9203,344.2,24232,34,1,,,20422,6729,0,0,368,0-39-42-34-10-45-3-27-7-32-44-31-36-28-14-1-16-5-8-29-26-23-2-30-38-40-12-21-47-24-43-9-35-37-22

@@ -1,0 +1,8 @@
+[PR15 (240)] start 0 (R4, paper) init obj 2471.30 size 10 at 9 s
+[PR15 (240)] start 0 (R4, paper) done after 12971 iterations (600 s elapsed)
+
+[PR15 (240)] FINISHED  budget 600 s  wall 600 s  starts 1
+[PR15 (240)] best obj 17360.52  size 94  found at 214 s (iter 4591)
+[PR15 (240)] counters: {'prop_add': 3312, 'label_excluded': 98394239, 'socp_calls': 1077, 'accepted': 259, 'acc_add': 129, 'prop_replace': 3242, 'worse': 806, 'prop_swap': 3242, 'acc_swap': 39, 'acc_replace': 48, 'prop_two_opt': 3163, 'acc_two_opt': 43, 'cache_excluded': 85469, 'ts_reject': 4, 'saturated': 11890, 'kicks': 12, 'chk1_fb_excluded': 0, 'chk2_cascade_rejected': 0, 'chk2_cascade_passed': 0}
+[PR15 (240)] best route: [0, 211, 158, 11, 235, 29, 213, 132, 165, 153, 54, 143, 238, 173, 115, 102, 148, 166, 145, 3, 107, 205, 10, 112, 185, 192, 74, 24, 73, 66, 181, 83, 230, 28, 135, 197, 177, 55, 203, 142, 81, 20, 80, 187, 101, 100, 121, 106, 64, 198, 77, 62, 136, 113, 87, 208, 240, 201, 123, 204, 43, 237, 99, 26, 163, 72, 221, 85, 30, 162, 182, 137, 49, 128, 14, 134, 232, 147, 110, 2, 27, 122, 179, 36, 141, 225, 207, 118, 108, 5, 35, 151, 133, 227, 193]
+Wrote experiments/tm_ils_pr15_240_paperlabel600_trace.csv / _summary.csv / _trace.png

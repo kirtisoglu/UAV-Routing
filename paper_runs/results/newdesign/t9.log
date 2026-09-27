@@ -1,0 +1,13 @@
+[resume] 33 runs on disk
+[plan] 9 runs, 1 at a time, maxIter 13000
+[1/9] PR15 (240) D=6: 18,815.18 tour 110 shakes 240
+[2/9] PR15 (240) D=12: 19,146.02 tour 106 shakes 792
+[3/9] C104 (100) D=12: 18,538.09 tour 91 shakes 109
+[4/9] RC104 (100) D=6: 35,245.62 tour 31 shakes 146
+[5/9] RC104 (100) D=12: 32,605.92 tour 29 shakes 182
+[6/9] PR11 (48) D=6: 6,486.06 tour 31 shakes 312
+[7/9] PR11 (48) D=12: 6,515.41 tour 34 shakes 553
+[8/9] PR10 (288) D=6: 16,870.31 tour 82 shakes 306
+[9/9] PR10 (288) D=12: 16,384.49 tour 80 shakes 246
+
+DONE -> /Users/kirtisoglu/GitHub/UAV-Routing/paper_runs/results/capdiv.csv

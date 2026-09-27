@@ -19,7 +19,9 @@ from uav_routing.solver.prune import prune
 
 
 
-def solve_model_gurobi(instance, seed, time_limit, env, prune=False, stats=False, no_loiter=False):
+def solve_model_gurobi(instance, seed, time_limit, env, prune=False, stats=False, no_loiter=False,
+                       warm_tour=None, warm_arc_solution=None, log_file=None,
+                       threads=None, energy_tiebreak=1e-5):
     """Solve the full MISOCP UAV routing model with Gurobi.
 
     Parameters
@@ -38,6 +40,15 @@ def solve_model_gurobi(instance, seed, time_limit, env, prune=False, stats=False
         If True, print model statistics after building.
     no_loiter : bool
         If True, force L[i,j] == d[i,j]*x[i,j] (no extra distance).
+    warm_tour : list of int, optional
+        Depot-first node sequence (no closing depot) injected as a MIP start.
+    warm_arc_solution : dict, optional
+        Fixed-tour SOCP solution for ``warm_tour`` in physical units, with
+        keys ``arrivals`` (node -> s; include the depot's return time),
+        ``times`` and ``lengths`` (arc -> s / m). When given, a complete
+        start vector is derived so Gurobi only validates it.
+    log_file : str, optional
+        If given, write the full Gurobi log to this path (enables output).
 
     Returns
     -------
@@ -68,6 +79,8 @@ def solve_model_gurobi(instance, seed, time_limit, env, prune=False, stats=False
         mdl.Params.TimeLimit = time_limit
         mdl.Params.MIPFocus = 1           # Reproducibility
         mdl.Params.Threads = 0          # Use all available cores
+        if threads is not None:
+            mdl.Params.Threads = threads
         mdl.Params.Method = 2           # Barrier (stable for SOCP)
         #mdl.Params.NumericFocus = 3     # Maximum numerical precision = slower solving
         mdl.Params.ScaleFlag = 2        # Aggressive automatic scaling
@@ -122,12 +135,8 @@ def solve_model_gurobi(instance, seed, time_limit, env, prune=False, stats=False
         #   info = info_at_lowest + slope * (a_physical - e_physical)
         #        = info_at_lowest + slope * _t_norm * (a_scaled - e_scaled)
         t_norm = instance._t_norm
-        obj = gp.quicksum(
-            graph.nodes[i]['info_at_lowest'] * w[i] +
-            graph.nodes[i]['info_slope'] * t_norm * (a[i] - graph.nodes[i]['time_window'][0] / t_norm * w[i])
-            for i in N
-        )
-        mdl.setObjective(obj, GRB.MAXIMIZE)
+        
+        
 
         # ---- Constraints ----
         
@@ -174,12 +183,20 @@ def solve_model_gurobi(instance, seed, time_limit, env, prune=False, stats=False
 
         # 5. MTZ Subtour Elimination
         for (i, j) in E:
+            # Desrochers-Laporte-style per-leg big-Ms (paper Section 3.3).
+            # Lower link: with x_ij = 0 the worst case is a_i = l_i, a_j = 0,
+            # so M = l_i suffices (depot-out legs need none: a_j >= t_0j is
+            # valid outright). Upper link: worst case a_j = l_j, a_i = 0, so
+            # M = l_j (l_j - e_i would wrongly bind when w_i = 0).
+            M_lo = graph.nodes[i]['time_window'][1] / t_norm \
+                if i != base else 0.0
+            M_up = graph.nodes[j]['time_window'][1] / t_norm
             if i == base:
-                mdl.addConstr(a[j] >= t[base, j] - T_max * (1 - x[base, j]), name=f'base_mtz_lb_{j}')
-                mdl.addConstr(a[j] <= t[base, j] + T_max * (1 - x[base, j]), name=f'base_mtz_ub_{j}')
+                mdl.addConstr(a[j] >= t[base, j] - M_lo * (1 - x[base, j]), name=f'base_mtz_lb_{j}')
+                mdl.addConstr(a[j] <= t[base, j] + M_up * (1 - x[base, j]), name=f'base_mtz_ub_{j}')
             else:
-                mdl.addConstr(a[j] >= a[i] + t[i, j] - T_max * (1 - x[i, j]), name=f'mtz_lb_{i}_{j}')
-                mdl.addConstr(a[j] <= a[i] + t[i, j] + T_max * (1 - x[i, j]), name=f'mtz_ub_{i}_{j}')
+                mdl.addConstr(a[j] >= a[i] + t[i, j] - M_lo * (1 - x[i, j]), name=f'mtz_lb_{i}_{j}')
+                mdl.addConstr(a[j] <= a[i] + t[i, j] + M_up * (1 - x[i, j]), name=f'mtz_ub_{i}_{j}')
 
         # 6. Energy Budget
         # Variables y, z are normalized by _d_norm (fixed, alpha-independent).
@@ -199,8 +216,68 @@ def solve_model_gurobi(instance, seed, time_limit, env, prune=False, stats=False
             for (i, j) in E
         )
         mdl.addConstr(total_energy <= instance.eta, name='energy_budget')
-        mdl.update()
+
+        reward_expr = gp.quicksum(
+            graph.nodes[i]['info_at_lowest'] * w[i] +
+            graph.nodes[i]['info_slope'] * t_norm * (a[i] - graph.nodes[i]['time_window'][0] / t_norm * w[i])
+            for i in N
+        )
+        # Energy tie-break: among schedules collecting the same reward, prefer
+        # the one that burns less energy. The coefficient must be large enough
+        # to be decisive against the solver's own tolerances and small enough
+        # that it never trades reward for energy; the reported value is the
+        # reward itself (results["reward"]), not this penalised objective.
+        obj = reward_expr - energy_tiebreak * total_energy
         
+    
+        mdl.setObjective(obj, GRB.MAXIMIZE)
+
+        mdl.update()
+
+        # ---- Optional Gurobi log capture ----
+        if log_file is not None:
+            mdl.Params.OutputFlag = 1
+            mdl.Params.LogFile = log_file
+
+        # ---- Optional MIP start from a heuristic tour ----
+        # The caller passes the tour plus its fixed-tour SOCP solution in
+        # PHYSICAL units (arrivals, per-arc travel times and path lengths);
+        # every variable's start value is derived here in the model's own
+        # normalization, with the auxiliaries y, z, s set cone-tight. Gurobi
+        # then only has to CHECK the vector, not complete it: a binaries-only
+        # partial start dies in start-completion on the 200-node instances,
+        # and solving with hard-fixed binaries trips a barrier
+        # false-infeasibility on the degenerate inactive cones.
+        if warm_tour is not None:
+            visited = set(warm_tour)
+            tour_arcs = set(zip(warm_tour, warm_tour[1:]))
+            tour_arcs.add((warm_tour[-1], base))
+            for i in N:
+                w[i].Start = 1.0 if i in visited else 0.0
+            for (i, j) in E:
+                x[i, j].Start = 1.0 if (i, j) in tour_arcs else 0.0
+            if warm_arc_solution is not None:
+                arr = warm_arc_solution["arrivals"]   # node -> seconds
+                tt = warm_arc_solution["times"]       # arc -> seconds
+                LL = warm_arc_solution["lengths"]     # arc -> meters
+                for i in N:
+                    a[i].Start = arr.get(i, 0.0) / t_norm
+                for (i, j) in E:
+                    if (i, j) in tour_arcs:
+                        tp = tt[(i, j)]
+                        Lp = LL[(i, j)]
+                        zp = tp * tp / Lp
+                        sp = Lp * Lp / tp
+                        yp = sp * sp / Lp
+                        t[i, j].Start = tp / t_norm
+                        L[i, j].Start = Lp / d_norm
+                        y[i, j].Start = yp / (d_norm * v_opt ** 2)
+                        z[i, j].Start = zp * v_opt ** 2 / d_norm
+                        s[i, j].Start = sp / (d_norm * v_opt)
+                    else:
+                        for var in (t[i, j], L[i, j], y[i, j],
+                                    z[i, j], s[i, j]):
+                            var.Start = 0.0
 
         # ---- Solve ----
         mdl.optimize()
@@ -247,6 +324,9 @@ def solve_model_gurobi(instance, seed, time_limit, env, prune=False, stats=False
             results = {
                 "status": mdl.Status,
                 "obj": mdl.ObjVal,
+                "reward": reward_expr.getValue(),
+                "energy_tiebreak": energy_tiebreak,
+                "objbound": mdl.ObjBound,
                 "solve_time": mdl.Runtime,
                 "gap": mdl.MIPGap,
                 "arrival_times": arrival_times,

@@ -1,0 +1,9 @@
+[C101 (50)] start 0 (R4, paper) init obj 2432.97 size 7 at 0 s
+[C101 (50)] stopped by max_iter=15000 after 16927 iterations at 251 s (best 8591.92 found at 29 s)
+[C101 (50)] start 0 (R4, paper) done after 16927 iterations (251 s elapsed)
+
+[C101 (50)] FINISHED  budget 14400 s  wall 251 s  starts 1  stopped by max_iter at 251 s
+[C101 (50)] best obj 8591.92  size 42  found at 29 s (iter 1927)
+[C101 (50)] counters: {'prop_add': 4210, 'sets_built': 1152, 'eval_add': 1796, 'socp_calls': 6759, 'accepted': 1049, 'acc_add': 624, 'prop_swap': 4130, 'eval_swap': 3793, 'acc_swap': 133, 'label_excluded': 68982, 'prop_two_opt': 4337, 'eval_two_opt': 3957, 'worse': 10602, 'worse_two_opt': 3477, 'prop_replace': 4146, 'eval_replace': 3621, 'worse_replace': 2988, 'worse_swap': 3382, 'acc_two_opt': 132, 'cache_feas': 5357, 'cache_worse': 5181, 'acc_replace': 160, 'return_excluded': 158, 'worse_add': 755, 'socp_numeric_infeasible': 187, 'reject_replace': 473, 'ts_reject': 1331, 'reject_two_opt': 348, 'reject_add': 417, 'reject_swap': 278, 'cache_excluded': 1157, 'saturated': 3656, 'lo_total': 104, 'ref_improved': 8, 'kicks': 104, 'lo_repeat': 72, 'shake_returns': 43, 'ref_exhausted': 1, 'ref_backtracks': 1, 'chk1_fb_excluded': 0, 'chk2_cascade_rejected': 0, 'chk2_cascade_passed': 0}
+[C101 (50)] best route: [0, 43, 32, 20, 3, 13, 17, 24, 42, 33, 25, 7, 41, 31, 40, 35, 27, 8, 19, 10, 15, 37, 46, 38, 30, 16, 9, 28, 39, 14, 12, 6, 26, 36, 34, 23, 50, 22, 2, 21, 1, 49, 47]
+Wrote experiments/tm_ils_c101_50_noret_c101_50_trace.csv / _summary.csv / _trace.png

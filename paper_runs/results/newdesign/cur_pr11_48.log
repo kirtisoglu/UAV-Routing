@@ -1,0 +1,9 @@
+[PR11 (48)] start 0 (R4, paper) init obj 1858.09 size 12 at 3 s
+[PR11 (48)] stopped by max_iter=20000 after 43946 iterations at 481 s (best 6468.90 found at 252 s)
+[PR11 (48)] start 0 (R4, paper) done after 43946 iterations (481 s elapsed)
+
+[PR11 (48)] FINISHED  budget 14400 s  wall 481 s  starts 1  stopped by max_iter at 481 s
+[PR11 (48)] best obj 6468.90  size 34  found at 252 s (iter 23946)
+[PR11 (48)] counters: {'prop_add': 10943, 'sets_built': 3924, 'label_excluded': 3528799, 'eval_add': 1722, 'socp_calls': 18343, 'accepted': 3452, 'acc_add': 1596, 'prop_two_opt': 10970, 'eval_two_opt': 10051, 'acc_two_opt': 619, 'worse': 22570, 'worse_two_opt': 9424, 'prop_replace': 10769, 'eval_replace': 4823, 'worse_replace': 4149, 'prop_swap': 10793, 'eval_swap': 9513, 'worse_swap': 8877, 'acc_swap': 624, 'cache_feas': 8378, 'cache_worse': 8154, 'acc_replace': 613, 'floor_excluded': 73928, 'saturated': 17366, 'ts_reject': 83, 'reject_replace': 61, 'lo_total': 471, 'kicks': 471, 'cache_excluded': 25, 'lo_repeat': 152, 'worse_add': 120, 'reject_swap': 12, 'reject_two_opt': 8, 'reject_add': 6, 'socp_numeric_infeasible': 4, 'chk1_fb_excluded': 0, 'chk2_cascade_rejected': 0, 'chk2_cascade_passed': 0}
+[PR11 (48)] best route: [0, 34, 42, 3, 45, 10, 32, 31, 41, 36, 14, 20, 33, 8, 5, 29, 16, 26, 18, 25, 23, 2, 30, 40, 38, 12, 21, 47, 24, 43, 9, 35, 37, 22, 28]
+Wrote experiments/tm_ils_pr11_48_cur_pr11_48_trace.csv / _summary.csv / _trace.png

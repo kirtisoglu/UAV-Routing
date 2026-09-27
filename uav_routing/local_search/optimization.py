@@ -14,9 +14,11 @@ All methods are generators yielding State objects at each iteration,
 allowing real-time tracking of convergence.
 """
 
-from typing import Union, Callable, List, Any
+from typing import Union, Callable, List, Any, Optional
 import random
 import math
+from collections import Counter, defaultdict
+from statistics import mean, median
 from tqdm import tqdm
 
 from uav_routing.local_search.accept import always_accept
@@ -24,6 +26,178 @@ from uav_routing.local_search.iterator import Iterator
 from uav_routing.local_search.state import State
 
 from uav_routing.local_search.proposal import random_flip_with_tabu, perturb_state
+
+
+class Tally:
+    """Per-operator counters + numerical distributions for an ILS run.
+
+    Outcomes (mutually exclusive, one per attempt):
+        accepted              -- move taken (SOCP feasible AND acceptance rule)
+        worse                 -- SOCP feasible but rejected by acceptance rule
+        infeas_cascade        -- TW pre-filter rejected the candidate (no SOCP call)
+        infeas_cone           -- SOCP returned no solution (model infeasible)
+        infeas_energy         -- SOCP returned solution but physical-energy
+                                 post-check rejected it (cone slack catch)
+        saturated             -- operator couldn't propose anything
+
+    Numerical accumulators (per operator):
+        energy_slack_accept   -- E_max - E_used for accepted tours (J)
+        energy_overshoot_rej  -- E_phys - E_max for cone-slack rejects (J)
+        tour_size_at_attempt  -- len(route) when operator was applied
+        delta_obj_socp_feas   -- proposed.value - current.value for SOCP-feasible
+
+    Read via Tally.summary() for per-operator rows, Tally.distributions()
+    for histograms, or Tally.report() to print everything.
+    """
+
+    INFEAS_KINDS = ("infeas_cascade", "infeas_cone", "infeas_energy")
+    OUTCOMES = ("accepted", "worse") + INFEAS_KINDS + ("saturated",)
+
+    def __init__(self):
+        self.attempts   = Counter()
+        # Each outcome is its own counter
+        for o in self.OUTCOMES:
+            setattr(self, o, Counter())
+        # Numerical distributions, per operator
+        self.energy_slack_accept   = defaultdict(list)
+        self.energy_overshoot_rej  = defaultdict(list)
+        self.tour_size_at_attempt  = defaultdict(list)
+        self.delta_obj_socp_feas   = defaultdict(list)
+
+    def record_attempt(self, op: Optional[str], tour_size: Optional[int] = None) -> None:
+        op = op or "unknown"
+        self.attempts[op] += 1
+        if tour_size is not None:
+            self.tour_size_at_attempt[op].append(tour_size)
+
+    def record(self, op: Optional[str], outcome: str) -> None:
+        op = op or "unknown"
+        if outcome not in self.OUTCOMES:
+            raise ValueError(f"unknown outcome: {outcome!r}")
+        getattr(self, outcome)[op] += 1
+
+    def record_accept(self, op, energy_used, energy_max, delta_obj):
+        op = op or "unknown"
+        self.accepted[op] += 1
+        if energy_used is not None and energy_max is not None:
+            self.energy_slack_accept[op].append(energy_max - energy_used)
+        if delta_obj is not None:
+            self.delta_obj_socp_feas[op].append(delta_obj)
+
+    def record_worse(self, op, energy_used, energy_max, delta_obj):
+        op = op or "unknown"
+        self.worse[op] += 1
+        if delta_obj is not None:
+            self.delta_obj_socp_feas[op].append(delta_obj)
+
+    def record_infeas_energy(self, op, energy_phys, energy_max):
+        op = op or "unknown"
+        self.infeas_energy[op] += 1
+        if energy_phys is not None and energy_max is not None:
+            self.energy_overshoot_rej[op].append(energy_phys - energy_max)
+
+    def total_infeas(self, op: str) -> int:
+        return sum(getattr(self, k)[op] for k in self.INFEAS_KINDS)
+
+    def summary(self) -> list:
+        rows = []
+        for op in sorted(self.attempts):
+            a = self.attempts[op]
+            row = {"operator": op, "attempts": a,
+                   "accepted": self.accepted[op],
+                   "worse":    self.worse[op],
+                   "infeas_cascade": self.infeas_cascade[op],
+                   "infeas_cone":    self.infeas_cone[op],
+                   "infeas_energy":  self.infeas_energy[op],
+                   "saturated":      self.saturated[op]}
+            row["reject_rate"] = 1.0 - self.accepted[op] / max(1, a)
+            socp_feas = self.accepted[op] + self.worse[op]
+            row["SOCP_feas"] = socp_feas
+            row["SOCP_feas_%"] = 100.0 * socp_feas / max(1, a)
+            rows.append(row)
+        return rows
+
+    @staticmethod
+    def _stats(xs):
+        if not xs:
+            return None
+        s = sorted(xs)
+        n = len(s)
+        return {
+            "n":      n,
+            "min":    s[0],
+            "p25":    s[int(0.25 * (n - 1))],
+            "median": s[int(0.50 * (n - 1))],
+            "p75":    s[int(0.75 * (n - 1))],
+            "p90":    s[int(0.90 * (n - 1))],
+            "max":    s[-1],
+            "mean":   mean(s),
+        }
+
+    def distributions(self) -> dict:
+        """Per-operator stats for all numerical accumulators."""
+        result = {}
+        for op in sorted(self.attempts):
+            result[op] = {
+                "tour_size_at_attempt":  self._stats(self.tour_size_at_attempt[op]),
+                "energy_slack_accept":   self._stats(self.energy_slack_accept[op]),
+                "energy_overshoot_rej":  self._stats(self.energy_overshoot_rej[op]),
+                "delta_obj_socp_feas":   self._stats(self.delta_obj_socp_feas[op]),
+            }
+        return result
+
+    def report(self, label: str = "", E_max: Optional[float] = None) -> str:
+        """Print rich human-readable summary."""
+        lines = []
+        if label:
+            lines.append(label)
+        lines.append("")
+        lines.append(f"{'operator':<22} {'att':>6} {'acc':>5} {'worse':>5} "
+                     f"{'fcas':>5} {'fcon':>5} {'fen':>5} {'sat':>4} "
+                     f"{'SOCPfeas%':>9}")
+        lines.append("-" * 80)
+        for r in self.summary():
+            lines.append(f"{r['operator']:<22} {r['attempts']:>6} "
+                         f"{r['accepted']:>5} {r['worse']:>5} "
+                         f"{r['infeas_cascade']:>5} {r['infeas_cone']:>5} "
+                         f"{r['infeas_energy']:>5} {r['saturated']:>4} "
+                         f"{r['SOCP_feas_%']:>8.2f}%")
+        lines.append("")
+        lines.append("Legend:  fcas = cascade pre-filter rejected (no SOCP call)")
+        lines.append("         fcon = SOCP model infeasible (no solution)")
+        lines.append("         fen  = SOCP solution failed physical-energy post-check")
+        lines.append("")
+
+        # Distributions
+        dists = self.distributions()
+        for op, by_field in dists.items():
+            for field_name, stats in by_field.items():
+                if stats is None:
+                    continue
+                if field_name == "energy_slack_accept" and E_max:
+                    pct = lambda v: 100.0 * v / E_max
+                    lines.append(f"  {op}.{field_name} (% of E_max): "
+                                 f"n={stats['n']} "
+                                 f"median={pct(stats['median']):.3f}% "
+                                 f"p25={pct(stats['p25']):.3f}% "
+                                 f"p75={pct(stats['p75']):.3f}% "
+                                 f"min={pct(stats['min']):.3f}%")
+                elif field_name == "energy_overshoot_rej" and E_max:
+                    pct = lambda v: 100.0 * v / E_max
+                    lines.append(f"  {op}.{field_name} (% over E_max): "
+                                 f"n={stats['n']} "
+                                 f"median={pct(stats['median']):.3f}% "
+                                 f"p75={pct(stats['p75']):.3f}% "
+                                 f"p90={pct(stats['p90']):.3f}% "
+                                 f"max={pct(stats['max']):.3f}%")
+                else:
+                    lines.append(f"  {op}.{field_name}: "
+                                 f"n={stats['n']} "
+                                 f"median={stats['median']:.3f} "
+                                 f"p25={stats['p25']:.3f} "
+                                 f"p75={stats['p75']:.3f}")
+            lines.append("")
+        return "\n".join(lines)
 
 
 class Optimizer:
@@ -660,7 +834,8 @@ class Optimizer:
         t_improve: int = 50,
         k_remove: int = 3,
         tabu_tenure: int = 20,
-        with_progress_bar: bool = False
+        with_progress_bar: bool = False,
+        tally: bool = False,
     ):
         """
         Executes Iterated Local Search (ILS) as a generator.
@@ -669,17 +844,21 @@ class Optimizer:
         :param t_improve: Threshold of improvements before triggering a 'Shake'.
         :param k_remove: Number of nodes to remove during perturbation.
         :param tabu_tenure: How many iterations a removed node remains Tabu.
+        :param tally: If True, collect per-operator attempt/outcome stats in
+            ``self.tally`` (a :class:`Tally` instance). If False (default),
+            ``self.tally`` is None and the hooks are no-ops.
         """
         # 0. Reset best state for this specific run
         self._best_state = self._initial_state
         self._best_score = self._initial_state.value
-        
+
         # Initialize trackers
         self.tabu_list = {}  # {node_id: expiry_iteration}
         self.current_iteration = 0
         self.improvements_since_perturb = 0
-        
-        self.stagnation_counter = 0 
+        self.tally = Tally() if tally else None
+
+        self.stagnation_counter = 0
 
         def ils_proposal_wrapper(current_state: State) -> State:
             self.current_iteration += 1
@@ -695,34 +874,47 @@ class Optimizer:
                     current_state, k_remove, self.current_iteration, tabu_tenure
                 )
                 self.tabu_list.update(new_tabu_entries)
-                self.stagnation_counter = 0 
-                
+                self.stagnation_counter = 0
+
                 # Tag this state so the acceptance function knows to let it through
-                perturbed_state.is_perturbation = True 
+                perturbed_state.is_perturbation = True
+                if self.tally is not None:
+                    self.tally.record_attempt(perturbed_state.last_operator)
                 return perturbed_state
-            
+
             # 2. Standard Local Move
-            return random_flip_with_tabu(current_state, set(self.tabu_list.keys()))
+            proposed = random_flip_with_tabu(current_state, set(self.tabu_list.keys()))
+            if self.tally is not None:
+                self.tally.record_attempt(proposed.last_operator)
+            return proposed
 
         def ils_accept(proposed_state: State) -> bool:
             if proposed_state.solver is None or proposed_state.solver.solution is None:
+                if self.tally is not None:
+                    self.tally.record(proposed_state.last_operator, "infeasible")
                 return False
-            
+
             # ALWAYS accept a perturbation to allow the chain to move basins
             if getattr(proposed_state, 'is_perturbation', False):
+                if self.tally is not None:
+                    self.tally.record(proposed_state.last_operator, "accepted")
                 return True
 
             proposed_score = proposed_state.value
             parent_score = proposed_state.parent.value if proposed_state.parent else -float('inf')
-            
+
             if self._is_improvement(proposed_score, parent_score):
                 if self._is_improvement(proposed_score, self._best_score):
                     self._best_state = proposed_state
                     self._best_score = proposed_score
                 self.stagnation_counter = 0  # Local improvement resets stagnation
+                if self.tally is not None:
+                    self.tally.record(proposed_state.last_operator, "accepted")
                 return True
 
             self.stagnation_counter += 1  # No improvement
+            if self.tally is not None:
+                self.tally.record(proposed_state.last_operator, "worse")
             return False
         # 3. Initialize the Iterator
         chain = Iterator(

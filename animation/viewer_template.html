@@ -1,0 +1,807 @@
+<title>__TITLE__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#EEF1F5; --panel:#FFFFFF; --panel-2:#F7F9FB; --ink:#0F151C; --muted:#5E6A78;
+  --line:#D5DCE5; --line-soft:#E6EBF1; --grid:#DCE3EA;
+  --insert:#1F8F5F; --replace:#C4760F; --swap:#7A4FD0; --twoopt:#1E6FBE; --shake:#C93B2C;
+  --ghost:#96A3B2; --best:#0F151C; --unsched:#B9C4D0;
+  --radius:9px;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"Archivo","Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C1116; --panel:#141B23; --panel-2:#1A222B; --ink:#E4EAF1; --muted:#8B98A8;
+    --line:#26313C; --line-soft:#1E2831; --grid:#202A34;
+    --insert:#3BBE85; --replace:#E39B36; --swap:#A985F0; --twoopt:#4E9DE8; --shake:#E4604F;
+    --ghost:#5A6775; --best:#E4EAF1; --unsched:#404C58;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C1116; --panel:#141B23; --panel-2:#1A222B; --ink:#E4EAF1; --muted:#8B98A8;
+  --line:#26313C; --line-soft:#1E2831; --grid:#202A34;
+  --insert:#3BBE85; --replace:#E39B36; --swap:#A985F0; --twoopt:#4E9DE8; --shake:#E4604F;
+  --ghost:#5A6775; --best:#E4EAF1; --unsched:#404C58;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+     font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.wrap{padding-inline:20px;padding-block:18px 26px;max-width:1440px;margin:0 auto;
+      display:flex;flex-direction:column;gap:14px}
+
+header.bar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:18px 28px;
+           border-bottom:1px solid var(--line);padding-bottom:14px}
+.eyebrow{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+         color:var(--muted);font-weight:600}
+h1{margin:2px 0 0;font-size:25px;font-weight:700;letter-spacing:-.015em;text-wrap:balance}
+h1 .sub{font-weight:400;color:var(--muted);font-size:15px;margin-left:8px}
+.stats{display:flex;gap:6px 22px;margin:0 0 0 auto;flex-wrap:nowrap}
+.stat{display:flex;flex-direction:column;gap:1px}
+.stat dt{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.stat{min-width:74px}
+.muted{color:var(--muted)}
+.stat dd{margin:0;font-family:var(--mono);font-size:15px;font-weight:500;
+         font-variant-numeric:tabular-nums;white-space:nowrap}
+
+main{display:grid;grid-template-columns:minmax(0,1fr) 316px;gap:14px;align-items:start;
+     grid-template-rows:auto auto}
+.rail{grid-column:2;grid-row:1 / span 2;align-self:stretch}
+.stage{position:relative;background:var(--panel);border:1px solid var(--line);
+       border-radius:var(--radius);overflow:hidden;min-height:430px;height:clamp(430px,58vh,720px)}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block}
+.legend{position:absolute;left:12px;bottom:11px;display:flex;flex-wrap:wrap;gap:5px 13px;
+        max-width:calc(100% - 24px);
+        font-size:11px;color:var(--muted);background:color-mix(in srgb,var(--panel) 86%,transparent);
+        padding:6px 9px;border-radius:6px;border:1px solid var(--line-soft)}
+.key{display:inline-flex;align-items:center;gap:5px}
+.key i{width:13px;height:3px;border-radius:2px;display:inline-block}
+.hint{position:absolute;right:12px;top:11px;font-size:11px;color:var(--muted);
+      font-family:var(--mono)}
+.tip{position:absolute;pointer-events:none;z-index:5;background:var(--panel);
+     border:1px solid var(--line);border-radius:7px;padding:8px 10px;
+     box-shadow:0 6px 18px rgb(0 0 0 / .16);min-width:172px;max-width:232px}
+.tip h3{margin:0 0 5px;font-size:12.5px;font-weight:600;display:flex;
+        justify-content:space-between;gap:10px;align-items:baseline}
+.tip h3 em{font-style:normal;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+           color:var(--muted);font-weight:600}
+.tip dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:0;
+        font-family:var(--mono);font-size:11.5px;font-variant-numeric:tabular-nums}
+.tip dt{color:var(--muted)} .tip dd{margin:0;text-align:right}
+.tip .warn{color:var(--shake)}
+
+.rail{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0;
+      height:100%}
+.rail .card{flex:0 0 auto}
+.rail .card.grow{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px}
+.card h2{margin:0 0 9px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+         color:var(--muted);font-weight:600}
+.verdict{display:flex;align-items:center;gap:6px;font-weight:600;font-size:15px;
+         white-space:nowrap;overflow:hidden}
+.verdict #vtext{overflow:hidden;text-overflow:ellipsis}
+.verdict .dot{width:9px;height:9px;border-radius:50%}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin-top:9px;
+    font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;
+    white-space:nowrap}
+.kv span:nth-child(odd){color:var(--muted)}
+.kv span:nth-child(even){text-align:right}
+.delta.up{color:var(--insert)} .delta.down{color:var(--shake)}
+
+.cands{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;margin:0 -4px;padding:0 4px;
+       scrollbar-gutter:stable}
+.seq{font-family:var(--mono);font-size:11.5px;line-height:1.7;height:96px;overflow-y:auto;
+     color:var(--muted);word-break:break-word}
+.seq b{color:var(--ink);font-weight:600}
+h2 em{font-style:normal;font-weight:400;font-size:11px;color:var(--muted);float:right}
+.cand{display:grid;grid-template-columns:52px 1fr 60px;align-items:center;gap:8px;
+      height:19px;font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;
+      white-space:nowrap;overflow:hidden}
+.cand .id{color:var(--muted)}
+.cand .bar{height:6px;border-radius:3px;background:var(--line-soft);overflow:hidden}
+.cand .bar i{display:block;height:100%;border-radius:3px}
+.cand .w{text-align:right}
+.cand.chosen{font-weight:600}
+.cand.chosen .id{color:var(--ink)}
+.empty{color:var(--muted);font-family:var(--mono);font-size:12px}
+
+.timeline{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+          padding:11px 14px 12px;grid-column:1;min-width:0}
+#tl{display:block;width:100%;height:112px;cursor:crosshair}
+.transport{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:10px;min-height:33px;
+           padding-top:10px;border-top:1px solid var(--line-soft)}
+button,select{font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--panel-2);
+       border:1px solid var(--line);border-radius:6px;padding:5px 11px;cursor:pointer}
+button:hover,select:hover{border-color:var(--muted)}
+button:focus-visible,select:focus-visible,#tl:focus-visible{outline:2px solid var(--twoopt);outline-offset:2px}
+button.primary{background:var(--ink);color:var(--panel);border-color:var(--ink);min-width:78px;font-weight:600}
+.toggles{display:flex;flex-wrap:wrap;gap:6px 14px;margin-left:auto;font-size:12.5px;color:var(--muted)}
+.toggles label{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.pos{font-family:var(--mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;
+     min-width:188px;white-space:nowrap}
+@media (max-width:900px){
+  main{grid-template-columns:minmax(0,1fr)}
+  .timeline,.rail{grid-column:1}
+  .rail{grid-row:auto}
+  .rail{height:auto}
+  .cands{max-height:300px}
+  .stage{min-height:340px;aspect-ratio:1/1}
+  .stats{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---- slide-over panels, opened by the arrows on the right edge ---- */
+.sotabs{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:30;
+        display:flex;flex-direction:column;gap:6px}
+.sotab{writing-mode:vertical-rl;padding:20px 11px;font-size:12.5px;letter-spacing:.12em;
+       text-transform:uppercase;font-weight:600;color:var(--muted);cursor:pointer;
+       background:var(--panel);border:1px solid var(--line);border-right:0;
+       border-radius:10px 0 0 10px;box-shadow:-4px 0 14px rgba(0,0,0,.10)}
+.sotab:hover{color:var(--ink)}
+.sotab[aria-expanded="true"]{color:var(--ink);background:var(--panel-2)}
+.slideover{position:fixed;top:0;right:0;height:100%;z-index:31;overflow:hidden;
+           background:var(--panel);border-left:1px solid var(--line);
+           box-shadow:-18px 0 40px rgba(0,0,0,.18);
+           transform:translateX(100%);transition:transform .22s ease;
+           width:min(560px,94vw)}
+.slideover.wide{width:min(1100px,96vw)}
+.slideover.open{transform:translateX(0)}
+.slideover h3{margin:0 0 2px;font-size:14px}
+.slideover .sub{margin:0 0 14px;font-size:11.5px;color:var(--muted)}
+.sogrip{position:absolute;left:0;top:0;width:18px;height:100%;z-index:2;
+        display:flex;align-items:center;justify-content:center;cursor:ew-resize;
+        background:var(--panel-2);border-right:1px solid var(--line);
+        color:var(--muted);font-size:12px;touch-action:none;user-select:none}
+.sogrip:hover{color:var(--ink)}
+.sobody{height:100%;overflow:auto;padding:18px 20px 18px 32px}
+.soclose{position:absolute;top:12px;right:14px;border:0;background:none;
+         font-size:18px;line-height:1;color:var(--muted);cursor:pointer}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin-bottom:16px}
+.sgrid .k{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.sgrid .v{font-family:var(--mono);font-size:14px}
+.stab{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px}
+.stab th,.stab td{padding:4px 6px;text-align:right;border-bottom:1px solid var(--line)}
+.stab th:first-child,.stab td:first-child{text-align:left}
+.stab th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.stab td{font-family:var(--mono)}
+.wins{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.slideover.narrow .wins{grid-template-columns:1fr}
+.slideover.narrow .wins figure:last-child{display:none}
+.wins figure{margin:0}
+.winnav{display:flex;align-items:center;gap:10px;margin-top:8px}
+#winPos{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.wins figcaption{font-size:11.5px;color:var(--muted);margin-bottom:6px}
+.wins canvas{width:100%;border:1px solid var(--line);border-radius:8px;background:var(--panel-2)}
+@media(max-width:900px){.wins{grid-template-columns:1fr}}
+
+</style>
+
+<div class="wrap">
+  <header class="bar">
+    <div>
+      <span class="eyebrow">Iterated local search replay</span>
+      <h1 id="title">&nbsp;<span class="sub" id="subtitle"></span></h1>
+    </div>
+    <dl class="stats" id="stats"></dl>
+  </header>
+
+  <main>
+    <section class="stage">
+      <canvas id="map"></canvas>
+      <div class="hint" id="hint">frame 1</div>
+      <div class="tip" id="tip" hidden></div>
+      <div class="legend">
+        <span class="key"><i style="background:var(--insert)"></i>Insert</span>
+        <span class="key"><i style="background:var(--replace)"></i>Replace</span>
+        <span class="key"><i style="background:var(--swap)"></i>Swap</span>
+        <span class="key"><i style="background:var(--twoopt)"></i>2-opt</span>
+        <span class="key"><i style="background:var(--shake)"></i>Shake</span>
+        <span class="key"><i style="background:var(--ghost)"></i>Rejected proposal</span>
+      </div>
+    </section>
+
+    <aside class="rail">
+      <div class="card">
+        <h2>Event</h2>
+        <div class="verdict" id="verdict"><span class="dot"></span><span id="vtext">—</span></div>
+        <div class="kv" id="ev"></div>
+      </div>
+      <div class="card">
+        <h2>Route in visit order</h2>
+        <div class="seq" id="seq"></div>
+      </div>
+      <div class="card grow">
+        <h2>Candidate set at this step <em id="candsNote"></em></h2>
+        <div class="cands" id="cands"></div>
+      </div>
+    </aside>
+    <section class="timeline">
+    <canvas id="tl" tabindex="0" aria-label="Objective over the run; click or drag to scrub"></canvas>
+    <div class="transport">
+      <button class="primary" id="play">Play</button>
+      <button id="prev">Back</button>
+      <button id="next">Forward</button>
+      <button id="tobest">Jump to best</button>
+      <select id="speed" aria-label="Playback speed">
+        <option value="1" selected>1&times;</option>
+        <option value="3">3&times;</option>
+        <option value="8">8&times;</option>
+      </select>
+      <select id="xaxis" aria-label="Timeline x axis">
+        <option value="it" selected>iterations</option>
+        <option value="t">seconds</option>
+      </select>
+      <span class="pos" id="pos">—</span>
+      <div class="toggles">
+        <label><input type="checkbox" id="tProp" checked> rejected proposals</label>
+        <label>labels
+          <select id="tIds">
+            <option value="off" selected>none</option>
+            <option value="order">visit order</option>
+            <option value="id">target id</option>
+          </select></label>
+      </div>
+    </div>
+    </section>
+  </main>
+
+</div>
+
+
+<div class="sotabs">
+  <!-- No inline onclick: soWire() below delegates these clicks. Two handlers on
+       one click cancel out, because soOpen toggles. -->
+  <button class="sotab" id="tabStats" aria-expanded="false">&#9664; Statistics</button>
+  <button class="sotab" id="tabWins"  aria-expanded="false">&#9664; Windows</button>
+</div>
+<section class="slideover" id="soStats" aria-hidden="true">
+  <div class="sogrip" title="Hold and drag to move the panel">⇔</div>
+    <button class="soclose" data-close="soStats" onclick="soClose('soStats')">&times;</button>
+    <div class="sobody">
+  <h3>Run statistics</h3>
+  <p class="sub" id="statsSub"></p>
+  <div id="statsBody"></div>
+    </div>
+</section>
+<section class="slideover wide" id="soWins" aria-hidden="true">
+  <div class="sogrip" title="Hold and drag to move the panel">⇔</div>
+    <button class="soclose" data-close="soWins" onclick="soClose('soWins')">&times;</button>
+    <div class="sobody">
+  <h3>Realized windows</h3>
+  <p class="sub">Grey, the time window [eᵢ, ℓᵢ]; colour, the realized window [aᵢ<sup>min</sup>, aᵢ<sup>max</sup>], blue where the slope is positive and orange where it is negative; the red dot is the arrival. The number at the right is the least and the most information the target can give over its <strong>time window</strong>, not over its realized window. The left figure follows the route in the search display; the right is the best route of the run.</p>
+  <div class="wins">
+    <figure><figcaption id="capNow"></figcaption><canvas id="cvNow"></canvas>
+      <div class="winnav"><button id="winNext">Next local optimum</button><span id="winPos"></span></div></figure>
+    <figure><figcaption id="capBest"></figcaption><canvas id="cvBest"></canvas></figure>
+  </div>
+    </div>
+</section>
+
+<script id="trace-data" type="application/json">__DATA__</script>
+<script>
+const OPC={add:"--insert",replace:"--replace",swap:"--swap",two_opt:"--twoopt",shake:"--shake"};
+const OPN={add:"Insert",replace:"Replace",swap:"Swap",two_opt:"2-opt",shake:"Shake"};
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt=n=>n==null?"—":n.toLocaleString("en-US",{maximumFractionDigits:0});
+let D=null,i=0,playing=false,acc=0,last=0;
+
+const map=document.getElementById("map"),mctx=map.getContext("2d");
+const tl=document.getElementById("tl"),tctx=tl.getContext("2d");
+
+function fit(c){const b=c.getBoundingClientRect(),d=window.devicePixelRatio||1;
+  const r={width:b.width||c.parentElement.clientWidth||640,
+           height:b.height||c.parentElement.clientHeight||430};
+  c.width=Math.max(1,r.width*d);c.height=Math.max(1,r.height*d);
+  c.getContext("2d").setTransform(d,0,0,d,0,0);return r;}
+
+function proj(r){
+  const xs=D.nodes.map(n=>n.x),ys=D.nodes.map(n=>n.y);
+  const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+  const pad=26,w=r.width-2*pad,h=r.height-2*pad;
+  const s=Math.min(w/Math.max(1e-9,x1-x0),h/Math.max(1e-9,y1-y0));
+  const ox=pad+(w-(x1-x0)*s)/2, oy=pad+(h-(y1-y0)*s)/2;
+  return n=>[ox+(n.x-x0)*s, r.height-(oy+(n.y-y0)*s)];
+}
+
+function drawMap(){
+  const r=fit(map),P=proj(r),f=D.frames[i],sched=new Set(f.r),byId=D.byId;
+  mctx.clearRect(0,0,r.width,r.height);
+  const col=css(OPC[f.e]||"--twoopt");
+
+  if(document.getElementById("tProp").checked){
+    mctx.lineWidth=1;mctx.strokeStyle=css("--ghost");mctx.globalAlpha=.34;
+    for(const p of f.p){mctx.beginPath();
+      const cyc=p.r.concat([D.depot]);
+      cyc.forEach((n,k)=>{const q=P(byId[n]);k?mctx.lineTo(q[0],q[1]):mctx.moveTo(q[0],q[1]);});
+      mctx.stroke();}
+    mctx.globalAlpha=1;
+  }
+
+  for(const n of D.nodes){
+    if(n.id===D.depot)continue;
+    const q=P(n),on=sched.has(n.id);
+    mctx.beginPath();mctx.arc(q[0],q[1],on?4.2:3,0,7);
+    if(on){mctx.fillStyle=col;mctx.fill();}
+    else{
+      // not on the route: filled in a light tone so it reads as a target the
+      // search may still pick up, without competing with the route itself
+      mctx.fillStyle=css("--unsched");mctx.fill();
+    }
+  }
+
+  const cyc=f.r.concat([D.depot]);
+  mctx.lineWidth=1.9;mctx.strokeStyle=col;mctx.lineJoin="round";
+  mctx.beginPath();
+  cyc.forEach((n,k)=>{const q=P(byId[n]);k?mctx.lineTo(q[0],q[1]):mctx.moveTo(q[0],q[1]);});
+  mctx.stroke();
+  mctx.fillStyle=col;                       // direction of travel, one arrowhead per leg
+  for(let k=0;k<cyc.length-1;k++){
+    const a=P(byId[cyc[k]]),b=P(byId[cyc[k+1]]);
+    const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy);
+    if(L<14)continue;
+    const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,ux=dx/L,uy=dy/L,s=4.6;
+    mctx.beginPath();
+    mctx.moveTo(mx+ux*s,my+uy*s);
+    mctx.lineTo(mx-ux*s-uy*s*0.62,my-uy*s+ux*s*0.62);
+    mctx.lineTo(mx-ux*s+uy*s*0.62,my-uy*s-ux*s*0.62);
+    mctx.closePath();mctx.fill();
+  }
+
+  const d=P(byId[D.depot]);
+  mctx.fillStyle=css("--ink");mctx.fillRect(d[0]-5,d[1]-5,10,10);
+
+  const lab=document.getElementById("tIds").value;
+  if(lab!=="off"){
+    mctx.font="10px "+css("--mono").split(",")[0].replace(/"/g,"");
+    mctx.fillStyle=css("--muted");mctx.textAlign="center";
+    f.r.forEach((n,k)=>{if(n===D.depot)return;const q=P(byId[n]);
+      mctx.fillText(lab==="order"?String(k):String(n),q[0],q[1]-8);});
+  }
+  D.est=false;
+  if(f.a){D.arr={};f.r.slice(1).concat([D.depot]).forEach((n,k)=>{if(f.a[k]!=null)D.arr[n]=f.a[k];});}
+  else {D.arr=arrivals(f.r);D.est=true;}
+  if(f.s){D.spd={};D.loi={};f.r.slice(1).concat([D.depot]).forEach((n,k)=>{
+            if(f.s[k]!=null)D.spd[n]=f.s[k]; if(f.lo&&f.lo[k]!=null)D.loi[n]=f.lo[k];});}
+  else {D.spd=legSpeeds(f.r.concat([D.depot]));D.loi={};D.est=true;}
+  document.getElementById("hint").textContent="frame "+(i+1)+" / "+D.frames.length;
+}
+
+function legSpeeds(route){
+  // speed each leg needs under the earliest-arrival schedule, in m/s
+  const out={},v=D.vmax/D.scale;
+  let a=0;
+  for(let k=1;k<route.length;k++){
+    const p=D.byId[route[k-1]],q=D.byId[route[k]];
+    const du=Math.hypot(q.x-p.x,q.y-p.y);
+    const t=Math.max(q.e, a+du/v)-a;
+    out[route[k]]=t>0?du*D.scale/t:null;
+    a=Math.max(q.e, a+du/v);
+  }
+  return out;
+}
+
+function arrivals(route){
+  // earliest arrival at each visit, flying every leg at v_max and waiting for a
+  // window to open: the same forward pass the search uses to test feasibility
+  const out={},v=D.vmax*1/D.scale;      // coordinate units per second
+  let a=0;
+  for(let k=1;k<route.length;k++){
+    const p=D.byId[route[k-1]],q=D.byId[route[k]];
+    a=Math.max(q.e, a+Math.hypot(q.x-p.x,q.y-p.y)/v);
+    out[route[k]]=a;
+  }
+  return out;
+}
+
+
+function drawTL(){
+  const r=fit(tl);tctx.clearRect(0,0,r.width,r.height);
+  const F=D.frames,pad=4,H=r.height;
+  const lo=D.lo,hi=D.hi,span=(hi-lo)||1;
+  // The frames are route changes, so on the wall clock a long construction
+  // or a long idle tail crushes the rest of the run into a corner of the
+  // axis. Iterations spread them evenly, and the axis switches between them.
+  const byIt=!document.getElementById("xaxis")||document.getElementById("xaxis").value==="it";
+  const key=f=>byIt?f.it:f.t, last=key(F[F.length-1])||1;
+  const X=k=>(k/last)*r.width,Y=v=>H-pad-((v-lo)/span)*(H-2*pad-10);
+  tctx.strokeStyle=css("--grid");tctx.lineWidth=1;
+  for(let k=0;k<=4;k++){const y=pad+ (H-2*pad-10)*k/4;tctx.beginPath();tctx.moveTo(0,y);tctx.lineTo(r.width,y);tctx.stroke();}
+  tctx.strokeStyle=css("--shake");tctx.globalAlpha=.32;tctx.lineWidth=1;
+  F.forEach(f=>{if(f.v!=="shake")return;const x=X(key(f));tctx.beginPath();tctx.moveTo(x,H-10);tctx.lineTo(x,H-3);tctx.stroke();});
+  tctx.globalAlpha=1;
+  tctx.strokeStyle=css("--ghost");tctx.lineWidth=1;tctx.beginPath();
+  F.forEach((f,k)=>{const x=X(key(f)),y=Y(f.f??lo);k?tctx.lineTo(x,y):tctx.moveTo(x,y);});tctx.stroke();
+  tctx.strokeStyle=css("--best");tctx.lineWidth=1.9;tctx.beginPath();
+  F.forEach((f,k)=>{const x=X(key(f)),y=Y(f.b);k?tctx.lineTo(x,y):tctx.moveTo(x,y);});tctx.stroke();
+  const f=F[i],px=X(key(f));
+  tctx.strokeStyle=css(OPC[f.e]||"--twoopt");tctx.lineWidth=1.6;
+  tctx.beginPath();tctx.moveTo(px,0);tctx.lineTo(px,H-2);tctx.stroke();
+  tctx.fillStyle=css("--muted");tctx.font="10px "+css("--mono").split(",")[0].replace(/"/g,"");
+  tctx.textAlign="left";tctx.fillText(fmt(hi),4,10);
+  tctx.textAlign="right";tctx.fillText(byIt?fmt(last)+" iterations":Math.round(last)+" s",r.width-4,H-2);
+}
+
+// Swap and 2-opt are accepted on the objective and, on a tie, on the capacity
+// max(T/Tmax, E/Emax) of the solved route. Show that quantity, its change and
+// which resource binds, so a lateral move can be read for what it trades.
+function capRows(f,prev){
+  if(f.cap==null||(f.e!=="swap"&&f.e!=="two_opt"))return "";
+  const dc=prev&&prev.cap!=null?f.cap-prev.cap:null;
+  const binds=f.er>=f.tr?"energy":"time";
+  return row("Capacity",(100*f.cap).toFixed(2)+"% <span class=\"muted\">("+binds+")</span>")+
+    row("Capacity change",dc==null?"&mdash;":
+      `<span class="delta ${dc<=0?"up":"down"}">${dc>0?"+":""}${(100*dc).toFixed(3)} pp</span>`)+
+    row("Time / energy",(100*f.tr).toFixed(1)+"% / "+(100*f.er).toFixed(1)+"%");
+}
+function rail(){
+  const f=D.frames[i];
+  document.querySelector(".verdict .dot").style.background=css(OPC[f.e]||"--twoopt");
+  document.getElementById("vtext").textContent=
+    (OPN[f.e]||f.e)+(f.v==="shake"?" — targets removed":" — accepted");
+  const prev=i>0?D.frames[i-1]:null,d=prev&&f.f!=null&&prev.f!=null?f.f-prev.f:null;
+  document.getElementById("ev").innerHTML=
+    row("Wall clock",f.t.toFixed(1)+" s")+row("At iteration",fmt(f.it))+
+    row("Targets",f.r.length-1)+row("Objective",fmt(f.f))+
+    row("Change",d==null?"—":`<span class="delta ${d>=0?"up":"down"}">${d>=0?"+":""}${fmt(d)}</span>`)+
+    row("Best so far",fmt(f.b))+row("Rejected since",fmt(f.np))+
+    capRows(f,prev);
+  document.getElementById("seq").innerHTML=
+    "<b>depot</b> &rarr; " + f.r.slice(1).map(n=>String(n)).join(" &rarr; ") + " &rarr; <b>depot</b>";
+  const box=document.getElementById("cands"),note=document.getElementById("candsNote");
+  if(!f.c.length){note.textContent="";box.innerHTML='<p class="empty">Not recorded for this event.</p>';return;}
+  // f.cw is the total weight of the whole set at the draw, so the listed
+  // weights become the selection probabilities of the roulette
+  const mx=Math.max(...f.c.map(c=>c[1]))||1,col=css(OPC[f.e]||"--twoopt");
+  const tot=f.cw||f.c.reduce((s,c)=>s+c[1],0);
+  note.textContent=(f.cn&&f.cn>f.c.length)?`top ${f.c.length} of ${f.cn}`:`${f.c.length} moves`;
+  const pct=p=>p>=.001?(100*p).toFixed(1)+"%":(100*p).toFixed(3)+"%";
+  box.innerHTML=f.c.map(c=>
+    `<div class="cand"><span class="id">${c[0]}</span>`+
+    `<span class="bar"><i style="width:${Math.max(3,100*c[1]/mx).toFixed(1)}%;background:${col}"></i></span>`+
+    `<span class="w">${tot>0?pct(c[1]/tot):"—"}</span></div>`).join("");
+}
+const row=(k,v)=>`<span>${k}</span><span>${v}</span>`;
+
+const mmss=s=>{const m=Math.floor(s/60);return m+"m "+String(Math.round(s-60*m)).padStart(2,"0")+"s";};
+
+function hover(ev){
+  const tip=document.getElementById("tip"),r=map.getBoundingClientRect(),P=proj(r);
+  const mx=ev.clientX-r.left,my=ev.clientY-r.top;
+  let best=null,bd=14*14;
+  for(const n of D.nodes){const q=P(n),dd=(q[0]-mx)**2+(q[1]-my)**2;if(dd<bd){bd=dd;best=n;}}
+  if(!best){tip.hidden=true;return;}
+  const f=D.frames[i],pos=f.r.indexOf(best.id),on=pos>=0,dep=best.id===D.depot;
+  const a=D.arr[best.id];
+  let rows="";
+  const row=(k,v,cls)=>rows+=`<dt>${k}</dt><dd class="${cls||""}">${v}</dd>`;
+  if(dep){
+    row("Return by", mmss(D.horizon));
+  }else{
+    row("Window opens", mmss(best.e));
+    row("Window closes", mmss(best.l));
+    const g=best.g||0;
+    row("Reward slope", (g>=0?"+":"")+g.toFixed(3)+" / s", g>=0?"":"warn");
+  }
+  if(on&&!dep){
+    row("Visit", pos+" of "+(f.r.length-1));
+    if(a!=null) row(D.est?"Earliest arrival":"Arrival", mmss(a), a>best.l?"warn":"");
+    const sIn=D.spd[best.id], sOut=D.spd[f.r[pos+1]!==undefined?f.r[pos+1]:D.depot];
+    if(sIn!=null) row("Speed in", sIn.toFixed(1)+" m/s");
+    if(sOut!=null) row("Speed out", sOut.toFixed(1)+" m/s");
+    const li=D.loi?D.loi[best.id]:null;
+    if(li!=null) row("Loiter in", (li/1000).toFixed(2)+" km");
+    if(D.est) rows+='<dt></dt><dd style="color:var(--muted)">estimated</dd>';
+  }
+  tip.innerHTML=`<h3>${dep?"Depot":"Target "+best.id}<em>${dep?"start and end":(on?"scheduled":"not scheduled")}</em></h3><dl>${rows}</dl>`;
+  tip.hidden=false;
+  const q=P(best),w=tip.offsetWidth,h=tip.offsetHeight;
+  tip.style.left=Math.min(Math.max(6,q[0]+12),r.width-w-6)+"px";
+  tip.style.top =Math.min(Math.max(6,q[1]-h-12),r.height-h-6)+"px";
+}
+
+function render(){drawMap();drawTL();rail();
+  document.getElementById("pos").textContent=
+    D.frames[i].t.toFixed(1)+" s  ·  event "+(i+1)+" of "+D.frames.length;
+  const wp=document.getElementById("winPos"), A=D.lopt||[], k=A.indexOf(i);
+  if(wp) wp.textContent=A.length?(k>=0?"local optimum "+(k+1)+" of "+A.length
+                                      :A.length+" local optima"):"";
+  const w=document.getElementById("soWins");   // the left figure tracks the playhead
+  if(w&&w.classList.contains("open")) drawWindows();}
+
+function go(n){i=Math.max(0,Math.min(D.frames.length-1,n));render();}
+
+function tick(ts){
+  if(!playing)return;
+  if(!last)last=ts;
+  acc+=(ts-last)/1000*Number(document.getElementById("speed").value)*6;last=ts;
+  while(acc>=1){acc-=1;if(i>=D.frames.length-1){playing=false;
+    document.getElementById("play").textContent="Play";break;}i++;}
+  render();requestAnimationFrame(tick);
+}
+
+function boot(D0){
+  D=D0;D.byId={};D.nodes.forEach(n=>D.byId[n.id]=n);
+  const ttl=document.getElementById("title");
+  if(ttl){if(ttl.firstChild)ttl.firstChild.nodeValue=D.instance;else ttl.prepend(D.instance);}
+  document.getElementById("subtitle").textContent=
+    Math.round(D.budget)+" s from the "+(D.start||"greedy")+" start";
+  document.title=D.instance.replace(/\s*\(\d+\)/,"")+" Search Replay";
+  D.horizon=Math.max(...D.nodes.map(n=>n.l));
+  // the routes the search settled on: the frame before each shake
+  D.lopt=[...new Set(D.frames.map((f,k)=>f.v==="shake"?k-1:-1).filter(k=>k>=0))];
+  soWire();
+  const fs=D.frames.map(f=>f.f).filter(v=>v!=null).concat(D.frames.map(f=>f.b));
+  D.lo=Math.min(...fs)*0.997;D.hi=Math.max(...fs)*1.003;
+  if(!(D.hi>D.lo)){D.lo-=1;D.hi+=1;}
+  // counts come from the whole run, not from the frames the page shows
+  const T=D.totals||{};
+  const n={accepted:T.accepted??D.frames.filter(f=>f.v==="accepted").length,
+           shake:T.shake??D.frames.filter(f=>f.v==="shake").length};
+  const rejected=(T.refused??0)+(T.infeasible??0)
+    || D.frames.reduce((a,f)=>a+f.np,0);
+  // Iterations = route changes + shakes + rejected + no move drawn. The last
+  // term is the iterations whose operator had an empty feasible set: they
+  // propose nothing, so they leave no row in the trace.
+  const noMove=T.no_move??0, iters=T.iterations??0;
+  document.getElementById("stats").innerHTML=
+    st("Best objective",fmt(D.hi/1.003))+st("Route changes",fmt(n.accepted))+
+    st("Shakes",fmt(n.shake))+st("Rejected",fmt(rejected))+
+    (noMove?st("No move drawn",fmt(noMove)):"")+
+    (iters?st("Iterations",fmt(iters)):"")+
+    st("Frames shown",fmt(D.frames.length));
+  render();
+  addEventListener("resize",render);
+  map.addEventListener("pointermove",hover);
+  map.addEventListener("pointerleave",()=>{document.getElementById("tip").hidden=true;});
+  document.getElementById("play").onclick=e=>{playing=!playing;last=0;
+    e.target.textContent=playing?"Pause":"Play";if(playing)requestAnimationFrame(tick);};
+  document.getElementById("next").onclick=()=>go(i+1);
+  document.getElementById("prev").onclick=()=>go(i-1);
+  const wn=document.getElementById("winNext");
+  if(wn) wn.onclick=()=>{const A=D.lopt||[];if(!A.length)return;
+    const k=A.find(j=>j>i);go(k!=null?k:A[0]);};
+  document.getElementById("tobest").onclick=()=>{
+    let bi=0,bv=-Infinity;D.frames.forEach((f,k)=>{if(f.b>bv){bv=f.b;bi=k;}});go(bi);};
+  ["tProp","tIds","xaxis"].forEach(id=>document.getElementById(id).onchange=render);
+  const scrub=ev=>{const r=tl.getBoundingClientRect();
+    const byIt=!document.getElementById("xaxis")||document.getElementById("xaxis").value==="it", key=f=>byIt?f.it:f.t;
+    const fr=D.frames, end=key(fr[fr.length-1])||1;
+    const q=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width))*end;
+    let bi=0,bd=Infinity;fr.forEach((f,k)=>{const d=Math.abs(key(f)-q);if(d<bd){bd=d;bi=k;}});go(bi);};
+  tl.onpointerdown=e=>{tl.setPointerCapture(e.pointerId);scrub(e);};
+  tl.onpointermove=e=>{if(e.buttons)scrub(e);};
+  tl.onkeydown=e=>{if(e.key==="ArrowRight")go(i+1);if(e.key==="ArrowLeft")go(i-1);};
+  addEventListener("keydown",e=>{
+    if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT")return;
+    if(e.key==="ArrowRight")go(i+1);if(e.key==="ArrowLeft")go(i-1);
+    if(e.key===" "){e.preventDefault();document.getElementById("play").click();}});
+}
+
+// ---- slide-over panels ----------------------------------------------------
+function soClose(id){const p=document.getElementById(id);if(!p)return;
+  p.classList.remove('open');p.setAttribute('aria-hidden','true');
+  document.querySelectorAll('.sotab').forEach(t=>t.setAttribute('aria-expanded','false'));}
+function soOpen(id,btn){
+  const panel=document.getElementById(id);
+  if(!panel) return;
+  document.querySelectorAll(".slideover").forEach(p=>{
+    const on = p.id===id && !p.classList.contains("open");
+    p.classList.toggle("open",on); p.setAttribute("aria-hidden",String(!on));
+    // an open always starts from the full panel, both figures showing; a drag
+    // narrows it again from there
+    if(on){ p.style.width=""; p.classList.remove("narrow"); }
+  });
+  document.querySelectorAll(".sotab").forEach(b=>
+    b.setAttribute("aria-expanded",String(b===btn && panel.classList.contains("open"))));
+  const w=document.getElementById("soWins");
+  if(w && w.classList.contains("open"))
+    requestAnimationFrame(()=>requestAnimationFrame(drawWindows));   // after layout
+}
+function soDrag(){
+  // The grip narrows the panel rather than sliding it away: pulled in far
+  // enough it keeps only the route in view and hands the rest of the screen
+  // back to the search play. The width is inline, so a choice made here sticks
+  // until the next drag.
+  document.querySelectorAll(".slideover").forEach(p=>{
+    const grip=p.querySelector(".sogrip"); if(!grip) return;
+    const full=()=>p.classList.contains("wide")?Math.min(1100,window.innerWidth*.96)
+                                               :Math.min(560,window.innerWidth*.94);
+    let x0=0,w0=0,dragging=false,raf=0;
+    const apply=w=>{
+      p.style.width=w+"px";
+      p.classList.toggle("narrow",w<full()*.62);   // drops the best-route figure
+      if(p.id==="soWins"&&!raf) raf=requestAnimationFrame(()=>{raf=0;drawWindows();});
+    };
+    const move=e=>{ if(dragging) apply(Math.max(360,Math.min(full(),w0-(e.clientX-x0)))); };
+    const up=()=>{ if(!dragging) return; dragging=false; p.style.transition="";
+      window.removeEventListener("pointermove",move);
+      window.removeEventListener("pointerup",up);
+      if(p.id==="soWins") drawWindows(); };
+    grip.addEventListener("pointerdown",e=>{ dragging=true; x0=e.clientX; w0=p.offsetWidth;
+      p.style.transition="none"; e.preventDefault();
+      window.addEventListener("pointermove",move);
+      window.addEventListener("pointerup",up); });
+  });
+}
+function soWire(){
+  // Delegated clicks, so the handlers do not depend on when this runs. The
+  // nodes are left where they are: in the embedded viewer they belong to the
+  // component that rendered them, and moving them breaks its bookkeeping.
+  if(soWire._done) return;
+  soWire._done = true;
+  document.addEventListener("click", e=>{
+    const tab = e.target.closest && e.target.closest(".sotab");
+    if(tab){
+      if(tab.id==="tabStats") fillStats();
+      soOpen(tab.id==="tabStats" ? "soStats" : "soWins", tab);
+      return;
+    }
+    const x = e.target.closest && e.target.closest(".soclose");
+    if(x){
+      const p=document.getElementById(x.dataset.close);
+      if(!p) return;
+      p.classList.remove("open"); p.setAttribute("aria-hidden","true");
+      document.querySelectorAll(".sotab").forEach(t=>t.setAttribute("aria-expanded","false"));
+    }
+  });
+  soDrag();
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape")
+    document.querySelectorAll(".slideover.open").forEach(p=>{
+      p.classList.remove("open"); p.setAttribute("aria-hidden","true");
+      document.querySelectorAll(".sotab").forEach(t=>t.setAttribute("aria-expanded","false")); }); });
+  window.addEventListener("resize",()=>{ const w=document.getElementById("soWins");
+    if(w && w.classList.contains("open")) drawWindows(); });
+}
+const OPLBL={add:"Insert",replace:"Replace",swap:"Swap",two_opt:"2-opt"};
+function fillStats(){
+  if(!D||!document.getElementById("statsBody")) return;
+  const s=D.stats||{}, t=D.totals||{};
+  document.getElementById("statsSub").textContent =
+    D.instance+" — "+fmt(t.iterations||0)+" iterations, "+fmt(t.accepted||0)+" route changes";
+  const cell=(k,v)=>`<div><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  let h='<div class="sgrid">';
+  h+=cell("Wall clock",(s.wall!=null?s.wall+" s":"—"));
+  h+=cell("Per iteration",(s.ms_per_iter!=null?s.ms_per_iter+" ms":"—"));
+  if(s.socp){
+    // the timer is newer than some datasets: show the count, not a fabricated 0
+    h+=cell("SOCP share",s.socp.pct?s.socp.pct+"% of wall":"not timed");
+    h+=cell("SOCP solves",fmt(s.socp.calls)+(s.socp.ms_each?" · "+s.socp.ms_each+" ms each":""));
+    const spi=(s.socp.s&&t.iterations)?1000*s.socp.s/t.iterations:0;
+    h+=cell("SOCP per iteration",spi?spi.toFixed(2)+" ms ("+
+            Math.round(100*spi/(s.ms_per_iter||spi))+"% of the iteration)":"not timed");
+  }else{
+    h+=cell("SOCP solves",fmt(s.solved||0)+" evaluated");
+    h+=cell("SOCP share","not recorded");
+  }
+  h+=cell("Infeasible at the solve",(s.infeas_pct!=null?s.infeas_pct+"%":"—"));
+  if(s.ts_reject!=null) h+=cell("Screened",fmt(s.ts_reject)+" routes");
+  h+=cell("Local optima",fmt((s.gap&&s.gap.n)||0)+" shakes");
+  h+=cell("Distance between them",(s.gap?fmt(s.gap.max)+" max · "+fmt(s.gap.avg)+" mean":"—"));
+  h+='</div>';
+  h+='<table class="stab"><thead><tr><th>Operator</th><th>accepted</th><th>refused</th>'+
+     '<th>infeasible</th><th>rate</th></tr></thead><tbody>';
+  for(const o of ["add","replace","swap","two_opt"]){
+    const v=(s.ops||{})[o]; if(!v) continue;
+    h+=`<tr><td>${OPLBL[o]}</td><td>${fmt(v.acc)}</td><td>${fmt(v.ref)}</td>`+
+       `<td>${fmt(v.inf)}</td><td>${v.rate}%</td></tr>`;
+  }
+  h+='</tbody></table>';
+  if(s.sets){
+    h+='<table class="stab"><thead><tr><th>Move set</th><th>min</th><th>mean</th><th>max</th>'+
+       '</tr></thead><tbody>';
+    for(const o of ["add","replace","swap","two_opt"]){
+      const v=s.sets[o]; if(!v) continue;
+      h+=`<tr><td>${OPLBL[o]}</td><td>${v.min}</td><td>${v.avg}</td><td>${fmt(v.max)}</td></tr>`;
+    }
+    h+='</tbody></table>';
+  }
+  document.getElementById("statsBody").innerHTML=h;
+}
+function drawOne(cv,cap,fr,label){
+  if(!cv||!cap) return;
+  const dpr=window.devicePixelRatio||1;
+  if(!fr||!fr.wlo){ cap.textContent=label+" — not recorded"; cv.height=0; return; }
+  // r[0] is the depot and wlo/whi/a are aligned with r, so the row index is the
+  // index into r: the depot is row 0, drawn at the bottom, and the visiting
+  // order runs upward from it.
+  const r=fr.r, n=r.length;
+  // Fit the rows to the panel when it is tall enough to hold them all, so the
+  // whole route reads at once. 9px is the floor at which the row number and the
+  // min-max label stay legible; under that the rows stay at 9px and it scrolls.
+  const CHROME=48+67;                      // the button row, and the axis and legend inside
+  const pan=cv.closest&&cv.closest(".slideover");
+  const room=pan?pan.clientHeight-(cv.getBoundingClientRect().top
+                                   -pan.getBoundingClientRect().top)-CHROME:0;
+  const rowH=Math.max(9,Math.min(15,(room>0?room:520)/Math.max(1,n)));
+  const W=cv.clientWidth||cv.parentElement.clientWidth||cv.getBoundingClientRect().width||460;
+  const T=D.horizon||Math.max(...D.nodes.map(x=>x.l));
+  const g=cv.getContext("2d"), FONT="9px "+getComputedStyle(document.body).fontFamily;
+  // Measure before sizing the canvas, because setting its width resets the
+  // context: the right gutter and the legend layout both depend on the text.
+  g.font=FONT;
+  // The information on offer over the whole time window: I is linear in the
+  // arrival, so its extremes are the two ends of [e,l]. These labels get a
+  // gutter of their own on the right, where they cannot cover a bar.
+  const lbl=r.map((id,q)=>{ if(!q) return "";
+    const nd=D.byId[id], i1=nd.i0, i2=nd.g*(nd.l-nd.e)+nd.i0;
+    return Math.round(Math.min(i1,i2))+"–"+Math.round(Math.max(i1,i2)); });
+  const gut=Math.max(...lbl.map(s=>g.measureText(s).width))+10;
+  const L=44, R=W-8-gut, X=v=>L+(R-L)*Math.max(0,Math.min(1,v/T));
+  const KEY=[["win","time window [eᵢ, ℓᵢ]"],
+             ["pos","realized, γᵢ > 0 (later is better)"],
+             ["dot","arrival"],
+             ["neg","realized, γᵢ < 0 (earlier is better)"]];
+  const cw=(W-8-L)/2;
+  const two=KEY.every(([,t])=>15+g.measureText(t).width<=cw-6);   // else one column
+  const NOTE=["number at the right: min and max information over the time window [eᵢ, ℓᵢ]",
+              "right: min–max information over [eᵢ, ℓᵢ]"];
+  const note=NOTE.find(t=>15+g.measureText(t).width<=W-8-L)||NOTE[NOTE.length-1];
+  const legRows=(two?2:KEY.length)+1;
+  const top=8, axisY=top+n*rowH+7, ly=axisY+24, H=Math.round(ly+(legRows-1)*13+10);
+  if(cv.width!==W*dpr||cv.height!==H*dpr){      // reallocating clears it; only when it changed
+    cv.width=W*dpr; cv.height=H*dpr; cv.style.height=H+"px"; }
+  g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  g.font=FONT; g.textBaseline="middle";
+  const yOf=q=>top+(n-1-q)*rowH;           // q=0, the depot, at the bottom
+  const C={line:css("--line"),ink:css("--ink"),muted:css("--muted"),
+           pos:css("--twoopt"),neg:css("--replace"),ghost:css("--ghost"),
+           arr:css("--shake")};
+  cap.textContent=label+" — iteration "+fmt(fr.it)+", "+(n-1)+" targets, objective "+fmt(fr.f);
+  for(let q=0;q<n;q++){
+    const nd=D.byId[r[q]], y=yOf(q), h=Math.max(3,rowH-3), mid=y+h/2, depot=q===0;
+    g.fillStyle=C.line; g.globalAlpha=.55;
+    g.fillRect(X(nd.e),y,Math.max(1,X(nd.l)-X(nd.e)),h);
+    g.globalAlpha=1;
+    g.fillStyle=C.muted; g.textAlign="right";
+    g.fillText(depot?"depot":String(nd.id),L-5,mid);
+    const lo=fr.wlo[q], hi=fr.whi[q];
+    if(lo!=null&&hi!=null){
+      // a realized window is often a few seconds against a horizon of hours, so
+      // it would be a fraction of a pixel; draw it at a visible minimum width
+      const x0=X(lo), w=Math.max(4,X(hi)-x0);
+      g.fillStyle=depot?C.ghost:(nd.g>0?C.pos:C.neg);
+      g.fillRect(x0,y,w,h);
+      g.strokeStyle=C.ink; g.globalAlpha=.35; g.lineWidth=.6;
+      g.strokeRect(x0+.3,y+.3,w-.6,h-.6); g.globalAlpha=1;
+    }
+    if(!depot){ g.fillStyle=nd.g>0?C.pos:C.neg; g.textAlign="right";
+                g.fillText(lbl[q],W-8,mid); }
+    const a=fr.a&&fr.a[q];
+    if(a!=null){ g.fillStyle=C.arr; g.beginPath(); g.arc(X(a),mid,1.2,0,6.284); g.fill(); }
+  }
+  g.strokeStyle=C.line; g.beginPath(); g.moveTo(L,axisY); g.lineTo(R,axisY); g.stroke();
+  g.fillStyle=C.muted;
+  g.textAlign="left"; g.fillText("0",L,axisY+9);
+  g.textAlign="right"; g.fillText(Math.round(T)+" s",R,axisY+9);
+  g.save(); g.translate(9,(top+axisY)/2); g.rotate(-Math.PI/2);
+  g.textAlign="center"; g.fillText("visiting order (depot at the bottom)",0,0); g.restore();
+  {                                         // legend under the axis
+    const sw=(x,yy,c,al)=>{g.fillStyle=c;g.globalAlpha=al||1;g.fillRect(x,yy-3.5,11,7);g.globalAlpha=1;};
+    const mark={win:(x,y)=>sw(x,y,C.line,.55), pos:(x,y)=>sw(x,y,C.pos),
+                neg:(x,y)=>sw(x,y,C.neg),
+                dot:(x,y)=>{g.fillStyle=C.arr;g.beginPath();g.arc(x+5,y,1.2,0,6.284);g.fill();}};
+    g.textAlign="left";
+    KEY.forEach(([k,txt],idx)=>{
+      const x=L+(two?idx%2:0)*cw, y=ly+(two?idx>>1:idx)*13;
+      mark[k](x,y); g.fillStyle=C.muted; g.fillText(txt,x+15,y);
+    });
+    g.fillStyle=C.muted; g.fillText(note,L+15,ly+(legRows-1)*13);
+  }
+}
+function drawWindows(){
+  if(!D) return;
+  const s=D.stats||{};
+  drawOne(document.getElementById("cvNow"),document.getElementById("capNow"),
+          D.frames[i],"Route in view");
+  drawOne(document.getElementById("cvBest"),document.getElementById("capBest"),
+          s.best_i!=null?D.frames[s.best_i]:null,"Best route");
+}
+
+const st=(k,v)=>`<div class="stat"><dt>${k}</dt><dd>${v}</dd></div>`;
+
+try{boot(JSON.parse(document.getElementById("trace-data").textContent));}
+catch(err){document.getElementById("stats").innerHTML=
+  '<div class="stat"><dt>Trace</dt><dd>'+err.message+'</dd></div>';throw err;}
+</script>

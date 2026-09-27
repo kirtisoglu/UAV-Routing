@@ -1,0 +1,26 @@
+[plan] fixed: 14 runs, 1 at a time, 3600s each, theta=1000000000000
+[saved 1/14] R101 (50): obj=10540.63 tour=9 t_best=2
+[saved 2/14] R101 (100): obj=19545.23 tour=15 t_best=3
+[saved 3/14] R1_2_1 (200): obj=14174.61 tour=27 t_best=15
+[saved 4/14] C101 (50): obj=7527.12 tour=36 t_best=2065
+[saved 5/14] C101 (100): obj=9821.04 tour=41 t_best=712
+[saved 6/14] C1_2_1 (200): obj=9673.91 tour=41 t_best=2830
+[saved 7/14] RC1_2_1 (200): obj=15657.15 tour=34 t_best=1444
+[saved 8/14] R102 (100): obj=28941.00 tour=27 t_best=306
+[saved 9/14] R104 (100): obj=35619.54 tour=35 t_best=3275
+[saved 10/14] C104 (100): obj=17418.30 tour=91 t_best=1250
+[saved 11/14] RC104 (100): obj=34419.83 tour=30 t_best=1819
+[saved 12/14] PR11 (48): obj=5427.62 tour=28 t_best=104
+[resume] 12 runs on disk
+[plan] fixed: 2 runs, 1 at a time, 3600s each, theta=1000000000000
+[saved 1/2] PR15 (240): obj=15373.69 tour=93 t_best=725
+[saved 2/2] PR10 (288): obj=13351.62 tour=66 t_best=1499
+
+==============================================================
+DONE -> /Users/kirtisoglu/GitHub/UAV-Routing/paper_runs/results/ils_fixed.csv
+[resume] 13 runs on disk
+[plan] fixed: 1 runs, 1 at a time, 3600s each, theta=1000000000000
+[saved 1/1] PR10 (288): obj=13423.57 tour=64 t_best=2040
+
+==============================================================
+DONE -> /Users/kirtisoglu/GitHub/UAV-Routing/paper_runs/results/ils_fixed.csv
