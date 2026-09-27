@@ -379,3 +379,70 @@ by any script that uses `tally=True`.
 ## 8. Rerun campaign (September 2026)
 
 The benchmark grew to 14 instances and the algorithm changed (four operators drawn uniformly, sweep shake, single-start protocol). The full experiment plan, ordering, budget and open decisions are in `experiments/RERUN_PLAN.md`.
+
+## Change round of 27 September 2026 — Section 4 design (paper first, code second)
+
+Diagnosis from the logs and traces of the 2026-09-26 base (paper_runs/results/newdesign,
+animation/traces):
+
+* Where the time goes. On short routes the SOCP dominates; on the long routes the
+  Python construction of the feasible sets did: O(k) `realized()` per reordering pair
+  (O(k^3) per route) and per surviving Insert/Replace candidate. Measured on trace
+  routes: PR15 3.36 s -> 0.39 s, C104 1.42 s -> 0.12 s per route with the O(1)
+  construction (`validate_fast_sets.py`, identical sets and weights on 840/840 sets).
+* The SOCP in physical units needs NumericFocus 3 and takes 56-87 barrier iterations;
+  in the nondimensional units of Section 5.3 with Presolve 0 + BarHomogeneous it takes
+  11-18 and agrees with the physical model and the taut string on every tested route
+  (`test_scaled_socp2.py`). Presolve, not the units, causes the false infeasibility.
+* Acceptance rate by rank of the drawn move (traces, 14 instances): for Insert and
+  Replace it does NOT decay with the weight rank (R104 Replace: 8% at rank 1, 24% at
+  ranks 21-50), so a shortlist of insertions loses improving moves; for Swap and 2-opt
+  it does decay (PR15: 17% at rank 1, 3-5% beyond rank 20). Hence L_r on reorderings
+  only. A full RCL/VND descent (`run_ils_rcl.py`, deterministic first-improvement over
+  top-L lists) was implemented and REJECTED: R101 (50) 10 850 vs 11 902, R101 (100)
+  22 386 vs 22 884 — the random-order full descent is what finds the improvements.
+* Improvements of R_best arrive at all depths of a descent (PR15: 96 of 124 within 200
+  iterations of a shake, 28 later), so the descent is not truncated.
+* Shake gaps between successive improvements: at most 88 shakes (PR11), otherwise
+  <= 46; idle shakes after the last improvement under maxIter = 13000: 12 to 276.
+  Hence termination by S = 100 consecutive idle shakes (`--max-idle-shakes`), which
+  keeps every improvement of the final runs and cuts the idle tails.
+* The (post, cons) arithmetic of the previous shake repeats its first pair after
+  cons(cons+1)/2 = k removals (k = 10, c = 4), and the code compared unreduced `post`
+  values, so "exhausted" almost never fired. Replaced by the explicit enumeration
+  (`--sweep enum`): one sweep of the route per cons = 1..c, then the next level.
+* Caveat found on the way: the energy tie-break coefficient 1e-5 is below the barrier's
+  optimality tolerance on f ~ 2e4, so among information-equivalent schedules the
+  returned E_R (and hence cap) is solver-dependent on degenerate routes (energies of
+  the two models differed by 3.5% of E_max on one R101 route at equal objective).
+  The capacity tie-break of the reordering acceptance reads this noise.
+
+Adopted (all opt-in flags of `run_ils_time_matched.py`, campaign `paper_runs/run_design.py`):
+`--fast-sets --scaled-socp --reorder-rcl 20 --sweep enum --max-idle-shakes 100`, stall off.
+Same-machine checks in the cloud container (pip Gurobi license, routes <= 32 targets):
+R101 (100) `--fast-sets` alone reproduces the base trajectory exactly (22 884.32 at
+iteration 351, 13 351 iterations); R102 (100) base 30 443.71 at 104 s / 252 s run vs new
+30 592.27 at 10 s / 29 s run (208 shakes). RC104 (100) and R1_2_1 (200): see the
+session report. The full 14-instance campaign needs the licensed machine.
+
+Addendum (same day). The first explicit enumeration was level by level (all single-target
+removals, then all pairs, ...). On R1_2_1 (200) it fell into a 27-target basin (14 716 vs
+16 950 for the base on the same machine): the first k shakes remove one target and the next
+k/2 remove two, the removals that improve the best in about 1% of the cases, whereas the
+(post, cons) arithmetic escalates at every shake. `_enumeration` now interleaves the levels
+(next block of size 1, of size 2, ..., of size c, and again), which keeps the escalation and
+the complete coverage. Section 4.4 describes the interleaved order.
+
+Same-machine check (cloud container, pip Gurobi license: routes above 32 targets are refused
+and counted as infeasible, so R1_2_1 is not a clean comparison; single runs, seed 42):
+
+| Instance | 2026-09-26 base: best (t_best / run) | Section 4 design: best (t_best / run) |
+|---|---|---|
+| R101 (100) | 22 884.32 (1.6 s / 47 s) | 22 884.44 (0.4 s / 7 s) |
+| R102 (100) | 30 443.71 (104 s / 252 s) | 30 443.78 (66 s / 95 s) |
+| RC104 (100) | 35 823.27 (238 s / 444 s) | 36 231.33 (34 s / 55 s) |
+| R1_2_1 (200) | 16 950.18 (57 s / 163 s), 356 refused solves | 16 367.83 (18 s / 35 s), 103 refused solves |
+
+Time per SOCP solve in the loop: 20-40 ms physical (NumericFocus 3) vs 3.6-7 ms scaled.
+The long-route instances (C104, PR15, PR10), where the O(1) construction matters most,
+exceed the license here and are to be run with `paper_runs/run_design.py` on the licensed machine.

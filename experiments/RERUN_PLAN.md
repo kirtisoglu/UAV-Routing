@@ -8,6 +8,13 @@ five pre-SOCP checks). Old numbers stay visible in the paper tables until
 each is replaced. The prose that was removed is kept in
 `Brain/40-Papers/uav-routing/Section5-removed-text.tex` for reference.
 
+> **2026-09-27.** Section 4 was rewritten for the design of `paper_runs/run_design.py new`
+> (`--fast-sets --scaled-socp --reorder-rcl 20 --sweep enum --max-idle-shakes 100`).
+> Every matheuristic row below is to be produced with that driver; the parameters of
+> Section 5.8 are D, L_r and S (no stall, no maxIter). Add to 5.8: acceptance rate by
+> weight rank per operator (from `--move-trace`), SOCP iterations/time physical vs
+> scaled, and the S calibration read from the traces. See experiments/DESIGN.md.
+
 ## 0. Ground rules (apply to every experiment)
 
 | Item | Setting | Notes |
