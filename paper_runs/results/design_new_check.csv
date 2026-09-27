@@ -1,0 +1,2 @@
+Instance,design,init,init_seed,D,L_r,S,extra,commit,init_obj,init_size,Objective,Tour,flown_km,energy_pct,time_s,t_best (s),Wall (s),stop,iterations,shakes,iter_of_best,accepted,socp_calls,socp_ms,reorder_trimmed,socp_numeric_infeasible,Route
+R101 (50),new,R4,,3,20,100,,46ae2bf,5863.95,3,11902.02,10,405.61,99.76,8465.0,0.1,1.8,max_idle_shakes,4997,100,29,464,646,0.86,0,0,0-42-14-2-21-23-22-3-50-26-13
