@@ -19,7 +19,7 @@ a different setup than the one documented here.
 | Energy tie-break | 1e-5 x normalized energy, subtracted from the reward |
 | Exact model | MISOCP with tightened per-leg big-M constants; no valid inequalities |
 | Gurobi | seed 42, `Threads = 0` (all cores), 3600 s per solve |
-| Matheuristic | single start from R4; operators Insert, Replace, Swap, 2-opt drawn uniformly; phased local search (Insert, Replace, Swap/2-opt on shortening moves, each to exhaustion), feasible set from the labels and the energy floor, exact energy test by the taut string, roulette over the f = 5 highest weights rho^2 / c, shake at every local optimum with cap c = max(2, ceil(k/6)); accept if f(R') > f(R), reorderings if f does not decrease |
+| Matheuristic | single start from R4; operators Insert, Replace, Swap, 2-opt drawn uniformly; feasible sets from the leg sets, the exact slot test (Insert, Replace) and the O(1) segment-concatenation test (Swap, 2-opt), energy floor while the set is built and the taut-string test on the drawn move; weights: route-wide midpoint estimate over the detour (Insert, Replace), exchange value (Swap, 2-opt); only the L_R = 20 reorderings of largest weight enter the set; roulette over the set; accept Insert/Replace on f(R') > f(R), reorderings on an improvement or a tie with smaller cap; shake at every exhausted route on the reference local optimum, removals enumerated per size (one sweep of the route per cons = 1..ceil(k/3)), knapsack look-ahead over the next 6; stop after S = 100 consecutive shakes without an improvement of R_best; fixed-tour SOCP in nondimensional units (Presolve 0, homogeneous barrier). `paper_runs/run_design.py new` |
 | Machine | Apple M3 Pro, 11 cores |
 | Versions | python 3.12.2 | gurobi (13, 0, 2) |
 
@@ -90,3 +90,19 @@ run one instance with `python3 experiments/run_ils_time_matched.py --instance
 --sweep-cap-div 6`; the run prints the per-operator counters and the shake
 count, and reaches the proven optimum 11921.13 on this instance within a
 minute.
+
+## Paper-to-code map, Section 4 as of 2026-09-27
+
+| Paper | Code |
+|---|---|
+| 4.1 nondimensional subproblem, solver settings | `uav_routing/solver/socp.py`, `Solver(scaled=True)` (set through `instance.socp_scaled`; runner flag `--scaled-socp`) |
+| 4.3 leg sets, arrival bounds, slot test | `experiments/fast_sets.py`: `chain_bounds`, `chained_sets`, `build_add`, `build_replace` |
+| 4.3 reorderings in O(1) (segment summaries D, W, L) | `fast_sets.build_two_opt` (prepend, eq. seg-prepend), `fast_sets.build_swap` (append, eq. seg-append) |
+| 4.3 propagated information estimate | `fast_sets.delta_insert`, `fast_sets.delta_replace` |
+| 4.3 2-opt weight by the recursion S(p,q) = x(p,q) + S(p+1,q-1) | `fast_sets.build_two_opt` |
+| 4.3 restricted candidate list L_r for Swap and 2-opt | `run_ils_time_matched.py`, `--reorder-rcl` (heapq.nlargest before the roulette) |
+| 4.4 enumeration E(R^ref), block removal, look-ahead | `TimedILS._enumeration`, `TimedILS._remove_block`, `--sweep enum`, `ILS_SHAKE_KNAP` |
+| 4.4 termination after S idle shakes | `--max-idle-shakes`; `idle_shakes` reset in `_record_best` |
+| identity check of the O(1) construction | `experiments/validate_fast_sets.py` (same sets and weights as the previous construction on trace routes); a run with `--fast-sets` alone reproduces the previous trajectory iteration for iteration |
+| SOCP settings check | `experiments/test_scaled_socp2.py` (feasibility verdicts against the physical model and the taut string, barrier iterations, time) |
+| campaign | `paper_runs/run_design.py new` (and `old` for the 2026-09-26 base on the same machine) |

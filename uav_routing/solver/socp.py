@@ -78,6 +78,7 @@ class Solver:
                  time_limit=None,
                  log_output=False,
                  no_loiter=False,
+                 scaled=None,
                  _gurobi_env=None):
         """Initialize and solve the SOCP for a given tour.
 
@@ -97,6 +98,15 @@ class Solver:
             Gurobi time limit in seconds.
         log_output : bool
             If True, enable Gurobi console output.
+        scaled : bool, optional
+            Solve the subproblem in the nondimensionalized units of
+            ``Environment._build_normalization`` (lengths over ``_d_norm``, times
+            over ``_t_norm``, speeds over the maximum-range speed, energy over the
+            eta = 1 budget).  The coefficients then all lie within a few orders of
+            magnitude, so the barrier converges in a fraction of the iterations
+            and the numerical-focus setting is not needed.  Every quantity the
+            solver reports is converted back to physical units.  When None, the
+            attribute ``instance.socp_scaled`` decides (default False).
         _gurobi_env : gurobipy.Env, optional
             Shared Gurobi environment to avoid per-solve overhead.
         """
@@ -104,6 +114,7 @@ class Solver:
         self.warm_start  = warm_start
         self.threads     = threads
         self.no_loiter   = no_loiter
+        self.scaled      = bool(getattr(instance, 'socp_scaled', False)) if scaled is None else bool(scaled)
         self.time_limit  = time_limit
         self.instance    = instance
         self.graph       = instance.graph
@@ -129,6 +140,7 @@ class Solver:
             time_limit=self.time_limit,
             log_output=self.log_output,
             no_loiter=self.no_loiter,
+            scaled=self.scaled,
             _gurobi_env=self._gurobi_env,
         )
 
@@ -157,9 +169,19 @@ class Solver:
         # with the homogeneous barrier recovers all of them.
         self.model.Params.Presolve = 0
         self.model.Params.BarHomogeneous = 1
-        self.model.Params.NumericFocus = int(
-            os.environ.get("UAV_NUMERIC_FOCUS",
-                           globals().get("NUMERIC_FOCUS_OVERRIDE", 3)))
+        if not self.scaled:
+            # In physical units the coefficient ranges need the numerical focus;
+            # in nondimensionalized units the default focus is exact and 3-5x faster.
+            self.model.Params.NumericFocus = int(
+                os.environ.get("UAV_NUMERIC_FOCUS",
+                               globals().get("NUMERIC_FOCUS_OVERRIDE", 3)))
+        # unit conversion factors (1.0 in physical units)
+        if self.scaled:
+            self._dn = float(self.instance._d_norm)
+            self._tn = float(self.instance._t_norm)
+            self._E1 = float(self.instance.calib.scaled_max_energy)
+        else:
+            self._dn = self._tn = self._E1 = 1.0
         if self.time_limit:
             self.model.Params.TimeLimit = self.time_limit
 
@@ -181,7 +203,10 @@ class Solver:
         else:
             E_phys = self._compute_physical_energy()
             self.physical_energy = E_phys
-            if E_phys <= self.instance.max_energy:
+            # In scaled units the cone slack on very short legs lets the exact energy
+            # exceed the budget by up to ~2e-6 of E_max at the solver's tolerances
+            # (measured on boundary routes); 1e-5 accepts those, 0.001% of the budget.
+            if E_phys <= self.instance.max_energy * (1.0 + (1e-5 if self.scaled else 0.0)):
                 self.solution  = True
                 self.obj_value = self.model.ObjVal
             else:
@@ -198,8 +223,8 @@ class Solver:
         drone = self.drone
         E_phys = 0.0
         for e in self.tour_edges:
-            t_val = self.var_time[e].X
-            L_val = self.var_length[e].X
+            t_val = self.var_time[e].X * self._tn
+            L_val = self.var_length[e].X * self._dn
             if t_val <= 0.0 or L_val <= 0.0:
                 continue
             v = L_val / t_val
@@ -224,13 +249,14 @@ class Solver:
         for n in self.tour_nodes:
             if n == base:
                 continue
-            e_i, l_i = self.graph.nodes[n]['time_window']
+            e_i, l_i = (self.instance.tw_scaled[n] if self.scaled
+                        else self.graph.nodes[n]['time_window'])
             self.var_arrival[n] = mdl.addVar(
                 lb=e_i, ub=l_i, name=f"a_{n}")
 
         # Edge variables in physical units
         for e in self.tour_edges:
-            d = self.graph[e[0]][e[1]]['distance']
+            d = self.instance.d_scaled[e] if self.scaled else self.graph[e[0]][e[1]]['distance']
             self.var_time[e]   = mdl.addVar(lb=0.0, name=f"t_{e}")
             # lb = d is constraint (25); pinning ub = d forbids loitering, leaving
             # the speed within [v_min, v_max] as the only way to retime a leg
@@ -248,8 +274,18 @@ class Solver:
         mdl   = self.model
         drone = self.drone
         base  = drone.base
-        E_max = self.instance.max_energy
-        T_max = self.instance.time_horizon
+        if self.scaled:
+            dn, tn, E1 = self._dn, self._tn, self._E1
+            v_lo, v_hi = self.instance.speed_min_s, self.instance.speed_max_s
+            c0, c1, c2 = drone.c_0 * tn / E1, drone.c_1 * dn ** 3 / (tn ** 2 * E1), drone.c_2 * tn ** 2 / (dn * E1)
+            E_max = self.instance.max_energy / E1
+            T_max = self.instance.T_max_s
+        else:
+            v_lo, v_hi = drone.speed_min, drone.speed_max
+            c0, c1, c2 = drone.c_0, drone.c_1, drone.c_2
+            E_max = self.instance.max_energy
+            T_max = self.instance.time_horizon
+        self._coef = (c0, c1, c2)
 
         energy_lhs = 0
 
@@ -261,8 +297,8 @@ class Solver:
             z = self.var_z[e]
 
             # Speed bounds (eq 26): v_min * t <= L <= v_max * t
-            mdl.addConstr(L >= drone.speed_min * t, name=f"speed_lb_{e}")
-            mdl.addConstr(L <= drone.speed_max * t, name=f"speed_ub_{e}")
+            mdl.addConstr(L >= v_lo * t, name=f"speed_lb_{e}")
+            mdl.addConstr(L <= v_hi * t, name=f"speed_ub_{e}")
 
             # Rotated SOC cones (eq 33-35): t² <= z·L, L² <= t·s, s² <= L·y
             mdl.addConstr(t * t <= z * L, name=f"cone1_{e}")
@@ -279,7 +315,7 @@ class Solver:
                     name=f"arr_{e}")
 
             # Energy (eq 32): sum(c_0*t + c_1*y + c_2*z) <= E_max
-            energy_lhs += drone.c_0 * t + drone.c_1 * y + drone.c_2 * z
+            energy_lhs += c0 * t + c1 * y + c2 * z
 
         mdl.addConstr(energy_lhs <= E_max, name="energy")
 
@@ -306,21 +342,22 @@ class Solver:
         """
         base  = self.drone.base
         drone = self.drone
-        E_max = self.instance.max_energy
+        c0, c1, c2 = self._coef
+        E_max = self.instance.max_energy / self._E1      # 1 / eta-scaled budget in the model's units
 
         obj_expr = 0
         for n in self.tour_nodes:
             if n == base:
                 continue
-            e_i  = self.graph.nodes[n]['time_window'][0]
-            slope       = self.graph.nodes[n]['info_slope']
+            e_i  = self.instance.tw_scaled[n][0] if self.scaled else self.graph.nodes[n]['time_window'][0]
+            slope       = self.graph.nodes[n]['info_slope'] * self._tn   # information per model time unit
             info_lowest = self.graph.nodes[n]['info_at_lowest']
             obj_expr += slope * (self.var_arrival[n] - e_i) + info_lowest
 
         energy_expr = gp.quicksum(
-            drone.c_0 * self.var_time[e] +
-            drone.c_1 * self.var_y[e] +
-            drone.c_2 * self.var_z[e]
+            c0 * self.var_time[e] +
+            c1 * self.var_y[e] +
+            c2 * self.var_z[e]
             for e in self.tour_edges
         )
         obj_expr = obj_expr - 0.00001 * (energy_expr / E_max)
@@ -402,8 +439,12 @@ class Solver:
         return status_map.get(status, f"Gurobi_Status_{status}")
 
 
+    def arrival(self, n):
+        """Arrival time at scheduled target n in seconds (physical units)."""
+        return 0.0 if n == self.drone.base else self.var_arrival[n].X * self._tn
+
     def get_tour_data(self) -> TourResult:
-        """Extracts solver results. All values are already in physical units."""
+        """Extracts solver results, converted to physical units."""
         if not self.solution:
             return TourResult(sequence=self.tour_nodes, feasible=False)
 
@@ -415,22 +456,23 @@ class Solver:
             if n == base:
                 arrivals[n] = 0.0
             else:
-                arrivals[n] = self.var_arrival[n].X
+                arrivals[n] = self.var_arrival[n].X * self._tn
 
         lengths  = {}
         times    = {}
         energies = {}
         total_e  = 0
 
+        c0, c1, c2 = self._coef
         for e in self.tour_edges:
             t_val = self.var_time[e].X
             L_val = self.var_length[e].X
             y_val = self.var_y[e].X
             z_val = self.var_z[e].X
 
-            lengths[e]  = L_val
-            times[e]    = t_val
-            e_val       = drone.socp_energy_function(t_val, y_val, z_val)
+            lengths[e]  = L_val * self._dn
+            times[e]    = t_val * self._tn
+            e_val       = (c0 * t_val + c1 * y_val + c2 * z_val) * self._E1   # Joules in both modes
             energies[e] = e_val
             total_e    += e_val
 

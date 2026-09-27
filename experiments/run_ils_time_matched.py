@@ -66,6 +66,11 @@ from run_ils_final_scored import (
 )
 
 from run_ils_final_scored import taut_min_energy as _TAUT   # hot path: never re-imported per call
+import heapq
+import fast_sets as _fs      # O(1) move tests and propagated estimates (--fast-sets)
+# Test-only: with ILS_LICENSE_GUARD=1 a Gurobi size-limited-license refusal counts as an
+# infeasible route instead of aborting the run. Never set for reported results.
+LICENSE_GUARD = bool(os.environ.get("ILS_LICENSE_GUARD"))
 
 # A reordering accepted on a tie discards the four feasible sets, which
 # resets the only condition that fires the shake. Two ways out: refuse the
@@ -409,7 +414,7 @@ def reward_guided_ruin(state, depot, seg_lengths):
         info = G.nodes[n]['info_at_lowest']
         slope = G.nodes[n]['info_slope']
         try:
-            a_n = sv.var_arrival[n].X
+            a_n = sv.arrival(n)
         except Exception:
             a_n = e_n
         rew[n] = info + slope * (a_n - e_n)
@@ -470,7 +475,9 @@ class TimedILS:
                  disabled_ops=(), no_fb=False, no_cascade=False,
                  no_cache=False, max_iter=None, no_shake=False, n_starts=1,
                  shake_return=False, shake_backtrack=False,
-                 dynamics_out=None, weights_out=None):
+                 dynamics_out=None, weights_out=None,
+                 fast_sets=False, reorder_rcl=0, max_idle_shakes=0, sweep_enum=False,
+                 scaled_socp=False):
         self.name = name
         self.path = path
         self.budget = budget
@@ -561,6 +568,7 @@ class TimedILS:
 
         self.instance, self.graph, self.drone = make_instance(path)
         self.instance.no_loiter = no_loiter      # read by State when it builds a Solver
+        self.instance.socp_scaled = bool(scaled_socp)   # nondimensionalized subproblem (Solver reads it)
         self.theta = self._theta_arg if self._theta_arg is not None else THETA
         # Termination: iterations without an improvement of the best found
         # solution. The counter lives on the run, is reset by _record_best, and
@@ -573,6 +581,15 @@ class TimedILS:
         # Shake the reference local optimum rather than whatever route the
         # search has drifted to, so that (post, cons) sweep one route.
         self.shake_return = shake_return
+        # Section 4 design switches: O(1) move tests with propagated estimates (same sets,
+        # same weights), a restricted candidate list for Swap and 2-opt, termination by
+        # consecutive shakes without an improvement, and the explicit shake enumeration.
+        self.fast_sets = fast_sets
+        self.reorder_rcl = int(reorder_rcl)
+        self.max_idle_shakes = int(max_idle_shakes)
+        self.sweep_enum = sweep_enum
+        self.scaled_socp = scaled_socp
+        self.idle_shakes = 0
         # When the sweep of a reference comes back to a shake already applied
         # to it, its neighborhood is exhausted: fall back to the previous
         # local optimum and resume that one's sweep where it stopped.
@@ -615,6 +632,10 @@ class TimedILS:
         for _a, _b, _dd in self.graph.edges(data="distance"):
             if _dd is not None:
                 self.DM[_a][_b] = float(_dd); self.DM[_b][_a] = float(_dd)
+        self._nd = (_fs.NodeData(self.graph, self.depot, self.T_max, self.v_max, self.DM,
+                                 self.F_leg, self.B_leg) if hasattr(self, 'F_leg') else None)
+        if self.fast_sets and not (INSERT_RATIO and REORDER_W == "exch"):
+            raise SystemExit("--fast-sets builds the weights of ILS_INSERT_RATIO=1 ILS_REORDER_W=exch")
 
         # Energy per meter is E_arc / L = P(v)/v with v = L/t. Since L >= d_ij,
         # every arc obeys E_arc >= d_ij * min_v P(v)/v, so the whole tour obeys
@@ -940,7 +961,7 @@ class TimedILS:
                 if n == self.depot:
                     continue
                 try:
-                    a_n = sv.var_arrival[n].X
+                    a_n = sv.arrival(n)
                 except Exception:
                     continue
                 nd = G.nodes[n]
@@ -1006,7 +1027,13 @@ class TimedILS:
             self.cache[key] = None
             return None, None, "infeasible"
         _t0 = time.perf_counter()
-        new_state = state.flip(route_to_nx(new_route))
+        try:
+            new_state = state.flip(route_to_nx(new_route))
+        except Exception as exc:
+            if LICENSE_GUARD and "size-limited" in str(exc):
+                self.counters["license_reject"] += 1
+                return None, None, "infeasible"
+            raise
         self.counters["socp_us"] += int((time.perf_counter() - _t0) * 1e6)
         self.counters["socp_calls"] += 1
         feas = not (new_state.solver is None or new_state.solver.solution is None)
@@ -1052,6 +1079,7 @@ class TimedILS:
         self.best_obj = obj
         self.best_route = list(route)
         self.idle = 0                       # an improvement restarts the stopping counter
+        self.idle_shakes = 0
         self.best_wall = self.elapsed()
         self.best_iter = self.iter_global
         self.trace.append((self.best_wall, self.iter_global, obj))
@@ -1265,7 +1293,13 @@ class TimedILS:
     def _resolve(self, state, new_route):
         """Re-solve a cache-hit route to materialize a State object."""
         _t0 = time.perf_counter()
-        new_state = state.flip(route_to_nx(new_route))
+        try:
+            new_state = state.flip(route_to_nx(new_route))
+        except Exception as exc:
+            if LICENSE_GUARD and "size-limited" in str(exc):
+                self.counters["license_reject"] += 1
+                return None, None, "infeasible"
+            raise
         self.counters["socp_us"] += int((time.perf_counter() - _t0) * 1e6)
         self.counters["socp_calls"] += 1
         if new_state.solver is None or new_state.solver.solution is None:
@@ -1282,7 +1316,7 @@ class TimedILS:
             if n == self.depot:
                 continue
             try:
-                a_n = sv.var_arrival[n].X
+                a_n = sv.arrival(n)
             except Exception:
                 continue
             nd = G.nodes[n]
@@ -1470,6 +1504,39 @@ class TimedILS:
             st[key] = (state.value, T, E, max(T / self.T_max, E / self.E_max))
         return st[key]
 
+    def _enumeration(self, k):
+        """E(R) for a reference with k targets.  Level cons = 1..c holds the blocks of
+        cons consecutive targets that sweep the route once (successive levels
+        staggered by one position, the last block of a level wrapping).  The list
+        interleaves the levels: the next block of size 1, the next of size 2, ...,
+        the next of size c, then again the next of size 1, a level whose sweep is
+        complete being skipped.  This keeps the escalation of Vansteenwegen et al.
+        (cons grows by one at every shake) and covers every target at every
+        level.  c = ceil(k / D); at least two targets are kept."""
+        c = max(1, -(-k // self.sweep_cap_div))
+        if self.sweep_cap_max:
+            c = min(c, self.sweep_cap_max)
+        c = min(c, max(1, k - 2))
+        start = {cons: (cons - 1) % k for cons in range(1, c + 1)}
+        removed = {cons: 0 for cons in range(1, c + 1)}
+        pairs = []
+        while any(removed[cons] < k for cons in removed):
+            for cons in range(1, c + 1):
+                if removed[cons] >= k:
+                    continue
+                pairs.append((cons, 1 + start[cons] % k))
+                start[cons] += cons; removed[cons] += cons
+        return pairs
+
+    @staticmethod
+    def _remove_block(route, cons, post):
+        """Route without the cons targets at positions post, post + 1, ... (wrapping)."""
+        k = len(route) - 1
+        if k - cons < 2:
+            return None
+        idxs = {1 + ((post - 1 + h) % k) for h in range(cons)}
+        return [route[i] for i in range(len(route)) if i not in idxs]
+
     def run_start_paper(self, start_idx):
         """One start of the ILS of Section 4: random operator, leg-feasible set,
         estimated ratio, linear-ranking roulette, strict acceptance for Insert and
@@ -1586,6 +1653,7 @@ class TimedILS:
         self._lo_seen = set()
         self._tie_run = 0       # consecutive reorderings accepted without a gain
         ref_state = None        # local optimum the sweep is exploring around
+        ref_pairs, ref_idx = [], 0   # --sweep enum: the removals of the reference and the next one
         ref_tried = set()       # (post, cons) already applied to it
         ref_stack = []          # (reference, post, cons, tried) of the earlier optima
         self._tabu = {tuple(state.solver.tour_nodes)}   # routes occupied since the last shake
@@ -1601,6 +1669,13 @@ class TimedILS:
                 self.stop_wall = self.elapsed()
                 print(f"[{self.name}] stopped by max_iter={self.max_iter} after "
                       f"{it} iterations at {self.stop_wall:.0f} s "
+                      f"(best {self.best_obj:.2f} found at {self.best_wall:.1f} s)", flush=True)
+                break
+            if self.max_idle_shakes and self.idle_shakes >= self.max_idle_shakes:
+                self.stop_reason = "idle_shakes"
+                self.stop_wall = self.elapsed()
+                print(f"[{self.name}] stopped by max_idle_shakes={self.max_idle_shakes} after "
+                      f"{self.counters['kicks']} shakes and {it} iterations at {self.stop_wall:.0f} s "
                       f"(best {self.best_obj:.2f} found at {self.best_wall:.1f} s)", flush=True)
                 break
             it += 1; self.iter_global += 1
@@ -1656,7 +1731,36 @@ class TimedILS:
                         self.sweep_R, self.sweep_S = 1, 1
                         count = 0
                         continue
-                if self.shake_return:
+                if self.shake_return and self.sweep_enum:
+                    # Explicit enumeration E(R^ref): for cons = 1..c one sweep of the
+                    # route in disjoint blocks of cons targets, then cons + 1.  A descent
+                    # that beats the reference replaces it; one that does not returns to
+                    # it and the next pair is shaken.  An exhausted enumeration falls back
+                    # to the previous reference, or restarts when there is none.
+                    if ref_state is None or state.value > ref_state.value + 1e-9:
+                        if ref_state is not None:
+                            ref_stack.append((ref_state, ref_pairs, ref_idx))
+                        ref_state = state
+                        ref_pairs = self._enumeration(len(state.solver.tour_nodes) - 1)
+                        ref_idx = 0
+                        self.counters["ref_improved"] += 1
+                    else:
+                        if state.solver.tour_nodes != ref_state.solver.tour_nodes:
+                            state = ref_state
+                            self._mkey = None
+                            self.counters["shake_returns"] += 1
+                        if ref_idx >= len(ref_pairs):
+                            self.counters["ref_exhausted"] += 1
+                            if self.shake_backtrack and ref_stack:
+                                ref_state, ref_pairs, ref_idx = ref_stack.pop()
+                                state = ref_state
+                                self._mkey = None
+                                self.counters["ref_backtracks"] += 1
+                            else:
+                                ref_idx = 0          # the descents are random: repeat the enumeration
+                                self.counters["enum_restarts"] += 1
+                    route = state.solver.tour_nodes
+                elif self.shake_return:
                     # Variable-neighborhood step: the sweep belongs to one route.
                     # A descent that beats the reference replaces it and restarts
                     # the sweep; one that does not sends the search back, so the
@@ -1688,7 +1792,27 @@ class TimedILS:
                     ref_tried.add((self.sweep_S, self.sweep_R))
                     route = state.solver.tour_nodes
                 # ---- shake (Algorithm 3): remove cons consecutive targets ----
-                if self.shake_schedule == "gunawan":
+                if self.sweep_enum:
+                    # knapsack look-ahead over the next pairs of the enumeration; the best
+                    # is applied and the enumeration advances by one
+                    d0_ = route_distance(route, G, depot)
+                    pick = None
+                    for j_ in range(ref_idx, min(ref_idx + max(1, SHAKE_KNAP), len(ref_pairs))):
+                        cons_, post_ = ref_pairs[j_]
+                        cand = self._remove_block(route, cons_, post_)
+                        if cand is None:
+                            continue
+                        sc = self._knap(cand, max(0.0, d0_ - route_distance(cand, G, depot)))
+                        if pick is None or sc > pick[0]:
+                            pick = (sc, cand, cons_)
+                    ref_idx += 1
+                    if pick is None:
+                        new_route, removed = None, []
+                    else:
+                        new_route, removed = pick[1], [None] * pick[2]
+                        self.counters["knap_picked"] += 1
+                        self.counters["shake_removed"] += pick[2]
+                elif self.shake_schedule == "gunawan":
                     new_route, removed, self.sweep_S, _ = sweep_remove(
                         route, self.sweep_S, self._cons, 1, 0)      # cap_div = 1: no cap
                     self._hold += 1
@@ -1770,6 +1894,7 @@ class TimedILS:
                 self._hist.clear()
                 self._last_shake_it = it
                 self.counters["kicks"] += 1
+                self.idle_shakes += 1
                 self._record_dyn(state.value, kick=1)
                 if new_route is not None:
                     new_state, obj, verdict = self.evaluate(state, new_route)
@@ -1835,6 +1960,16 @@ class TimedILS:
 
             if cached_set is not None:
                 pass
+            elif self.fast_sets:
+                # the same sets and weights as the four blocks below, in O(1) per candidate
+                if op == "add":
+                    moves = _fs.build_add(self._nd, route, Nprime, amin0, amax0, d_room, self.counters)
+                elif op == "replace":
+                    moves = _fs.build_replace(self._nd, route, Nprime, amin0, amax0, d_room, self.counters)
+                elif op == "swap":
+                    moves = _fs.build_swap(self._nd, route, amin0, amax0, d_room, None, self.counters)
+                else:
+                    moves = _fs.build_two_opt(self._nd, route, amin0, amax0, d_room, None, self.counters)
             elif op == "add":
                 FR, BR = chained_sets(route, F, B, depot)
                 for p in range(1, k + 2):
@@ -1971,6 +2106,12 @@ class TimedILS:
                                   score_of(info_new - info0, dd))
                         moves.append((_s, ("two_opt", p, q), dd))
 
+            if cached_set is None and self.reorder_rcl and op in ("swap", "two_opt") \
+                    and len(moves) > self.reorder_rcl:
+                # restricted candidate list: only the L_r reorderings of largest exchange
+                # value are offered to the roulette (their acceptance rate decays with rank)
+                self.counters["reorder_trimmed"] += len(moves) - self.reorder_rcl
+                moves = heapq.nlargest(self.reorder_rcl, moves, key=lambda m: m[0])
             if cached_set is None:
                 random.shuffle(moves)          # break ties between equal weights
                 self._msets[op] = moves
@@ -2441,6 +2582,16 @@ def main():
     ap.add_argument("--no-cache", action="store_true", help="ablation: skip check 3 (evaluated routes)")
     ap.add_argument("--sweep-cap-div", type=int, default=3,
                     help="Sweep shake: escalation cap = ceil(n/div). D=3 from the Table 9 sweep.")
+    ap.add_argument("--fast-sets", action="store_true",
+                    help="build the four move sets with O(1) tests and propagated estimates (same sets, same weights)")
+    ap.add_argument("--reorder-rcl", type=int, default=0,
+                    help="L_r: offer only the L_r Swap and 2-opt moves of largest exchange value (0 = all)")
+    ap.add_argument("--max-idle-shakes", type=int, default=0,
+                    help="S: stop after S consecutive shakes without an improvement of R_best (0 = off)")
+    ap.add_argument("--sweep", choices=["paper", "enum"], default="paper",
+                    help="enum: explicit enumeration of the removals of a reference (one sweep per cons)")
+    ap.add_argument("--scaled-socp", action="store_true",
+                    help="solve the fixed-tour subproblem in nondimensionalized units (Presolve 0, homogeneous barrier)")
     ap.add_argument("--sweep-cap-max", type=int, default=0,
                     help="Sweep shake: absolute cap on removal length "
                          "(0 = only the divisor cap).")
@@ -2489,6 +2640,9 @@ def main():
                    init_seed=args.init_seed,
                    sweep_cap_div=args.sweep_cap_div,
                    sweep_cap_max=args.sweep_cap_max,
+                   fast_sets=args.fast_sets, reorder_rcl=args.reorder_rcl,
+                   max_idle_shakes=args.max_idle_shakes, sweep_enum=(args.sweep == "enum"),
+                   scaled_socp=args.scaled_socp,
                    cand_mode=args.cand_weight,
                    local_search=args.local_search, paper_label=args.paper_label,
                    exhaust_shake=args.exhaust_shake, set_cache=args.set_cache,

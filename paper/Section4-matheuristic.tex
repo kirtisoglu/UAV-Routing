@@ -1,0 +1,435 @@
+% ============================================================================
+% Section 4 of ArXiv-version.tex, complete, for the design implemented by
+%   experiments/run_ils_time_matched.py --fast-sets --scaled-socp
+%       --reorder-rcl L_R --sweep enum --max-idle-shakes S --sweep-cap-div D
+% (paper_runs/run_design.py new).  Labels of the previous version are kept, so
+% every cross-reference from Sections 3 and 5 still resolves.
+%
+% What changed against the 2026-09-26 version of this section:
+%   4.1  the subproblem is solved in nondimensional units (one paragraph);
+%   4.3  Swap and 2-opt are tested in O(1) per pair by segment concatenation,
+%        the route-wide information estimate is propagated only as far as the
+%        shift reaches, the 2-opt weight is computed for all pairs at once, and
+%        only the L_r reorderings of largest weight enter the feasible set;
+%   4.4  the removals of a reference are enumerated explicitly (one sweep of
+%        the route per removal size), the stall parameter is gone, and the run
+%        ends after S consecutive shakes without an improvement.
+% Section 5 consequences: the parameter analysis sets D, L_r and S (no stall,
+% no maxIter); the operator-acceptance-by-rank evidence that motivates L_r
+% belongs in Section 5.1 or 5.8; the SOCP timing comparison belongs in 5.3.
+% ============================================================================
+\section{A Matheuristic Based on Iterated Local Search}\label{sec:heuristic}
+
+The MISOCP formulation of Section~\ref{subsec:misocp} simultaneously determines four decisions, namely the subset of targets to visit, the visiting order, and the travel distance and travel time on every flight leg. Moreover, each flight leg requires three auxiliary conic constraints~\eqref{misocp:cone-z}--\eqref{misocp:cone-y}, causing the model size to grow quadratically with $|N|$. Practical reconnaissance missions may involve hundreds of candidate targets, far beyond what a branch-and-bound search over this conic model can be expected to certify, which motivates a scalable solution approach.
+
+Our solution approach decomposes these decisions into two interconnected subproblems. The first determines the subset of targets to visit together with their visiting order, thereby defining a closed tour. The second optimizes the travel distance and travel time on each flight leg for a fixed tour. Since this subproblem is convex, it can be solved to optimality by the SOCP model of Section~\ref{subsec:socp}.
+
+Building on this decomposition, we develop a matheuristic in the form of an Iterated Local Search (ILS). The outer search explores the combinatorial space through neighborhood moves, while the inner SOCP computes the optimal continuous decisions for every candidate tour. The search is initialized from one of four construction heuristics, repeatedly improved by local search, and diversified through a shake step whenever the local search has exhausted the neighborhood of its route. Every candidate route costs one solve of the subproblem, so the design of the local search is governed by one question: which routes are worth that solve. Section~\ref{subsec:proposal} answers it with feasibility tests that need no subproblem and with weights that order the candidates, and Section~\ref{subsec:ils} with a shake step that is applied systematically rather than at random.
+
+% ============================================================
+\subsection{Fixed-tour SOCP subproblem}\label{subsec:socp}
+% ===========================================================
+
+We first make precise what the combinatorial side of the decomposition hands
+to the continuous side. A \emph{route} is a sequence $R = (0, r_1, r_2, \ldots,
+r_k, 0)$ that starts and ends at the depot and schedules $k \ge 1$ distinct targets
+$r_1, \ldots, r_k \in N \setminus \{0\}$, each exactly once. A route fixes the
+target selection and visiting order while leaving the associated continuous decisions
+unspecified. Every feasible solution of the MINLP in Section~\ref{subsec:minlp}
+induces exactly one such route, since the time-precedence
+constraints~\eqref{minlp:timelink}--\eqref{minlp:timelink-depot2}
+exclude subtours. Thus, the MINLP can equivalently be viewed as selecting a route
+together with its associated continuous decisions. Let $N_R = \{0, r_1, \ldots, r_k\}$
+denote the scheduled targets of a route $R$, the depot included, and $A_R = \{(0,r_1), (r_1,r_2), \ldots, (r_{k-1},r_k),
+(r_k,0)\}$ its flight legs. We use the words route and tour interchangeably. Along a route the depot is left at time zero and $a_0$ denotes the return time, which the depot window $[0, T_{\max}]$ of Section~\ref{subsec:problem} bounds.
+
+For a given route $R$, the remaining subproblem optimizes the travel times and flight lengths, equivalently the corresponding speeds, along the route to maximize information collection subject to the energy budget. Since the visited targets and the flown legs are known, the binary variables of the MINLP formulation of Section~\ref{subsec:minlp} are fixed, with $w_i = 1$ on $N_R$, $x_{ij} = 1$ on $A_R$, and both zero elsewhere. Consequently, the objective no longer contains the target-selection variables, the time windows become simple bounds, and the time-precedence constraints simplify to equalities. The resulting formulation is the following continuous nonlinear program (NLP).
+
+\vspace{4mm}
+\noindent\textbf{NLP Formulation}
+\begin{align}
+\max \quad
+& \sum_{i \in N_R \setminus \{0\}} \bigl(\gamma_i\, a_i - \gamma_i\, e_i + I_{e_i} \bigr) \label{nlp:obj} \\[6pt]
+\text{subject to} \notag \\[6pt]
+& \sum_{(i,j) \in A_R} \left( c_0\, t_{ij} + c_1 \frac{L_{ij}^3}{t_{ij}^2} + c_2 \frac{t_{ij}^2}{L_{ij}} \right) \le E_{\max} \label{nlp:energy} \\[6pt]
+& L_{ij} \ge d_{ij},
+    && \forall\, (i,j) \in A_R \label{nlp:path-length} \\[6pt]
+& v_{\min}\, t_{ij} \le L_{ij} \le v_{\max}\, t_{ij},
+    && \forall\, (i,j) \in A_R \label{nlp:speed-bound} \\[6pt]
+& e_i \le a_i \le \ell_i,
+    && \forall\, i \in N_R \label{nlp:timewindow} \\[6pt]
+& a_j = a_i + t_{ij},
+    && \forall\, (i,j) \in A_R \setminus \{(0,r_1)\} \label{nlp:timelink} \\[6pt]
+& a_{r_1} = t_{0,r_1} \label{nlp:timelink-depot} \\[6pt]
+& t_{ij},\, L_{ij} \ge 0,
+    && \forall\, (i,j) \in A_R. \label{nlp:domain}
+\end{align}
+
+Because the tour sequence is fixed, the time-precedence inequalities~\eqref{minlp:timelink}--\eqref{minlp:timelink-depot2} reduce to the equalities~\eqref{nlp:timelink}--\eqref{nlp:timelink-depot}. Since $d_{ij}>0$ for all flight legs in $A_R$, constraint~\eqref{nlp:speed-bound} implies $t_{ij}>0$, which in turn guarantees $a_j>a_i$ along the tour through~\eqref{nlp:timelink}. Applying the same conic reformulation and the same energy tie-breaker with the same small positive $\varepsilon$ as in Section~\ref{subsec:misocp}, we obtain the following SOCP formulation for a given route $R$.
+
+\vspace{4mm}
+\noindent\textbf{SOCP Formulation}
+\begin{align}
+\max \quad
+& \sum_{i \in N_R \setminus \{0\}} \bigl(\gamma_i\, a_i - \gamma_i\, e_i + I_{e_i} \bigr)
+\;-\; \varepsilon\, \frac{1}{E_{\max}}
+\sum_{(i,j) \in A_R}
+\bigl( c_0\, t_{ij} + c_1\, y_{ij} + c_2\, z_{ij} \bigr)
+\label{socp:obj} \\[6pt]
+\text{subject to} \quad
+& \eqref{nlp:path-length}\text{--}\eqref{nlp:domain}, \notag \\[6pt]
+& \sum_{(i,j) \in A_R}
+\left( c_0\, t_{ij} + c_1\, y_{ij} + c_2\, z_{ij} \right)
+\le E_{\max} \label{socp:energy} \\[6pt]
+& \left\lVert
+\begin{pmatrix}
+t_{ij} \\[2pt]
+\frac{z_{ij}-L_{ij}}{2}
+\end{pmatrix}
+\right\rVert_2
+\le \frac{z_{ij}+L_{ij}}{2},
+&& \forall\, (i,j) \in A_R \label{socp:cone-z} \\[6pt]
+& \left\lVert
+\begin{pmatrix}
+L_{ij} \\[2pt]
+\frac{t_{ij}-s_{ij}}{2}
+\end{pmatrix}
+\right\rVert_2
+\le \frac{t_{ij}+s_{ij}}{2},
+&& \forall\, (i,j) \in A_R \label{socp:cone-s} \\[6pt]
+& \left\lVert
+\begin{pmatrix}
+s_{ij} \\[2pt]
+\frac{L_{ij}-y_{ij}}{2}
+\end{pmatrix}
+\right\rVert_2
+\le \frac{L_{ij}+y_{ij}}{2},
+&& \forall\, (i,j) \in A_R \label{socp:cone-y} \\[6pt]
+& s_{ij},\, y_{ij},\, z_{ij} \ge 0,
+&& \forall\, (i,j) \in A_R. \notag
+\end{align}
+
+The resulting SOCP is a continuous convex program that can be solved efficiently by modern solvers. It is used to evaluate every route generated by the local search. At each step, the ILS proposes a new route by modifying the target sequence, and the SOCP optimizes the associated continuous decisions and returns the resulting objective value. Thus, the ILS does not need to search over the continuous decision space.
+
+We call a route \emph{SOCP-feasible} if this subproblem admits a feasible solution. Whether a route is SOCP-feasible depends on its time windows, the mission horizon, and the energy budget, so feasibility is determined by the continuous subproblem rather than by the route structure alone. For simplicity, for an SOCP-feasible route $R$ we write $f(R)$ for the optimal value of~\eqref{socp:obj}, and $E_R$ and $T_R$ for the energy term of the budget constraint~\eqref{socp:energy} and the return time $a_0$ of the solution the subproblem returns. The value $f(R)$ is uniquely determined as an optimal value; the energy $E_R$ is pinned by the tie-breaker among information-equivalent schedules, and the return time can differ between alternative optimal schedules, which is why both are tied to the returned solution and read within the solver's tolerance. These three route quantities are what the construction heuristics and the local search compare. The decision variables themselves never leave the subproblem.
+
+\paragraph{Units.}
+The subproblem is passed to the solver in the nondimensional units of Section~\ref{subsec:mapping}: lengths are divided by the range $E_{\max}/\bar{e}$ that the budget at $\eta = 1$ buys at the maximum-range speed, with $\bar{e} = P(v_{mr})/v_{mr}$ the minimum energy per meter, times by that range over $v_{mr}$, speeds by $v_{mr}$ and energy by the budget. In these units the two propulsion coefficients both become $1/2$, every variable of the cone model is of order one, and the objective is unchanged. In physical units the coefficients of the same model span more than seven decades, the barrier method needs its most conservative numerical settings, and presolve declares feasible routes infeasible; in the scaled units the default settings, with presolve disabled and the homogeneous barrier, return the same feasibility verdicts and the same values within the solver tolerance in a fraction of the barrier iterations, as Section~\ref{subsec:parameter-analysis} reports. Since the subproblem is solved for every candidate route, its solve time is the unit in which the cost of the search is measured, and everything that follows is designed to spend it only where it can pay.
+
+% ============================================================
+\subsection{Construction heuristics}\label{subsec:initial}
+% ============================================================
+
+The iterated local search of Section~\ref{subsec:ils} starts from an initial solution built by a construction heuristic. We keep the route notation $R = (0, r_1, \ldots, r_k, 0)$ of Section~\ref{subsec:socp}, with the scheduled targets $N_R$ written by position, and write $N' = N \setminus N_R$ for the set of unscheduled targets. Inserting an unscheduled target $u \in N'$ at position $p \in \{1, \ldots, k+1\}$ of $R$ yields the route
+\[
+R \oplus \langle u, p \rangle \;=\; (0, r_1, \ldots, r_{p-1}, u, r_p, \ldots, r_k, 0),
+\]
+and the insertion $\langle u, p \rangle$ is \emph{SOCP-feasible} in the sense of Section~\ref{subsec:socp} if this route admits travel times and flight lengths that satisfy every time window, the mission horizon, and the energy budget.
+
+All four construction heuristics start from the depot alone, $R_0 = (0)$, and repeatedly append a target at the last position, $p = k+1$, so that the first append gives $k = 1$ and every intermediate route is SOCP-feasible. Feasibility is verified in R1 to R4 by solving the SOCP subproblem on the candidate route, and $N'$ is updated after every append. The heuristics differ only in the rule that selects the target to append.
+
+\begin{enumerate}[label=\textbf{R\arabic*}., leftmargin=2em]
+\item \textbf{Earliest opening.}
+The targets $u \in N'$ are sorted by the opening time $e_u$ of their time windows $W_u$ and the first target whose insertion is SOCP-feasible is appended. The procedure stops once $k = 4$.
+
+\item \textbf{Random then earliest opening.}
+The first target is selected uniformly at random among the targets in $N'$ whose insertion is SOCP-feasible. The remaining targets are appended by the rule of R1 until $k = 4$.
+
+\item \textbf{Random.}
+Targets are drawn uniformly at random from $N'$ and appended whenever the insertion is SOCP-feasible, until $k = 4$.
+
+\item \textbf{Greedy.}
+Among the SOCP-feasible extensions, the target with the highest collected information per unit of capacity is appended,
+\begin{equation}\label{eq:r4-ratio}
+u^{*} \;=\; \arg\max_{u \in N'} \; \frac{f(R \oplus \langle u, k+1 \rangle)}{\mathrm{cap}(R \oplus \langle u, k+1 \rangle)},
+\qquad
+\mathrm{cap}(R) \;=\; \max\!\left\{ \frac{T_R}{T_{\max}},\; \frac{E_R}{E_{\max}} \right\},
+\end{equation}
+where $f(R)$, $T_R$ and $E_R$ are the route quantities of Section~\ref{subsec:socp}. The capacity $\mathrm{cap}(R)$ is the larger of the two normalized resource utilizations of the route, so it measures the resource that binds first, and the quotient measures the information the route collects per unit of that resource. The procedure stops when no SOCP-feasible insertion remains.
+\end{enumerate}
+
+The quotient in~\eqref{eq:r4-ratio} plays the role of the insertion ratio of \citep{vansteenwegen2009iterated}, which divides the square of a visit's score by the time its insertion consumes. Two differences follow from our problem. A change of the route changes the arrival times of every target, since the subproblem reschedules the whole route, so the quotient is a property of the route rather than of one visit. And two resources rather than one are consumed. Dividing by either one alone would prefer a target that is cheap in that resource while exhausting the other, whereas normalizing each by its own limit makes the two comparable, so the maximum in~\eqref{eq:r4-ratio} charges every candidate for the resource it actually depletes. Heuristics R1 to R3 stop at $k = 4$, which leaves the route length to the local search rather than to the starting rule. R4 is the greedy construction heuristic and the default starting point of the search. Section~\ref{subsec:initial-selection} compares the four starting points.
+
+% ============================================================
+\subsection{Local search}\label{subsec:proposal}\label{subsec:operators}
+% ============================================================
+
+The local search modifies the current route $R = (0, r_1, \ldots, r_k, 0)$ with four operators.
+\begin{enumerate}[noitemsep, topsep=4pt, leftmargin=2em]
+    \item \textbf{Insert} inserts one unscheduled target $u \in N'$ at a position $p \in \{1, \ldots, k+1\}$ of the route, between $r_{p-1}$ and $r_p$.
+    \item \textbf{Replace} replaces the scheduled target $r_p$ at position $p \in \{1, \ldots, k\}$ by an unscheduled target $u \in N'$. The number of scheduled targets is unchanged.
+    \item \textbf{Swap} exchanges two scheduled targets $r_p$ and $r_q$, $1 \le p < q \le k$.
+    \item \textbf{2-opt} reverses the sequence of scheduled targets between two positions $p$ and $q$, $1 \le p < q \le k$.
+\end{enumerate}
+Insert and Replace change the set of scheduled targets, while Swap and 2-opt change only their order. A move is denoted by $m$ and the route it produces by $R \circ m$, so that $R \circ \langle u, p \rangle = R \oplus \langle u, p \rangle$ for an Insert move.
+
+Each iteration of the local search applies one operator to the current route. The operator is selected uniformly at random among those that apply to the route, where Swap requires at least two and 2-opt at least three scheduled targets, the set of feasible moves of that operator is determined, one move is drawn from it, and the resulting route is evaluated by the SOCP subproblem of Section~\ref{subsec:socp} and submitted to the acceptance criterion of Section~\ref{subsec:ils}. This differs from the iterated local searches of \citep{gunawan2015iterated, gunawan2017well}, which apply the four operators in a fixed sequence, each until no further improvement is found, and from the iterated local search of \citep{vansteenwegen2009iterated}, which applies Insert only. A fixed sequence is well suited to an evaluation in constant time, whereas every evaluation in our setting requires solving the SOCP subproblem, so the search is organized as a sequence of single moves and the operators are drawn at random.
+
+\paragraph{Leg feasibility.}
+A condition that depends on the instance alone restricts the candidates for a slot before any route is examined. On a flown leg $(i,j)$ the length constraint~\eqref{nlp:path-length} and the speed bound~\eqref{nlp:speed-bound} give $t_{ij} \ge d_{ij}/v_{\max}$, the time link~\eqref{nlp:timelink} gives $a_j = a_i + t_{ij}$, and the time windows~\eqref{nlp:timewindow} give $a_i \ge e_i$ and $a_j \le \ell_j$, so every leg of a feasible route satisfies
+\begin{equation}\label{eq:leg-cond}
+    e_i \;+\; d_{ij} / v_{\max} \;\le\; \ell_j .
+\end{equation}
+Loitering leaves the travel time unbounded above, so $v_{\min}$ yields no such condition. We compute once, in $O(|N|^2)$ time, the sets
+\begin{equation}\label{eq:fb-sets}
+    F_i \;=\; \{\, u \in N : e_i + d_{iu}/v_{\max} \le \ell_u \,\}
+    \qquad \text{and} \qquad
+    B_i \;=\; \{\, u \in N : e_u + d_{ui}/v_{\max} \le \ell_i \,\}
+\end{equation}
+of the targets that may directly follow $i$ and that may directly precede $i$, with $e_0 = 0$ and $\ell_0 = T_{\max}$ at the depot. They are the row and the column of one table, since $u \in B_i$ holds exactly when $i \in F_u$. Condition~\eqref{eq:leg-cond} is the time window elimination of flight legs of \citep{desrochers1991improvements}, and it implies the weaker compatibility condition $\ell_u > e_i$ on which \citep{vansteenwegen2009iterated} and \citep{gunawan2015iterated} rely. By the triangle inequality on the leg distances, $a_{r_j} \ge a_{r_i} + d_{r_i, r_j}/v_{\max}$ for any two positions $i < j$ of a route, so the condition holds for every ordered pair and not only for consecutive ones, that is $r_j \in F_{r_i}$ whenever $i < j$. Two targets that fail it in both directions never share a route.
+
+Condition~\eqref{eq:leg-cond} bounds one leg at a time and starts it at the window opening of its first target. Chained along the current route it accumulates the travel times of all earlier legs and yields the arrival bounds
+\begin{equation}\label{eq:leg-chain}
+\begin{aligned}
+    a^{\min}_{r_0} &= 0, &\qquad
+    a^{\min}_{r_q} &= \max\!\bigl( e_{r_q},\; a^{\min}_{r_{q-1}} + d_{r_{q-1}, r_q} / v_{\max} \bigr), &\quad q &= 1, \ldots, k+1, \\
+    a^{\max}_{r_{k+1}} &= T_{\max}, &\qquad
+    a^{\max}_{r_q} &= \min\!\bigl( \ell_{r_q},\; a^{\max}_{r_{q+1}} - d_{r_q, r_{q+1}} / v_{\max} \bigr), &\quad q &= k, \ldots, 1,
+\end{aligned}
+\end{equation}
+both computed in $O(k)$ time from the route alone, with $r_{k+1} = 0$ the return to the depot. The forward bound is the earliest arrival that the route prefix permits, since no leg is flown faster than $v_{\max}$ along the straight line and waiting only adds time, and the backward bound is the latest arrival that keeps every later window and the return to the depot reachable. Placing a target $u$ between two consecutive route members $i$ and $j$ satisfies every time window if and only if
+\begin{equation}\label{eq:slot-test}
+    \max\!\bigl( e_u,\; a^{\min}_i + d_{iu} / v_{\max} \bigr)
+    \;\le\;
+    \min\!\bigl( \ell_u,\; a^{\max}_j - d_{uj} / v_{\max} \bigr),
+\end{equation}
+because any travel time longer than $d / v_{\max}$ is realizable by flying slower or by loitering, so the test is exact for the variable speed model and leaves only the energy budget to the subproblem.
+
+Intersecting the two bounds with the window of the target gives the \emph{realized window}
+\begin{equation}\label{eq:realized-window}
+    \bar{W}_{r_q} \;=\; W_{r_q} \cap \bigl[\, a^{\min}_{r_q},\; a^{\max}_{r_q} \,\bigr] \;=\; \bigl[\, a^{\min}_{r_q},\; a^{\max}_{r_q} \,\bigr] ,
+\end{equation}
+the two forms agreeing because the recursion~\eqref{eq:leg-chain} intersects with the window at every step. It is the part of the window that the rest of the route leaves available: every arrival time in it is met by some schedule that respects all windows, and no time outside it is. The route satisfies every time window if and only if $\bar{W}_{r_q} \neq \emptyset$, that is $a^{\min}_{r_q} \le a^{\max}_{r_q}$, at every position $q$, and a move whose route has an empty realized window anywhere is discarded before any subproblem is solved. Test~\eqref{eq:slot-test} is this condition written for the one position that a slot insertion adds.
+
+The one-leg condition needs no separate check. Since $a^{\min}_i \ge e_i$ and $a^{\max}_j \le \ell_j$, the test~\eqref{eq:slot-test} gives $e_i + d_{iu}/v_{\max} \le \ell_u$ and $e_u + d_{uj}/v_{\max} \le \ell_j$, that is $u \in F_i \cap B_j$, and~\eqref{eq:leg-cond} is~\eqref{eq:slot-test} with the two arrival bounds replaced by the window ends. The sets are the building block from which~\eqref{eq:leg-chain} is chained, and in the implementation they are intersected to enumerate the candidates of a slot rather than scanning every unscheduled target. Insert $\langle u, p \rangle$ is tested by~\eqref{eq:slot-test} with $i = r_{p-1}$ and $j = r_p$, and Replace $\langle u, p \rangle$ with $i = r_{p-1}$ and $j = r_{p+1}$, both in $O(1)$ time, since the prefix before the slot and the suffix after it are unchanged and their bounds are those of $R$.
+
+\paragraph{Reorderings in constant time.}
+Swap and 2-opt reorder several targets at once, and recomputing the bounds~\eqref{eq:leg-chain} of every reordered route would cost $O(k)$ per position pair and $O(k^3)$ per route. The test is decided in $O(1)$ per pair instead by summarizing the reordered part of the route. For a segment $\sigma = (s_1, \ldots, s_m)$ of targets flown in this order, let the arrival at $s_1$ be $a \ge e_{s_1}$. The earliest arrival at $s_m$ that the segment permits is then $\max(a + D_\sigma, W_\sigma)$, and every window of the segment is met if and only if $a \le L_\sigma$, where $D_\sigma$ is the travel time of the segment at $v_{\max}$, $W_\sigma$ the earliest arrival at $s_m$ forced by the windows inside the segment, and $L_\sigma$ the latest entry that keeps those windows reachable. A single target $s$ has $D = 0$, $W = e_s$ and $L = \ell_s$, and the three numbers of a longer segment follow from those of a shorter one in $O(1)$ time. Placing a target $x$ in front of a segment whose first target is $y$, with $\tau = d_{xy}/v_{\max}$, gives
+\begin{equation}\label{eq:seg-prepend}
+    D' = \tau + D, \qquad W' = \max(e_y + D,\; W), \qquad
+    L' = \begin{cases} \min(\ell_x,\; L - \tau) & \text{if } e_y \le L, \\ -\infty & \text{otherwise,} \end{cases}
+\end{equation}
+and appending a target $z$ after a segment whose last target is $w$, with $\tau = d_{wz}/v_{\max}$, gives
+\begin{equation}\label{eq:seg-append}
+    D' = D + \tau, \qquad W' = \max(W + \tau,\; e_z), \qquad
+    L' = \begin{cases} \min(L,\; \ell_z - D - \tau) & \text{if } W + \tau \le \ell_z, \\ -\infty & \text{otherwise.} \end{cases}
+\end{equation}
+Both follow from the recursion~\eqref{eq:leg-chain} written for the segment, and $L' = -\infty$ records that some window of the segment is missed however early it is entered. This is the concatenation of time-window segments of \citep{savelsbergh1992vehicle}, in the form that allows waiting, which here is loitering. The 2-opt move $\langle p, q \rangle$ flies the prefix $(0, \ldots, r_{p-1})$, the reversed segment $(r_q, r_{q-1}, \ldots, r_p)$ and the suffix $(r_{q+1}, \ldots, 0)$; for a fixed $p$ the reversed segment of $q + 1$ is that of $q$ with $r_{q+1}$ placed in front, so~\eqref{eq:seg-prepend} yields its summary as $q$ advances. The Swap move $\langle p, q \rangle$ flies the prefix, $r_q$, the interior $(r_{p+1}, \ldots, r_{q-1})$, $r_p$ and the suffix; for a fixed $p$ the interior of $q + 1$ is that of $q$ with $r_q$ appended, so~\eqref{eq:seg-append} applies. In both cases the reordered route satisfies every time window if and only if the arrival at the first reordered target, $\max(e, a^{\min}_{r_{p-1}} + d/v_{\max})$, does not exceed the summary's $L$, and the earliest arrival at its last reordered target, read from the summary and carried over the connecting leg, does not exceed $a^{\max}_{r_{q+1}}$ of the unchanged suffix. The arrival bounds of $R$ serve every pair, so the Swap and 2-opt sets are built in $O(k^2)$ time, and every position pair that passes enters the set, whether the reordering shortens the route or lengthens it. Section~\ref{subsec:parameter-analysis} reports that on the longest routes this replaces the dominant cost of an iteration.
+
+Swap and 2-opt interact with the time windows in a way that Insert and Replace do not. On instances whose time windows fix the visiting order, the reversed condition fails for most pairs and both operators are rejected in most iterations. Since this depends on the instance and not on the operators, both are kept in the local search, and Section~\ref{subsec:solomon} quantifies how often they can be applied on the benchmark instances.
+
+\paragraph{Feasible moves.}
+Since solving the SOCP subproblem is the most time-consuming step of an iteration, the local search determines the set $\mathcal{M}_o(R)$ of moves of an operator $o$ that pass the following two conditions before any subproblem is solved, and draws the move to evaluate from that set. Neither requires the subproblem.
+\begin{enumerate}[noitemsep, topsep=4pt, leftmargin=2em]
+    \item \textbf{Time window feasibility.} The route produced by the move passes the test~\eqref{eq:slot-test}, or for a reordering the concatenation test of~\eqref{eq:seg-prepend}--\eqref{eq:seg-append}.
+    \item \textbf{Minimum energy of the route.} A leg consumes at least its length times $E(v_{mr}, 1)$, the energy per metre of~\eqref{eq:energy} at the maximum-range speed, but the time windows may force it to be flown at another speed and so to cost more. Read the schedule in cumulative distance: the cumulative arrival time must stay inside the time window $W_{r_q} = [e_{r_q}, \ell_{r_q}]$ at every target $r_q$ and inside $[0, T_{\max}]$ at the depot return. A leg of length $d$ flown in time $t$ has slope $s = t/d$ in that plane, so it is flown at speed $1/s$ and costs $d\,\psi(s)$ with
+    \begin{equation}\label{eq:psi}
+        \psi(s) = s\, P\!\bigl(\max(v_{mp},\, 1/s)\bigr),
+    \end{equation}
+    where $P$ is the power function of~\eqref{eq:power-full} and the $\max$ is loitering: given more time than $d/v_{mp}$ the drone holds the minimum-power speed $v_{mp}$ of~\eqref{eq:vmp} and flies the surplus, rather than fly slower and burn more. So $\psi(s) = E(1/s,\, 1)$ wherever $1/s \ge v_{mp}$, and minimising it over $s$ is minimising $P(v)/v$ over $v$, which by~\eqref{eq:vmr} is least at $v_{mr}$. The function is convex and minimal at the slope $s = 1/v_{mr}$. The minimum energy of the route over all schedules inside the windows is therefore attained by the tightest schedule the windows admit: piecewise linear, of constant slope between the points where it meets a window end, at the preferred slope $1/v_{mr}$ wherever the windows leave room. It is computed in $O(k)$ and the move is discarded when it exceeds $E_{\max}$. Where that schedule asks for a slope below $1/v_{\max}$ the speed it needs is unavailable, and the subproblem decides instead. The cheaper necessary condition that the route length times $\bar{e} = P(v_{mr})/v_{mr}$ stays within $E_{\max}$ is applied to every candidate while the set is built, and the exact test to the move that is drawn.
+\end{enumerate}
+A Replace move is treated as a removal followed by an insertion. Removing the scheduled target $r_p$ leaves the shorter route $R \ominus r_p$, and the Replace set is the union over the $k$ removals of the insertion set of $R \ominus r_p$, each one built, weighted and drawn exactly as the Insert set of that route. Nothing in the construction refers to the reward the displaced target earns, so a replacement that loses information at the slot is not excluded: it may still raise the objective through the rescheduling of the rest of the route, and the acceptance criterion of Section~\ref{subsec:ils} is what refuses it if it does not.
+
+Both conditions are exact, so the subproblem decides only whether a speed schedule within $[v_{\min}, v_{\max}]$ attains the minimum energy that this schedule certifies. With the bounds~\eqref{eq:leg-chain} at hand a slot is tested in $O(1)$ time, so the Insert and Replace sets are built in $O(k\,|N'|)$ time and the Swap and 2-opt sets in $O(k^2)$ time. Weighting a move requires the information estimate of the route it produces, whose cost is discussed next.
+
+Two consequences follow from building a set once per route and removing every move that is drawn from it. An iteration whose operator has an empty set makes no move, and a route whose four sets are all empty admits no move at all, so the search leaves such a route only by the shake step of Section~\ref{subsec:ils}. Since every draw removes a move, every route reaches that state after finitely many draws.
+
+\paragraph{Weight of a move.}
+A move is weighted by the information it gains per unit of distance it adds, both of which are available without solving the subproblem. The move changes the route length by $\Delta d_m$, with the loitering of $R$ unchanged. For the insertion $\langle u, p \rangle$ this is the detour
+\begin{equation}\label{eq:detour}
+    \Delta d_{\langle u, p \rangle} \;=\; d_{r_{p-1}, u} + d_{u, r_p} - d_{r_{p-1}, r_p} \;\ge\; 0 ,
+\end{equation}
+nonnegative by the triangle inequality, and for the Replace move that puts $v$ in the place of $r_p$ it is the detour of $v$ into the gap the removal leaves,
+\begin{equation}\label{eq:replace-weight}
+    \Delta d_m \;=\; d_{r_{p-1}, v} + d_{v, r_{p+1}} - d_{r_{p-1}, r_{p+1}} \;\ge\; 0 .
+\end{equation}
+A reordering changes no member of the route, and its $\Delta d_m$ may have either sign. The added length is flown at the maximum-range speed $v_{mr}$ of Equation~\eqref{eq:vmr}, so it costs $\Delta d_m / v_{mr}$ in time and $\bar{e}\,\Delta d_m$ in energy.
+
+The information side is read from the realized windows~\eqref{eq:realized-window}. The reward $r_i$ is linear on $W_i$, so on the realized window it attains its extremes at the two ends and the target contributes an information value between
+\begin{equation}\label{eq:info-bounds}
+    I^-_i(R) \;=\; \min\bigl\{ r_i(a^{\min}_i),\; r_i(a^{\max}_i) \bigr\}
+    \qquad \text{and} \qquad
+    I^+_i(R) \;=\; \max\bigl\{ r_i(a^{\min}_i),\; r_i(a^{\max}_i) \bigr\} ,
+\end{equation}
+the sign of the slope $\gamma_i$ deciding which end gives which. Both follow from the bounds~\eqref{eq:leg-chain}. We take the midpoint of that interval as the information to expect from $i$ on the route $R$, which by linearity is the reward at the midpoint of the realized window,
+\begin{equation}\label{eq:info-mid}
+    \bar{I}_i(R) \;=\; \tfrac{1}{2}\bigl( I^-_i(R) + I^+_i(R) \bigr) \;=\; r_i\!\left( \tfrac{1}{2}\bigl( a^{\min}_i + a^{\max}_i \bigr) \right) ,
+\end{equation}
+and the information change of a move is the change of that estimate over the whole route,
+\begin{equation}\label{eq:info-change}
+    \Delta I_m \;=\; \sum_{i \in N_{R \circ m} \setminus \{0\}} \bar{I}_i(R \circ m) \;\;-\!\! \sum_{i \in N_R \setminus \{0\}} \bar{I}_i(R) .
+\end{equation}
+The arrival bounds therefore enter the weight and not only the feasibility test. An insertion contributes the information of the target it adds, but it also delays the earliest arrival at every later target and advances the latest arrival at every earlier one, and the realized windows carry those shifts into the estimate: a target whose reward grows within its window gains from the delay and one whose reward decays loses by it. A replacement is charged in the same way with the estimate of the target it displaces. This estimate replaces the window midpoint $I_{e_i} + \gamma_i \Delta_i / 2$, which the construction heuristics of Section~\ref{subsec:initial} use because they have no route to read. It is not the reward the subproblem will realize, since the arrivals are chosen jointly and under the energy budget, but it is cheap: an insertion changes $a^{\min}$ only behind the slot and $a^{\max}$ only ahead of it, and the recursion~\eqref{eq:leg-chain} absorbs a shift at the first position where the window end, rather than the shifted arrival, attains the maximum or the minimum, after which every bound is unchanged. The change~\eqref{eq:info-change} is therefore accumulated by propagating the two shifts only as far as they reach, which on instances with narrow windows is a few positions and never more than the route.
+
+An Insert or a Replace move adds a target, and by the triangle inequality it cannot shorten the route, so $\Delta d_m > 0$ and the quotient
+\begin{equation}\label{eq:cand-weight}
+    w(m) \;=\; \max\Bigl\{ \frac{\Delta I_m}{\Delta d_m},\; 0 \Bigr\}
+\end{equation}
+clamps at zero the information the move gains per unit of distance it costs. The quotient needs no floor and no shift, being scale free.
+It can be non-positive even though the move adds a target, because $\Delta I_m$ is the change over
+the whole route and not the reward of the target inserted: the new visit pushes $a^{\min}$ later
+at every target behind it and pulls $a^{\max}$ earlier at every target ahead of it, so every realized
+window~\eqref{eq:realized-window} on the route moves and with it every estimate~\eqref{eq:info-mid}.
+One target of a steep positive slope, dragged earlier to make room, can lose more than the inserted target
+brings. A move of non-positive quotient is one the acceptance criterion of Section~\ref{subsec:ils} would refuse,
+so it is left in the set at zero weight and drawn only when no move of the set has a positive weight, in which case
+the draw is uniform.
+
+A Swap or a 2-opt move changes no member of the route. What it changes is which target is visited when, so its value is the information carried by that exchange rather than a quotient over an added distance. Write $a_p = a^{\min}_{r_p}$ for the arrival bound at the $p$-th visit and $u = r_p$, $v = r_q$ for the two targets exchanged, $p < q$. Holding the arrival times of the two positions fixed, each target is read by its reward at the other's arrival, and the exchange moves
+\begin{equation}\label{eq:exch}
+    w(m) \;=\; \max\bigl\{ r_u(a_q) + r_v(a_p) - r_u(a_p) - r_v(a_q),\; 0 \bigr\}
+           \;=\; \max\bigl\{ \bigl( \gamma_u - \gamma_v \bigr)\bigl( a_q - a_p \bigr),\; 0 \bigr\} ,
+\end{equation}
+the two forms agreeing because the exchange permutes the two targets over the two arrival times rather than replacing either: each reward is differenced against itself, its value at the window opening and the opening itself cancel, and only the slopes and the separation of the arrivals remain. It is positive exactly when the target of the larger slope takes the later visit, and grows with both the difference of the slopes and the separation of the two arrivals. A 2-opt reverses a segment, and its weight is~\eqref{eq:exch} summed over the pairs the reversal exchanges. Writing $x(p, q)$ for the unclamped exchange value of the pair $(p, q)$, the sum $S(p, q)$ over the pairs of the reversal $\langle p, q \rangle$ satisfies $S(p, q) = x(p, q) + S(p+1, q-1)$, so the weights of all reversals are obtained in $O(k^2)$ time by increasing $q - p$, in step with the feasibility test. Both weights are read from the arrival bounds~\eqref{eq:leg-chain} already computed for that test, so neither costs a further pass over the route.
+
+Equation~\eqref{eq:exch} isolates the effect the move is made for. The route-wide change $\Delta I_m$ of~\eqref{eq:info-change} also carries the retiming of every visit downstream of the move, which for a reordering is large, of either sign, and unrelated to the exchange the move performs.
+
+\paragraph{Restricted candidate list for reorderings.}
+The two families of operators differ in what their weights predict. For Insert and Replace the weight~\eqref{eq:cand-weight} decides which move is drawn first, but the share of drawn moves the subproblem then accepts is as large in the tail of the ranking as at its head, since a replacement that fits a window the estimate cannot see is found by the subproblem alone; a set restricted to its best-weighted moves would lose those acceptances, and the full set is kept. For Swap and 2-opt the acceptance rate decays with the rank of the exchange weight~\eqref{eq:exch}, and the sets are the large ones: on a route of $k$ targets with wide windows they hold hundreds of position pairs, most of them refused by the subproblem after a solve each. Of the reorderings that pass the two conditions, therefore, only the $L_r$ of largest weight enter the set, a restricted candidate list in the sense of \citep{gunawan2015iterated}, who keep the five best insertions of their construction. Section~\ref{subsec:parameter-analysis} reports the acceptance rates by rank on which this asymmetry rests and sets $L_r$. On instances whose windows fix the order the reordering sets hold a handful of pairs and the list is not binding.
+
+\paragraph{Candidate selection.}
+Write $\mathcal{M} = \mathcal{M}_o(R)$ for the feasible set of the drawn operator. One move is drawn from $\mathcal{M}$ by roulette-wheel selection, the fitness-proportionate rule of genetic algorithms \citep{goldberg1989genetic} that \citep{gunawan2015iterated} use in their construction heuristic. Each move receives a nonnegative weight, and the move $m$ is drawn with probability
+\begin{equation}\label{eq:roulette}
+    \Pr[m] \;=\; \frac{w(m)}{\sum_{m' \in \mathcal{M}} w(m')},
+\end{equation}
+which is implemented by drawing a uniform random number $U \in [0, 1)$ and returning the first move at which the cumulative sum of the weights, in a fixed order, exceeds $U \sum_{m'} w(m')$. The weight is~\eqref{eq:cand-weight} for Insert and Replace and~\eqref{eq:exch} for Swap and 2-opt. A move of zero weight is drawn only when the set holds no move of positive weight, and the draw is then uniform, so no feasible move is closed to the search.
+
+\paragraph{Reuse of the feasible sets.}
+The four sets $\mathcal{M}_o(R)$ depend on the current route alone. They are built when the route changes, kept while it does not, and discarded with it, and a move that has been drawn is removed from its set whether it was accepted or refused, so that no move is evaluated twice for the same route. The cost of building a set is therefore paid once per accepted move rather than once per iteration, which matters because a route is typically left unchanged for many iterations. A route the search returns to later has its sets built again rather than resumed, since a resumed set is a partly drawn one and would send the route to the shake step of Section~\ref{subsec:ils} sooner than a route reached for the first time.
+
+Keeping the sets is not an optimization but part of the algorithm: a set that empties is what defines a local optimum of the four operators, so the shake step fires on the state of these sets, and without them the descent would have no termination criterion. The reference route of Section~\ref{subsec:perturbation}, the removals already applied to it and the stack of earlier references play the same role, since the fallback sends the search to a route it would otherwise not revisit.
+
+One further store does change what the subproblem is asked: every route the run has evaluated is kept with its value, and a route found infeasible is kept as such. A move whose route is stored as infeasible is discarded and the draw repeated, and a move whose route is stored with a value is decided by the acceptance criterion on that value, so a solve is paid only to move there. Since $f$ depends on the route alone, this changes no decision: a run with the store disabled reproduces the same objective at the same iteration and differs only in the time it takes.
+
+Algorithm~\ref{alg:localmove} summarizes one iteration.
+
+\begin{algorithm}[!htbp]
+\SetAlgoVlined
+\LinesNumbered
+\caption{Local search iteration}\label{alg:localmove}
+\KwIn{Current route $\Rcurr = (0, r_1, \ldots, r_k)$, sets $\{F_i, B_i\}_{i \in N}$ of~\eqref{eq:fb-sets}, feasible sets $\mathcal{M}_o(\Rcurr)$ built so far, list length $L_r$}
+\KwOut{Candidate route $\Rcand$, or $\emptyset$ if no move is drawn, and the updated sets}
+\BlankLine
+$N' \leftarrow N \setminus (N_R \cup \{0\})$\;
+select an operator $o$ uniformly at random among Insert, Replace, Swap and 2-opt, restricted to those applicable to $\Rcurr$\;
+\If{$\mathcal{M}_o(\Rcurr)$ has not been built}{
+    compute the arrival bounds~\eqref{eq:leg-chain} of $\Rcurr$\;
+    \uIf{$o$ is Insert}{
+        $\mathcal{M}_o(\Rcurr) \leftarrow \{\, \langle u, p \rangle : p \in \{1, \ldots, k+1\},\; u \in N' \text{ passing~\eqref{eq:slot-test}} \,\}$\;
+    }
+    \uElseIf{$o$ is Replace}{
+        $\mathcal{M}_o(\Rcurr) \leftarrow \bigcup_{p = 1}^{k} \{\, \langle u, p \rangle : u \in N' \text{ whose insertion into the gap of } \Rcurr \ominus r_p \text{ passes~\eqref{eq:slot-test}} \,\}$\;
+    }
+    \uElseIf{$o$ is Swap}{
+        $\mathcal{M}_o(\Rcurr) \leftarrow \{\, \langle p, q \rangle : 1 \le p < q \le k,\; R \text{ with } r_p \text{ and } r_q \text{ exchanged passes the test of~\eqref{eq:seg-append}} \,\}$\;
+    }
+    \Else{
+        $\mathcal{M}_o(\Rcurr) \leftarrow \{\, \langle p, q \rangle : 1 \le p < q \le k,\; R \text{ with } (r_p, \ldots, r_q) \text{ reversed passes the test of~\eqref{eq:seg-prepend}} \,\}$\;
+    }
+    discard from $\mathcal{M}_o(\Rcurr)$ the moves that violate the energy bound\;
+    weight the remaining moves by~\eqref{eq:cand-weight} for Insert and Replace, by~\eqref{eq:exch} for Swap and 2-opt\;
+    \lIf{$o$ is Swap or 2-opt \KwSty{and} $|\mathcal{M}_o(\Rcurr)| > L_r$}{keep the $L_r$ moves of largest weight}
+}
+\While{$\mathcal{M}_o(\Rcurr) \neq \emptyset$}{
+    draw $m \in \mathcal{M}_o(\Rcurr)$ by~\eqref{eq:roulette}; remove $m$ from $\mathcal{M}_o(\Rcurr)$\;
+    \lIf{the route $\Rcurr \circ m$ is not stored as infeasible}{\Return $\Rcand \leftarrow \Rcurr \circ m$}
+}
+\Return $\emptyset$
+\end{algorithm}
+
+An Insert or a Replace move is accepted only if it raises the value of the route, so a move whose value cannot exceed $f(\Rcurr)$ need not be solved at all. Every visit contributes at most the upper end $I^+$ of its information interval~\eqref{eq:info-bounds}, so
+\begin{equation}\label{eq:info-bound}
+    \bar{f}(\Rcand) \;=\; \sum_{q = 1}^{k} I^{+}_{r_q}(\Rcand)
+\end{equation}
+bounds $f(\Rcand)$ from above: it grants every visit its best arrival at once, which the chain forbids, and it ignores the energy budget. It is read from the arrival bounds~\eqref{eq:leg-chain} in one pass. When $\bar{f}(\Rcand) \le f(\Rcurr)$ the move is discarded and the iteration passes without a subproblem. A reordering is exempt, because the capacity clause of Section~\ref{subsec:ils} can accept one whose value is not larger.
+
+The route $\Rcand$ returned by Algorithm~\ref{alg:localmove} is evaluated by the SOCP subproblem. If the subproblem is infeasible, which happens when the energy budget cannot accommodate the new legs at any speed, the move is rejected and the search continues from $\Rcurr$, and the same holds when no move is drawn. The second condition above leaves the subproblem little to reject: on C101~(100) this condition discards $12\,347$ routes against the $93$ the subproblem finds infeasible. Whether a feasible route replaces $\Rcurr$ is decided by the acceptance criterion of the iterated local search, to which we now turn.
+
+% ============================================================
+\subsection{Iterated local search}\label{subsec:ils}\label{subsec:perturbation}
+% ============================================================
+
+Given the initial route $\Rinit$ produced by a construction heuristic of Section~\ref{subsec:initial}, the iterated local search improves it by alternating the local search of Section~\ref{subsec:proposal} with a shake step. Following \citep{gunawan2015iterated}, the three components of an iterated local search are the local search, the perturbation, and the acceptance criterion. We present the shake step first, then the outer loop, then the acceptance criterion.
+
+\paragraph{Shake step.}
+We adopt the shake step of \citep{vansteenwegen2009iterated}, in the form used by \citep{gunawan2015iterated} for a single route. A block of $\mathit{cons}$ consecutive targets is removed from the route, starting at the position $\mathit{post}$ and continuing from the first scheduled target if the last one is reached, and the local search then fills the gap by subsequent Insert and Replace moves. At least two targets are always kept. Removing consecutive targets rather than targets scattered along the route keeps the repair simple. The arrival times before the removed block are unchanged and those after it can only decrease, so the reduced route remains feasible and is always accepted, and the local search has to fill a single gap. In \citep{vansteenwegen2009iterated} the pair $(\mathit{cons}, \mathit{post})$ is advanced after every shake, $\mathit{post}$ by $\mathit{cons}$ and $\mathit{cons}$ by one up to a maximum $c$, against whichever route the search has reached, and the shake step is reported to be the most influential component of the heuristic.
+
+A pair $(\mathit{cons}, \mathit{post})$ names a removal of one particular route, so it is only meaningful against a route that stays fixed while the pairs advance. We therefore attach the removals to a \emph{reference} route $\Rref$, which is a local optimum of the four operators, and make their order explicit. The \emph{enumeration} $\mathcal{E}(\Rref)$ of a reference with $k$ scheduled targets is built from $c$ \emph{levels}. Level $\mathit{cons}$ holds the blocks of $\mathit{cons}$ consecutive targets that sweep the route once: its first block starts at position $\mathit{cons}$, each following block starts where the previous one ended, the last block wraps around the route, and the sweep stops once every target has been removed at that level, so that successive levels are staggered by one position and level $\mathit{cons}$ holds $\lceil k / \mathit{cons} \rceil$ blocks. The enumeration interleaves the levels: the next block of level $1$, then the next block of level $2$, and so on up to level $c$, then again the next block of level $1$, a level whose sweep is complete being skipped. Consecutive shakes therefore remove $1, 2, \ldots, c$ targets in turn, which is the escalation of \citep{vansteenwegen2009iterated}, while the list of $\sum_{\mathit{cons} = 1}^{c} \lceil k / \mathit{cons} \rceil$ removals covers every target at every level, which the escalation alone does not: advancing $\mathit{post}$ by $\mathit{cons}$ returns to the first block after one pass through the levels whenever $c(c+1)/2$ is a multiple of $k$, and covers the route unevenly otherwise. Small removals alone rarely lift a local optimum, so a level-by-level order that spends the first $k$ shakes on single targets was found to lose the improvements the escalation finds early. The cap is $c = \lceil k / D \rceil$ with a divisor $D$ set in Section~\ref{sec:experiment}; in \citep{vansteenwegen2009iterated} it is a third of the average number of visits per route.
+
+\paragraph{Choosing among the enumerated removals.}
+The enumeration fixes the order in which the removals of a reference are offered, not which of them is worth making. A removal frees a length $\Delta d$ of flight, and what that length can buy is the information of the unscheduled targets it makes insertable. For a candidate removal we take every $u \in N' \setminus N_R$ that passes the slot test~\eqref{eq:slot-test} somewhere in the shortened route, at its cheapest such slot, with the detour $\Delta d_u$ of~\eqref{eq:detour} and the most that slot can give, the upper end $I^+_u$ of~\eqref{eq:info-bounds}, and fill the freed length greedily in decreasing $I^+_u / \Delta d_u$,
+\begin{equation}\label{eq:shake-value}
+    V \;=\; \max \Bigl\{ \textstyle\sum_{u \in S} I^+_u \;:\; S \subseteq N' \setminus N_R, \;\; \textstyle\sum_{u \in S} \Delta d_u \le \Delta d \Bigr\} .
+\end{equation}
+The next $m$ removals of the enumeration are scored by~\eqref{eq:shake-value} and the best is applied; the enumeration itself advances by one, so a removal passed over here is offered again at the next shake and the coverage of the reference is unchanged. The slot test and the arrival bounds are the ones the local search already builds, so the value costs no subproblem. Algorithm~\ref{alg:perturbation} states the step.
+
+\begin{algorithm}[!htbp]
+\SetAlgoVlined
+\LinesNumbered
+\caption{Shake step}\label{alg:perturbation}
+\KwIn{Reference route $\Rref = (0, r_1, \ldots, r_k)$, its enumeration $\mathcal{E}(\Rref) = (\varepsilon_1, \varepsilon_2, \ldots)$, index $\iota$ of the next removal, look-ahead $m$}
+\KwOut{Shaken route $\Rshk$, updated index $\iota$}
+\BlankLine
+\lIf{$k < 3$}{\Return $\Rref, \iota$}
+\For{$h = \iota, \ldots, \min(\iota + m - 1, |\mathcal{E}(\Rref)|)$}{
+    $(\mathit{cons}, \mathit{post}) \leftarrow \varepsilon_h$;\quad $R_h \leftarrow \Rref$ without the targets $r_{1 + ((\mathit{post} - 1 + j) \bmod k)}$, $j = 0, \ldots, \mathit{cons} - 1$\;
+    $V_h \leftarrow$ the value~\eqref{eq:shake-value} of $R_h$ with $\Delta d$ the length the removal frees\;
+}
+$\Rshk \leftarrow R_{h^*}$ with $h^* = \arg\max_h V_h$;\quad $\iota \leftarrow \iota + 1$\;
+\Return $\Rshk, \iota$
+\end{algorithm}
+
+A shake of $\Rref$ is followed by the local search until the next local optimum $\Rcurr$. If $f(\Rcurr) > f(\Rref)$ the descent has found a better route, which becomes the reference, and its own enumeration is started from its first removal. If it has not, the search returns to $\Rref$ and the next removal of the enumeration is applied. Consecutive shakes therefore enumerate the removals of one route instead of drifting, and the reference moves only on an improvement. The enumeration of a reference is finite, so after finitely many failed descents the reference is exhausted. The search then falls back to the reference it held before and resumes that one's enumeration where it stopped, so the references form a stack that grows on an improvement and shrinks on an exhaustion; when the stack is empty the enumeration of the current reference restarts, which is not futile since the descents are random. On our instances the enumerations are long relative to a run and the fallback is reached only a few times, so it bounds the search rather than driving it.
+
+\paragraph{Outer loop.}
+Let $\Rcurr$ be the current route and $\Rbest$ the best found solution. In each iteration one move is drawn by Algorithm~\ref{alg:localmove}, its route is evaluated by the SOCP subproblem, and the acceptance criterion decides whether it replaces $\Rcurr$. Since the feasible sets belong to the route, an accepted move and a shake step both discard them, and they are rebuilt operator by operator as the following iterations draw from them. The shake step is applied as soon as the four feasible sets of the current route are all built and empty. Such a route is a local optimum of the four operators, since every move that survived the two conditions has been drawn and refused, and every route reaches this state after finitely many draws because each draw removes a move. Where the iterated local searches of \citep{vansteenwegen2009iterated} and \citep{gunawan2015iterated} shake after a fixed number of iterations without improvement, the trigger here is the state of the sets, so a route is perturbed once the search has exhausted it, and the restricted list $L_r$ of Section~\ref{subsec:proposal} keeps that exhaustion within a few hundred iterations on the routes whose reordering sets would otherwise hold thousands of moves. Since every new reference is enumerated from its first removal, a route that keeps improving is shaken by small blocks, while a reference that resists improvement is shaken by every level in turn until its removals are spent.
+
+The search stops when $S$ consecutive shakes have passed without an improvement of $\Rbest$. A counter is increased at every shake and reset to zero whenever $\Rbest$ improves, and the run returns $\Rbest$ as soon as the counter reaches $S$. The shake is the unit of exploration, and the descent between two shakes is bounded by the sets of a route, so this rule ends a run when the shake step has stopped producing improvements, however long an iteration takes on the instance at hand. Termination is therefore a property of the search rather than of the machine it runs on, and the time it takes to reach that state is an outcome of the run, which we report alongside the objective value. A wall-clock cap is kept in the experiments as a safeguard, and Section~\ref{sec:experiment} reports how often it binds before the shake count does. Algorithm~\ref{alg:ils} presents the outline.
+
+\begin{algorithm}[!htbp]
+\SetKwFunction{FPerturb}{Shake}
+\SetKwFunction{FLocal}{LocalSearch}
+\SetKwFunction{FAccept}{Accept}
+\SetAlgoVlined
+\LinesNumbered
+\caption{Iterated local search}\label{alg:ils}
+\KwIn{Initial route $\Rinit$, cap divisor $D$, list length $L_r$, look-ahead $m$, shake limit $S$}
+\KwData{Reference route $\Rref$, its enumeration $\mathcal{E}(\Rref)$ and index $\iota$, stack $\mathcal{S}$ of earlier references, shakes $\mathit{idle}$ since the last improvement}
+\KwOut{Best found route $\Rbest$}
+\BlankLine
+$\Rcurr \leftarrow \Rinit$;\quad $\Rbest \gets \Rinit$;\quad $\Rref \gets \emptyset$;\quad $\mathcal{S} \gets ()$;\quad $\mathit{idle} \gets 0$;\quad discard the feasible sets\;
+\While{$\mathit{idle} < S$}{
+    \uIf{the feasible sets of $\Rcurr$ are all built and empty}{
+        \uIf{$\Rref = \emptyset$ \KwSty{or} $f(\Rcurr) > f(\Rref)$}{
+            push $(\Rref, \iota)$ onto $\mathcal{S}$ if $\Rref \neq \emptyset$\;
+            $\Rref \gets \Rcurr$;\quad build $\mathcal{E}(\Rref)$ with $c = \lceil k / D \rceil$;\quad $\iota \gets 1$ \tcp*{a better local optimum}
+        }
+        \Else{
+            $\Rcurr \gets \Rref$ \tcp*{the descent did not improve: go back}
+            \If{$\iota > |\mathcal{E}(\Rref)|$}{
+                \lIf{$\mathcal{S} \neq ()$}{pop $(\Rref, \iota)$ from $\mathcal{S}$; $\Rcurr \gets \Rref$}
+                \lElse{$\iota \gets 1$}
+            }
+        }
+        $\Rcurr,\, \iota \gets \FPerturb{$\Rref,\, \mathcal{E}(\Rref),\, \iota,\, m$}$ \tcp*{Algorithm~\ref{alg:perturbation}, always accepted}
+        $\mathit{idle} \gets \mathit{idle} + 1$;\quad discard the feasible sets\;
+    }
+    \Else{
+        $\Rcand \gets \FLocal{$\Rcurr$}$ \tcp*{Algorithm~\ref{alg:localmove}}
+        \If{$\Rcand \neq \emptyset$ \KwSty{and} \FAccept{$\Rcand,\, \Rcurr$}}{
+            $\Rcurr \gets \Rcand$;\quad discard the feasible sets\;
+            \lIf{$f(\Rcurr) > f(\Rbest)$}{$\Rbest \gets \Rcurr$;\quad $\mathit{idle} \gets 0$}
+        }
+    }
+}
+\Return $\Rbest$
+\end{algorithm}
+
+\paragraph{Acceptance criterion.}
+The function \FAccept{$\Rcand, \Rcurr$} of Algorithm~\ref{alg:ils} accepts an Insert or Replace move only if it improves the objective value of the route, $f(\Rcand) > f(\Rcurr)$, with $f$ the route quantity of Section~\ref{subsec:socp}. A Swap or 2-opt move changes only the order of the route, so it is accepted if $f(\Rcand) > f(\Rcurr)$, or if the two values agree within the solver tolerance and $\mathrm{cap}(\Rcand) < \mathrm{cap}(\Rcurr)$, that is, if it improves the collected information or frees time or energy for a later insertion. A reordering is refused once more in one case. Let $R'$ and $R''$ be the two routes the search has most recently occupied; a Swap or 2-opt whose route equals $R''$ is refused, so that the search cannot alternate between one pair of routes. The case arises because the improvement test is exact while the tie is read within a tolerance, so two routes whose objectives differ by less than that tolerance are an improvement in one direction and a tie in the other, and the search crosses between them without end. Insert and Replace need no such rule: they change the visited set and are accepted only on a strict gain, so $f$ rises along them and they cannot return.
+
+The search therefore relies on the shake step alone to escape from local optima. Here our search differs from both of the iterated local searches we follow elsewhere. That of \citep{vansteenwegen2009iterated} always continues from the shaken solution and never returns to a previous one, so the pair $(\mathit{cons}, \mathit{post})$ advances against a route that has meanwhile changed. That of \citep{gunawan2015iterated} also continues from the shaken solution, and returns to the best found solution $\Rbest$ periodically, every fixed number of iterations without improvement. We return instead to the reference route, and we return whenever a descent fails to improve on it rather than on a period, so that consecutive shakes enumerate the removals of one route. The reference is not the best found solution but the local optimum the enumeration belongs to, and it is replaced only by a descent that improves on it.
+
+The algorithm has three parameters, the divisor $D$ that sets the largest number $c = \lceil k / D \rceil$ of targets a shake removes, the length $L_r$ of the restricted candidate list of the reordering operators, and the number $S$ of consecutive shakes without an improvement that ends the run. The look-ahead of the shake step is fixed at $m = 6$ removals. All three parameters are set in Section~\ref{sec:experiment}, and the traces of a run record the shake count at every improvement of $\Rbest$, so the objective and the stopping time of any other value of $S$ can be read from one run without repeating it.
+
+% ============================================================
