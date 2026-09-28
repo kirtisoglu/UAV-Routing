@@ -21,6 +21,8 @@ Knobs (environment variables; every one defaults to the paper's setting):
   DESIGN_DYNAMICS   1 = also write the per-iteration trace (iter, wall_s, f_curr,
                     f_best, kick) to results/details/dynamics/<stem>_<design><OUT>.csv,
                     the input of the perturbation figure (fig:ils-capdiv)
+  DESIGN_ETA        energy budget scaling eta (default 1); name the output by it, e.g.
+                    DESIGN_ETA=0.75 DESIGN_OUT=_eta075 (the value is recorded in the extra column)
   DESIGN_BUDGET     wall-clock safeguard per run, seconds (default 14400)
   DESIGN_WORKERS    parallel runs (default 1; keep 1 whenever t_best or Run is reported)
 
@@ -34,6 +36,8 @@ Which run fills which table (the exact commands are in experiments/RERUN_PLAN.md
   design_new_D6.csv, _D12.csv     tab:theta         (DESIGN_CAPDIV=6 DESIGN_OUT=_D6, DESIGN_CAPDIV=12 DESIGN_OUT=_D12)
   design_new_R1.csv, _R2.csv,     tab:initial-tour  (DESIGN_INIT=R1 DESIGN_OUT=_R1, ...;
   _R3s1.csv, _R3s2.csv, _R3s3.csv                    R3 with DESIGN_INIT_SEED=1, 2, 3 and DESIGN_OUT=_R3s1, ...)
+  design_new_eta075.csv, _fixed_eta075.csv, _noloiter_eta075.csv, and the same at _eta125
+                                  tab:levers-eta    (DESIGN_ETA=0.75 with DESIGN_OUT=_eta075, _fixed_eta075, _noloiter_eta075; 1.25 likewise)
   details/dynamics/pr15_240_new_D{3,6,12}dyn.csv    fig:ils-capdiv
                                   (DESIGN_INSTANCES="PR15 (240)" DESIGN_DYNAMICS=1 DESIGN_CAPDIV=D DESIGN_OUT=_D{D}dyn)
 
@@ -64,6 +68,7 @@ CAPDIV = int(os.environ.get("DESIGN_CAPDIV", 3))
 INIT = os.environ.get("DESIGN_INIT", "R4")
 INIT_SEED = int(os.environ.get("DESIGN_INIT_SEED", 1))
 DYNAMICS = os.environ.get("DESIGN_DYNAMICS", "") not in ("", "0")
+ETA = float(os.environ.get("DESIGN_ETA", 1.0))
 OUT = os.environ.get("DESIGN_OUT", "")
 EXTRA = os.environ.get("DESIGN_EXTRA", "").split()
 TRACE_DIR = os.path.join(HERE, "results", "details", "design_traces")
@@ -104,6 +109,8 @@ def run_one(name, design):
     else:
         env["ILS_SHAKE_STALL"] = "1000"
         args += ["--max-iter", "13000"]
+    if ETA != 1.0:
+        args += ["--eta", str(ETA)]
     if DYNAMICS:
         os.makedirs(DYN_DIR, exist_ok=True)
         args += ["--dynamics-out", os.path.join(DYN_DIR, f"{stem}_{design}{OUT}.csv")]
@@ -133,7 +140,7 @@ def run_one(name, design):
     socp_ms = (cnt.get("socp_us", 0) / 1000.0 / cnt["socp_calls"]) if cnt.get("socp_calls") else ""
     return {"Instance": name, "design": design, "init": INIT, "init_seed": INIT_SEED if INIT == "R3" else "",
             "D": CAPDIV, "L_r": RCL if design == "new" else "", "S": IDLE if design == "new" else "",
-            "extra": " ".join(EXTRA), "commit": COMMIT,
+            "extra": " ".join(EXTRA + (["--eta", str(ETA)] if ETA != 1.0 else [])), "commit": COMMIT,
             "init_obj": float(init.group(1)) if init else "", "init_size": int(init.group(2)) if init else "",
             "Objective": float(m.group(1)), "Tour": int(m.group(2)),
             "flown_km": round(float(phys.group(1)) / 1000.0, 2) if phys else "",
@@ -186,7 +193,7 @@ def main():
     jobs = [n for n in order if n not in done]
     print(f"[plan] {design}{OUT}: {len(jobs)} runs, {WORKERS} at a time; start {INIT}"
           f"{' seed ' + str(INIT_SEED) if INIT == 'R3' else ''}, L_r={RCL} S={IDLE} D={CAPDIV} "
-          f"budget {BUDGET:.0f}s extra={EXTRA} dynamics={'on' if DYNAMICS else 'off'} commit {COMMIT}",
+          f"eta={ETA:g} budget {BUDGET:.0f}s extra={EXTRA} dynamics={'on' if DYNAMICS else 'off'} commit {COMMIT}",
           flush=True)
     with ThreadPoolExecutor(max_workers=WORKERS) as ex:
         futs = {ex.submit(run_one, n, design): n for n in jobs}

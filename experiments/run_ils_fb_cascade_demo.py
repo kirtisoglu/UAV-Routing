@@ -76,14 +76,14 @@ def assign_slopes(graph, seed=1, lo=0.5, hi=1.0):
         graph.nodes[node_id]['info_slope'] = sign * magnitude
 
 
-def make_instance(path):
+def make_instance(path, eta=1.0):
     g = Graph(path=path, slope='zero', seed=GRAPH_SEED)
     assign_slopes(g, seed=GRAPH_SEED)
     drone = Drone(base=g.graph['base'])
     calib = calibrate(graph=g, tour_length=len(g.nodes)//2, drone=drone,
                       drone_sortie_time=SORTIE_TIME,
                       calibration_method="campaign")
-    inst = Environment(calib, drone, eta=1.0)
+    inst = Environment(calib, drone, eta=eta)     # eta scales the energy budget only
     # Return the calibrated graph (distances in meters, time windows in
     # seconds), the same graph the SOCP uses. The raw benchmark graph must
     # not be used for the feasibility checks, since v_max, T_max and E_max

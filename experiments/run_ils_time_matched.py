@@ -475,7 +475,7 @@ class TimedILS:
                  disabled_ops=(), no_fb=False, no_cascade=False,
                  no_cache=False, max_iter=None, no_shake=False, n_starts=1,
                  shake_return=False, shake_backtrack=False,
-                 dynamics_out=None, weights_out=None,
+                 dynamics_out=None, weights_out=None, eta=1.0,
                  fast_sets=False, reorder_rcl=0, max_idle_shakes=0, sweep_enum=False,
                  scaled_socp=False):
         self.name = name
@@ -566,7 +566,8 @@ class TimedILS:
         self.seed_offset = seed_offset
         self.t0 = time.time()
 
-        self.instance, self.graph, self.drone = make_instance(path)
+        self.instance, self.graph, self.drone = make_instance(path, eta=eta)
+        self.eta = eta
         self.instance.no_loiter = no_loiter      # read by State when it builds a Solver
         self.instance.socp_scaled = bool(scaled_socp)   # nondimensionalized subproblem (Solver reads it)
         self.theta = self._theta_arg if self._theta_arg is not None else THETA
@@ -2619,6 +2620,8 @@ def main():
     ap.add_argument("--dynamics-out", default=None,
                     help="Write a per-step (f_curr, f_best, kick) trace to "
                          "this CSV for the perturbation-dynamics figure.")
+    ap.add_argument("--eta", type=float, default=1.0,
+                    help="energy budget scaling: E_max(eta) = eta * E_max(1); distances and windows unchanged")
     ap.add_argument("--seed-offset", type=int, default=0,
                     help="Worker index for best-of-K parallel runs; shifts "
                          "all RNG seeds so workers explore independent basins.")
@@ -2668,7 +2671,7 @@ def main():
                    shake_schedule=args.shake_schedule, shake_hold=args.shake_hold, restart_threshold=args.restart_threshold,
                    kappa_max=args.kappa_max,
                    weights_out=args.weights_out,
-                   dynamics_out=args.dynamics_out).run()
+                   dynamics_out=args.dynamics_out, eta=args.eta).run()
     write_outputs(run, tag)
 
 

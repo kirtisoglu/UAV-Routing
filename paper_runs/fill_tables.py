@@ -18,6 +18,9 @@ Table                       inputs under paper_runs/results
   tab:theta                   design_new.csv (D = 3), design_new_D6.csv, design_new_D12.csv
   tab:initial-tour            design_new_R1.csv, design_new_R2.csv, design_new_R3s1.csv,
                               design_new_R3s2.csv, design_new_R3s3.csv, design_new.csv (R4)
+  tab:levers-eta              the three files above per eta: design_new<_etaXXX>.csv,
+                              design_new_fixed<_etaXXX>.csv, design_new_noloiter<_etaXXX>.csv
+                              for XXX in 075, (none), 125; a missing eta leaves its columns empty
 """
 import os, re, sys, csv
 
@@ -100,8 +103,34 @@ def rows_fixed_speed():
         if a is None or b is None:
             out.append(f"{name_tex(n)} & & & & & \\\\"); continue
         fa, fb = float(a["Objective"]), float(b["Objective"])
-        out.append(f"{name_tex(n)} & {num(fa)} & {a['Tour']} & {num(fb)} & {b['Tour']} & "
+        ea, eb = fnum(a, "energy_pct"), fnum(b, "energy_pct")
+        out.append(f"{name_tex(n)} & {num(fa)} & {a['Tour']} & {f'{ea:.1f}' if ea is not None else ''} & "
+                   f"{num(fb)} & {b['Tour']} & {f'{eb:.1f}' if eb is not None else ''} & "
                    f"{100.0 * (fb - fa) / fa:.2f} \\\\")
+    return out
+
+
+def rows_levers_eta():
+    """Gain of speed optimization and of loitering at eta = 0.75, 1, 1.25."""
+    suf = {"0.75": "_eta075", "1": "", "1.25": "_eta125"}
+    ref = {e: load(f"design_new{x}.csv") for e, x in suf.items()}
+    fix = {e: load(f"design_new_fixed{x}.csv") for e, x in suf.items()}
+    nol = {e: load(f"design_new_noloiter{x}.csv") for e, x in suf.items()}
+    if ref["1"] is None or fix["1"] is None or nol["1"] is None:
+        return None
+    out = []
+    for n in ORDER:
+        cells = []
+        for var in (fix, nol):
+            for e in ("0.75", "1", "1.25"):
+                r, v = ref[e], var[e]
+                if r is None or v is None or r.get(n) is None or v.get(n) is None:
+                    cells.append(""); continue
+                fr, fv = float(r[n]["Objective"]), float(v[n]["Objective"])
+                cells.append(f"{100.0 * (fr - fv) / fv:.2f}")
+        out.append(f"{name_tex(n)} & " + " & ".join(cells) + " \\\\")
+        if n in GROUP_ENDS:
+            out.append("\\midrule")
     return out
 
 
@@ -176,7 +205,8 @@ TABLES = {"tab:matheuristic-vs-exact": rows_matheuristic_vs_exact,
           "tab:fixed-speed": rows_fixed_speed,
           "tab:coverage": rows_coverage,
           "tab:theta": rows_theta,
-          "tab:initial-tour": rows_initial_tour}
+          "tab:initial-tour": rows_initial_tour,
+          "tab:levers-eta": rows_levers_eta}
 
 
 def replace_body(tex, label, rows):

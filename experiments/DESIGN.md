@@ -583,6 +583,21 @@ the energy" contradicted `misocp_s1.csv` (98.7 to 100%) and is replaced by a ref
 to the energy column of Table `tab:scalability`. The construction heuristics do not use
 the window midpoint estimate (R4 solves the subproblem), and the claim was dropped.
 
+### Strengthening the two lever tables (28 September 2026)
+
+At eta = 1 both settings of the loitering table use the whole budget on every
+instance and the gain is 0.04 to 6.2 percent, while the exact solver's R-class table
+shows the gain rising as the budget tightens (R101 (50): 12.5 percent at eta = 0.75).
+The mechanism: waiting without loitering means slow flight below v_mp at rising induced
+power, so it wastes energy exactly when energy is scarce. The speed table shows the
+opposite dependence in the same data: fixed-speed routes leave 0.4 to 8 percent of the
+budget unused and schedule 3 to 29 fewer targets, since speed above v_mr is what
+converts energy into targets. Added: `--eta` in the runner (`make_instance(path, eta)`),
+`DESIGN_ETA` in the driver, an energy-use column in `tab:fixed-speed`, and the table
+`tab:levers-eta` (gain of each lever at eta = 0.75, 1, 1.25), filled by runbook Step 8.
+Smoke test on R101 (50) at eta = 0.75 in the container: reference, no-loiter and
+fixed-speed variants run; the objectives fall below the eta = 1 values as they must.
+
 Files identified as superseded, to be removed by the author (git history keeps them):
 `experiments/tm_ils_*` (runner outputs, now ignored), `archive/`, `animation/traces/`,
 `animation/.viewer_template.bak`, `figures/`, `fig/` (stale copies; the tex reads

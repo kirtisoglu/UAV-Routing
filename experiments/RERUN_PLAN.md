@@ -117,6 +117,32 @@ and `design_new_D12.csv`. The per-iteration traces land in
 
 The R4 column is the reference run of Step 1.
 
+## Step 8: the two levers by energy budget (Table `tab:levers-eta`), about 3 hours
+
+Added 28 September, after Steps 1 to 7 were done. The reference run and the two
+variants of Step 2 are repeated at a tighter and a looser energy budget; the driver's
+`DESIGN_ETA` scales the budget and nothing else, and the value is recorded in the
+`extra` column of every row.
+
+    for e in 0.75 1.25; do t=$(echo $e | tr -d .);
+      DESIGN_ETA=$e                              DESIGN_OUT=_eta$t          python3 paper_runs/run_design.py new
+      DESIGN_ETA=$e DESIGN_EXTRA="--fixed-speed" DESIGN_OUT=_fixed_eta$t    python3 paper_runs/run_design.py new
+      DESIGN_ETA=$e DESIGN_EXTRA="--no-loiter"   DESIGN_OUT=_noloiter_eta$t python3 paper_runs/run_design.py new
+    done
+    python3 paper_runs/fill_tables.py --only tab:levers-eta
+
+Six campaigns of fourteen runs; the `eta = 1` columns of the table are already filled
+from Step 1 and Step 2. Expected from the exact solver's Table `tab:loitering`: the
+loitering gain rises as the budget tightens (R101 (50): 12.5 percent at 0.75 against
+0.3 at 1). The speed gain may move either way: a tighter budget leaves less energy for
+speed above `v_mr`, but makes the cheap waiting speed `v_mp` more valuable. A container
+preview on R101 (50) at 0.75 gave a loitering gain of 4.7 percent (0.17 at 1) and a
+speed gain of 15.8 percent (12.9 at 1); the reference run there reached 10 021 against
+the exact optimum 10 989, so report the exact-solver gains of Table `tab:loitering`
+next to these where both exist. Checks: every `stop` is `max_idle_shakes`; at `eta = 0.75`
+the objectives and `Tour` are below the reference run's, at `1.25` above. Then
+compile (Step 6) and commit (Step 7), adding `paper_runs/results/design_new_*eta*.csv`.
+
 ## Step 6: compile
 
     cd paper && pdflatex -interaction=nonstopmode ArXiv-version && bibtex ArXiv-version \
@@ -164,7 +190,13 @@ Sections 5.3 to 5.6, and delete the comment it replaces.
 4. Table `tab:fixed-speed`: one paragraph (loss from fixing the speed, change in the
    number of scheduled targets, where the loss is largest).
 5. Section 5.10, Table `tab:coverage`: the `% TEXT PENDING` comment holds the drafted
-   reading; write the paragraph from the numbers.
+   reading and the sentences moved out of the caption; write the paragraph from the
+   numbers, then a paragraph on Table `tab:levers-eta` once Step 8 has filled it (how
+   each gain moves with the budget, and why: loitering is the cheapest way to wait,
+   so it pays when energy is scarce; speed above `v_mr` costs energy, so it pays when
+   energy is plentiful).
+5b. Every `% Moved out of the caption` comment in the tex holds material for the prose
+   of its subsection; work it in and delete the comment.
 6. Recompile (Step 6) and commit (Step 7).
 
 ## Optional, only if the author asks

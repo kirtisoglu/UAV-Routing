@@ -26,6 +26,7 @@ commit of the run. `paper_runs/fill_tables.py` reads these and writes the tables
 | `design_new_D6.csv`, `design_new_D12.csv` | D = 6, D = 12 | `tab:theta` |
 | `design_new_R1.csv`, `design_new_R2.csv`, `design_new_R3s1.csv`, `design_new_R3s2.csv`, `design_new_R3s3.csv` | starts R1, R2, R3 with seeds 1, 2, 3 | `tab:initial-tour` |
 | `details/dynamics/pr15_240_new_D{3,6,12}dyn.csv` (ignored by git, regenerated) | PR15 with the per-iteration trace | `fig:ils-capdiv` |
+| `design_new_eta075.csv`, `design_new_fixed_eta075.csv`, `design_new_noloiter_eta075.csv`, and the same with `_eta125` | the reference run and both variants at `eta = 0.75` and `1.25` (runbook Step 8) | `tab:levers-eta` |
 | `design_new.v1.csv` | the same reference run recorded by the earlier driver (27 Sept 2026, fewer columns) | comparison with the rerun only |
 
 ## Records (not inputs to any table)
