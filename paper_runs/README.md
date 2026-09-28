@@ -47,6 +47,7 @@ the saturated regime and distorts the reported objective by about 3e-6.
 | `make_capdiv_figure.py` | `fig:ils-capdiv` | `paper/fig/ils_capdiv.png` |
 | `analyze_traces.py` | Section 5.8 evidence from traces: acceptance rate by rank, shake gaps, S calibration | console |
 | `compare_runs.py` | two campaign CSVs side by side (reproduction check, variant against reference) | console |
+| `reorder_share.py` | Section 5.1: share of position pairs of the best routes whose Swap or 2-opt keeps every window reachable | console |
 
 The matheuristic itself is `experiments/run_ils_time_matched.py`, which depends on
 `experiments/fast_sets.py` (feasible sets and weights in O(1) per move),

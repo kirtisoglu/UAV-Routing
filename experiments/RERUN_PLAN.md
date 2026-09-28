@@ -154,8 +154,13 @@ Sections 5.3 to 5.6, and delete the comment it replaces.
 3. Section 5.9, before Table `tab:matheuristic-vs-exact`: where the ILS reaches the
    proven optimum, where it beats the one-hour incumbent and by how much, `t_best`
    against the MISOCP time, and the two figures (`fig:ils-convergence` after the table).
-   Replace the `% TEXT REMOVED` comment; update the comment block above the table
-   (date, commit).
+   State whether the wall-clock safeguard ever ended a run before the shake limit did
+   (Section 4.4 promises this; read the `stop` column of every design CSV). Replace the
+   `% TEXT REMOVED` comment; update the comment block above the table (date, commit).
+3b. Section 5.1, last paragraph before Section 5.2: the shares of window-feasible Swap
+   and 2-opt pairs on the best routes are quoted there. Run
+   `python3 paper_runs/reorder_share.py` after Step 1 and update the sentence only if
+   the shares moved (they do not if Step 1 reproduced the routes).
 4. Table `tab:fixed-speed`: one paragraph (loss from fixing the speed, change in the
    number of scheduled targets, where the loss is largest).
 5. Section 5.10, Table `tab:coverage`: the `% TEXT PENDING` comment holds the drafted

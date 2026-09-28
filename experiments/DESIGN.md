@@ -553,6 +553,36 @@ old column equals the fixed-speed evaluation of the R4 tour (R101 (50): 4 643.08
 is what `--fixed-speed` reproduces), the new one is the value of the tour the run
 starts from with the speed free (5 863.95).
 
+### Paper against code, 28 September 2026 (submission pass on Section 4 and 5.1 to 5.3)
+
+Three statements of Section 4 did not describe the code that produced the results and
+were rewritten; nothing in the code changed.
+
+* Reordering weights. The text clamped the exchange value at zero. The runner
+  (`ILS_SELECT=scaled`, `ILS_SCALE_EPS=0.01`) shifts the exchange values of the moves
+  still in the set onto a nonnegative scale, `x - x_min + 0.01 (x_max - x_min)`, so the
+  least attractive reordering keeps a small probability. Section 4.3 now states the
+  shift as equation `eq:exch-weight`, defines the exchange value `x(p, q)` once and
+  uses it for Swap (`x_m = x(p, q)`) and 2-opt (`x_m = S(p, q)`, equation `eq:exch-2opt`).
+* No-return rule. The text refused a reordering that returned to the previous route
+  (one hop). `ILS_NO_RETURN=2` bars, at the draw, a reordering that would extend an
+  A-B-A alternation to A-B-A-B, and another move is drawn. Section 4.4 and Algorithm 1
+  say so.
+* The evaluated-route store. The text claimed a run without the store reproduces the
+  same objective at the same iteration. It does not have to: a stored-infeasible route
+  is dropped and another move drawn in the same iteration, which consumes a random
+  draw. The text now claims only that the store changes no acceptance decision.
+
+Numbers replaced because no run supports them: "12 347 routes discarded against 93
+infeasible" (an old-design count) by the `socp_numeric_infeasible` column of
+`design_new.csv` (at most 2 per run); "at most 1.7% of 300 random proposals" by the
+shares of `paper_runs/reorder_share.py` on the best routes of `design_new.csv`
+(0.2 to 2.6% co-monotone, 14 to 23% inverted, under 1% Cordeau, where the packed best
+routes rather than the windows fix the order); "Cordeau instances use only 78 to 86% of
+the energy" contradicted `misocp_s1.csv` (98.7 to 100%) and is replaced by a reference
+to the energy column of Table `tab:scalability`. The construction heuristics do not use
+the window midpoint estimate (R4 solves the subproblem), and the claim was dropped.
+
 Files identified as superseded, to be removed by the author (git history keeps them):
 `experiments/tm_ils_*` (runner outputs, now ignored), `archive/`, `animation/traces/`,
 `animation/.viewer_template.bak`, `figures/`, `fig/` (stale copies; the tex reads
