@@ -143,6 +143,24 @@ next to these where both exist. Checks: every `stop` is `max_idle_shakes`; at `e
 the objectives and `Tour` are below the reference run's, at `1.25` above. Then
 compile (Step 6) and commit (Step 7), adding `paper_runs/results/design_new_*eta*.csv`.
 
+## Step 9: replication 2 of the reference run (Table `tab:matheuristic-vs-exact`), about 30 minutes
+
+Added 29 September. Table `tab:matheuristic-vs-exact` now reports two replications of
+the single-start ILS side by side. Replication 1 is `design_new.csv` (Step 1).
+Replication 2 is the same start R4 with the ILS seed shifted (`--seed-offset 1`, which
+the driver records in the `extra` column):
+
+    DESIGN_EXTRA="--seed-offset 1" DESIGN_OUT=_rep2 python3 paper_runs/run_design.py new
+    python3 paper_runs/fill_tables.py --only tab:matheuristic-vs-exact
+
+Output `paper_runs/results/design_new_rep2.csv` and the traces
+`details/design_traces/<stem>_new_rep2.csv`. Checks: 14 rows, every `stop` is
+`max_idle_shakes`, the `init_obj` column equals that of `design_new.csv` on every
+instance (same start), and the objectives differ on at least the wide-window
+instances (on R101 (50) both replications reach 11 902.02). Then compile (Step 6) and
+commit (Step 7), adding the new CSV and traces. Every other table stays on
+replication 1, as the caption of Table `tab:matheuristic-vs-exact` states.
+
 ## Step 6: compile
 
     cd paper && pdflatex -interaction=nonstopmode ArXiv-version && bibtex ArXiv-version \
@@ -181,8 +199,11 @@ Sections 5.3 to 5.6, and delete the comment it replaces.
    proven optimum, where it beats the one-hour incumbent and by how much, `t_best`
    against the MISOCP time, and the two figures (`fig:ils-convergence` after the table).
    State whether the wall-clock safeguard ever ended a run before the shake limit did
-   (Section 4.4 promises this; read the `stop` column of every design CSV). Replace the
-   `% TEXT REMOVED` comment; update the comment block above the table (date, commit).
+   (Section 4.4 promises this; read the `stop` column of every design CSV). Once Step 9
+   is done, read the two replications against each other: on how many instances they
+   agree to the cent, the largest difference and where it is, and whether both beat the
+   incumbent on the same instances. Replace the `% TEXT REMOVED` comment; update the
+   comment block above the table (date, commit).
 3b. Section 5.1, last paragraph before Section 5.2: the shares of window-feasible Swap
    and 2-opt pairs on the best routes are quoted there. Run
    `python3 paper_runs/reorder_share.py` after Step 1 and update the sentence only if

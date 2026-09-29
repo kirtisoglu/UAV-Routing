@@ -1274,29 +1274,31 @@ PR10 (288)      & 16\,696.23 & 311 & 126 & 196 & 16\,696.15 & 571 & 244 & 300 & 
 \begin{table}[H]
 \centering\footnotesize
 \setlength{\tabcolsep}{4pt}
-\caption{Single-start matheuristic against its greedy start and the MISOCP at $\eta = 1$. $f(R_4)$ is the value of the start, $t_{\mathrm{best}}$ the time at which the ILS reaches its best solution and Run the duration of the run (s); the MISOCP columns are from Table~\ref{tab:scalability}, bold marking gap $\le 0.5\%$; $\Delta = (f^{\star} - f_{\mathrm{best}}^{\mathrm{ILS}})/f^{\star}$ is negative where the ILS beats the incumbent.}\label{tab:matheuristic-vs-exact}
-\begin{tabular}{l r rrr r r c r}
+\caption{Two replications of the single-start matheuristic, ILS seeds 1 and 2 from the same greedy start, against the MISOCP at $\eta = 1$. $f(R_4)$ is the value of the start, $f_1$ and $f_2$ the objectives of the replications, $t_{\mathrm{best}}$ the time at which a replication reaches its best solution and Run its duration (s); the MISOCP columns are from Table~\ref{tab:scalability}, bold marking gap $\le 0.5\%$; $\Delta_r = (f^{\star} - f_r)/f^{\star}$ is negative where replication $r$ beats the incumbent. Replication 1 is the run every other table uses.}\label{tab:matheuristic-vs-exact}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{l r rrr rrr rrc rr}
 \toprule
-& \multicolumn{1}{c}{Greedy (R4)} & \multicolumn{3}{c}{Single-start ILS ($S = 100$)} & \multicolumn{3}{c}{Exact MISOCP} & \\
-\cmidrule(lr){2-2}\cmidrule(lr){3-5}\cmidrule(lr){6-8}
-Instance & $f(R_4)$ & $f_{\mathrm{best}}^{\mathrm{ILS}}$ & $t_{\mathrm{best}}$ (s) & Run (s) & $f^{\star}$ & time (s) & gap (\%) & $\Delta$ (\%) \\
+& \multicolumn{1}{c}{Greedy} & \multicolumn{3}{c}{ILS, replication 1} & \multicolumn{3}{c}{ILS, replication 2} & \multicolumn{3}{c}{Exact MISOCP} & \multicolumn{2}{c}{$\Delta$ (\%)} \\
+\cmidrule(lr){2-2}\cmidrule(lr){3-5}\cmidrule(lr){6-8}\cmidrule(lr){9-11}\cmidrule(lr){12-13}
+Instance & $f(R_4)$ & $f_1$ & $t_{\mathrm{best}}$ & Run & $f_2$ & $t_{\mathrm{best}}$ & Run & $f^{\star}$ & time & gap (\%) & $\Delta_1$ & $\Delta_2$ \\
 \midrule
-R101 (50)       & 5\,863.95 & 11\,902.02 & 0.1 & 1.8 & \textbf{11\,921.13} & \textbf{7.7} & \textbf{0.00} & $+0.16$ \\
-R101 (100)      & 8\,830.39 & 22\,884.44 & 0.2 & 4.3 & \textbf{22\,886.91} & \textbf{40.9} & \textbf{0.00} & $+0.01$ \\
-R1\_2\_1 (200)  & 5\,024.46 & 16\,586.35 & 9.2 & 17.9 & \textbf{16\,954.02} & \textbf{99.6} & \textbf{0.00} & $+2.17$ \\
-C101 (50)       & 3\,119.99 & 8\,591.92 & 1.5 & 33.7 & 8\,594.11 & 3\,600.0 & 2.61 & $+0.03$ \\
-C101 (100)      & 4\,330.59 & 11\,324.41 & 116.9 & 157.4 & 11\,328.36 & 3\,600.1 & 32.19 & $+0.03$ \\
-C1\_2\_1 (200)  & 4\,583.74 & 11\,146.32 & 82.1 & 144.8 & 10\,747.43 & 3\,600.4 & 87.46 & $\mathbf{-3.71}$ \\
-RC1\_2\_1 (200) & 4\,007.52 & 17\,973.77 & 71.1 & 91.3 & 16\,746.34 & 3\,600.2 & 209.93 & $\mathbf{-7.33}$ \\
-R102 (100)      & 12\,701.51 & 30\,443.78 & 45.0 & 62.2 & 27\,941.61 & 3\,600.1 & 108.51 & $\mathbf{-8.95}$ \\
-R104 (100)      & 15\,524.43 & 38\,105.79 & 41.8 & 60.0 & 25\,377.52 & 3\,600.1 & 271.42 & $\mathbf{-50.16}$ \\
-C104 (100)      & 11\,285.90 & 18\,414.60 & 215.9 & 302.0 & 16\,468.21 & 3\,600.2 & 32.01 & $\mathbf{-11.82}$ \\
-RC104 (100)     & 17\,538.11 & 36\,231.33 & 17.0 & 27.1 & 27\,439.42 & 3\,600.1 & 289.22 & $\mathbf{-32.04}$ \\
-PR11 (48)       & 2\,608.05 & 6\,473.95 & 6.7 & 17.0 & 5\,401.01 & 3\,600.0 & 78.53 & $\mathbf{-19.87}$ \\
-PR15 (240)      & 3\,623.26 & 19\,639.68 & 609.8 & 705.5 & 6\,005.65 & 3\,600.8 & 713.79 & $\mathbf{-227.02}$ \\
-PR10 (288)      & 2\,333.43 & 16\,696.23 & 126.5 & 196.4 & 5\,377.05 & 3\,600.9 & 984.58 & $\mathbf{-210.51}$ \\
+R101 (50)       & 5\,863.95 & 11\,902.02 & 0.1 & 1.8 &  &  &  & \textbf{11\,921.13} & \textbf{7.7} & \textbf{0.00} & $+0.16$ &  \\
+R101 (100)      & 8\,830.39 & 22\,884.44 & 0.2 & 4.3 &  &  &  & \textbf{22\,886.91} & \textbf{40.9} & \textbf{0.00} & $+0.01$ &  \\
+R1\_2\_1 (200)  & 5\,024.46 & 16\,586.35 & 9.2 & 17.9 &  &  &  & \textbf{16\,954.02} & \textbf{99.6} & \textbf{0.00} & $+2.17$ &  \\
+C101 (50)       & 3\,119.99 & 8\,591.92 & 1.5 & 33.7 &  &  &  & 8\,594.11 & 3\,600.0 & 2.61 & $+0.03$ &  \\
+C101 (100)      & 4\,330.59 & 11\,324.41 & 116.9 & 157.4 &  &  &  & 11\,328.36 & 3\,600.1 & 32.19 & $+0.03$ &  \\
+C1\_2\_1 (200)  & 4\,583.74 & 11\,146.32 & 82.1 & 144.8 &  &  &  & 10\,747.43 & 3\,600.4 & 87.46 & $\mathbf{-3.71}$ &  \\
+RC1\_2\_1 (200) & 4\,007.52 & 17\,973.77 & 71.1 & 91.3 &  &  &  & 16\,746.34 & 3\,600.2 & 209.93 & $\mathbf{-7.33}$ &  \\
+R102 (100)      & 12\,701.51 & 30\,443.78 & 45.0 & 62.2 &  &  &  & 27\,941.61 & 3\,600.1 & 108.51 & $\mathbf{-8.95}$ &  \\
+R104 (100)      & 15\,524.43 & 38\,105.79 & 41.8 & 60.0 &  &  &  & 25\,377.52 & 3\,600.1 & 271.42 & $\mathbf{-50.16}$ &  \\
+C104 (100)      & 11\,285.90 & 18\,414.60 & 215.9 & 302.0 &  &  &  & 16\,468.21 & 3\,600.2 & 32.01 & $\mathbf{-11.82}$ &  \\
+RC104 (100)     & 17\,538.11 & 36\,231.33 & 17.0 & 27.1 &  &  &  & 27\,439.42 & 3\,600.1 & 289.22 & $\mathbf{-32.04}$ &  \\
+PR11 (48)       & 2\,608.05 & 6\,473.95 & 6.7 & 17.0 &  &  &  & 5\,401.01 & 3\,600.0 & 78.53 & $\mathbf{-19.87}$ &  \\
+PR15 (240)      & 3\,623.26 & 19\,639.68 & 609.8 & 705.5 &  &  &  & 6\,005.65 & 3\,600.8 & 713.79 & $\mathbf{-227.02}$ &  \\
+PR10 (288)      & 2\,333.43 & 16\,696.23 & 126.5 & 196.4 &  &  &  & 5\,377.05 & 3\,600.9 & 984.58 & $\mathbf{-210.51}$ &  \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \begin{table}[H]
@@ -1330,7 +1332,7 @@ PR10 (288)      & 12\,681.68 & 58 & 98.5 & 16\,696.23 & 77 & 100.0 & 31.66 \\
 \begin{figure}[H]
 \centering
 \includegraphics[width=160mm]{fig/meta_convergence_timematched.png}
-\caption{Best-seen objective against wall-clock time for the runs of Table~\ref{tab:matheuristic-vs-exact}, one panel per instance; each panel ends where its run ends. Dashed: the MISOCP value at the $3\,600$\,s cap.}
+\caption{Best-seen objective against wall-clock time for replication 1 of Table~\ref{tab:matheuristic-vs-exact}, one panel per instance; each panel ends where its run ends. Dashed: the MISOCP value at the $3\,600$\,s cap.}
 \label{fig:ils-convergence}
 \end{figure}
 

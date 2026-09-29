@@ -598,6 +598,16 @@ converts energy into targets. Added: `--eta` in the runner (`make_instance(path,
 Smoke test on R101 (50) at eta = 0.75 in the container: reference, no-loiter and
 fixed-speed variants run; the objectives fall below the eta = 1 values as they must.
 
+### Replication 2 of the reference run (29 September 2026)
+
+Table `tab:matheuristic-vs-exact` reports two replications of the single-start ILS,
+the second with `--seed-offset 1` (the runner seeds its RNG with
+`ILS_SEED + 100000 * offset`; the R4 start is deterministic and shared). The driver
+already handled the runner's `_w1` tag suffix; `fill_tables.py` writes the second
+block from `design_new_rep2.csv` and leaves it empty until Step 9 of the runbook has
+run. Smoke test on R101 (50): same start (5 863.95), same objective (11 902.02), a
+different trajectory (129 shakes, t_best 1.4 s against 100 and 0.1 s).
+
 Files identified as superseded, to be removed by the author (git history keeps them):
 `experiments/tm_ils_*` (runner outputs, now ignored), `archive/`, `animation/traces/`,
 `animation/.viewer_template.bak`, `figures/`, `fig/` (stale copies; the tex reads

@@ -71,25 +71,36 @@ def signed(x):
 
 
 def rows_matheuristic_vs_exact():
-    new, mis = load("design_new.csv"), load("misocp_s1.csv")
+    """Greedy start, two replications of the ILS (design_new.csv and design_new_rep2.csv,
+    the latter run with --seed-offset 1), the MISOCP, and Delta per replication.
+    A missing replication 2 leaves its cells empty."""
+    new, rep2, mis = load("design_new.csv"), load("design_new_rep2.csv"), load("misocp_s1.csv")
     if new is None or mis is None:
         return None
     out = []
     for n in ORDER:
         r, m = new.get(n), mis.get(n)
+        r2 = rep2.get(n) if rep2 else None
         if r is None or m is None:
-            out.append(f"{name_tex(n)} & & & & & & & & \\\\"); continue
-        f_ils, f_star = float(r["Objective"]), float(m["Objective"])
+            out.append(f"{name_tex(n)} & & & & & & & & & & & & \\\\"); continue
+        f_star = float(m["Objective"])
         gap, t_mis = float(m["Gap (%)"]), float(m["Time (s)"])
-        closed = gap <= 0.5
         mcells = [num(f_star), num1(t_mis), f"{gap:.2f}"]
-        if closed:
+        if gap <= 0.5:
             mcells = [bold(c) for c in mcells]
-        delta = 100.0 * (f_star - f_ils) / f_star
+
+        def ils(row):
+            if row is None:
+                return ["", "", ""], ""
+            f = float(row["Objective"])
+            return ([num(f), f"{float(row['t_best (s)']):.1f}", f"{float(row['Wall (s)']):.1f}"],
+                    signed(100.0 * (f_star - f) / f_star))
+
+        c1, d1 = ils(r)
+        c2, d2 = ils(r2)
         init = fnum(r, "init_obj")
-        out.append(f"{name_tex(n)} & {num(init) if init is not None else ''} & {num(f_ils)} & "
-                   f"{float(r['t_best (s)']):.1f} & {float(r['Wall (s)']):.1f} & "
-                   f"{mcells[0]} & {mcells[1]} & {mcells[2]} & {signed(delta)} \\\\")
+        out.append(f"{name_tex(n)} & {num(init) if init is not None else ''} & "
+                   + " & ".join(c1 + c2 + mcells) + f" & {d1} & {d2} \\\\")
     return out
 
 

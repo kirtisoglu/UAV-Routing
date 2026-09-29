@@ -21,6 +21,7 @@ commit of the run. `paper_runs/fill_tables.py` reads these and writes the tables
 | File | Configuration | Table or figure |
 |---|---|---|
 | `design_new.csv`, `details/design_traces/<stem>_new.csv` | reference run: R4 start, D = 3, L_r = 20, S = 100 | `tab:matheuristic-vs-exact`, `fig:ils-convergence`, D = 3 block of `tab:theta`, R4 column of `tab:initial-tour`, right blocks of `tab:fixed-speed` and `tab:coverage` |
+| `design_new_rep2.csv`, `details/design_traces/<stem>_new_rep2.csv` | replication 2: same start, ILS seed shifted (`--seed-offset 1`) | `tab:matheuristic-vs-exact`, replication 2 block |
 | `design_new_fixed.csv` | `--fixed-speed` | `tab:fixed-speed`, left block |
 | `design_new_noloiter.csv` | `--no-loiter` | `tab:coverage`, left block |
 | `design_new_D6.csv`, `design_new_D12.csv` | D = 6, D = 12 | `tab:theta` |
