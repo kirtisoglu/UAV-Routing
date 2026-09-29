@@ -649,24 +649,48 @@ the two forms agreeing because the recursion~\eqref{eq:leg-chain} intersects wit
 The one-leg condition needs no separate check. Since $a^{\min}_i \ge e_i$ and $a^{\max}_j \le \ell_j$, the test~\eqref{eq:slot-test} gives $e_i + d_{iu}/v_{\max} \le \ell_u$ and $e_u + d_{uj}/v_{\max} \le \ell_j$, that is $u \in F_i \cap B_j$, and~\eqref{eq:leg-cond} is~\eqref{eq:slot-test} with the two arrival bounds replaced by the window ends. The sets are the building block from which~\eqref{eq:leg-chain} is chained, and in the implementation they are intersected to enumerate the candidates of a slot rather than scanning every unscheduled target. Insert $\langle u, p \rangle$ is tested by~\eqref{eq:slot-test} with $i = r_{p-1}$ and $j = r_p$, and Replace $\langle u, p \rangle$ with $i = r_{p-1}$ and $j = r_{p+1}$, both in $O(1)$ time, since the prefix before the slot and the suffix after it are unchanged and their bounds are those of $R$.
 
 \paragraph{Reorderings in constant time.}
-Swap and 2-opt reorder several targets at once, and recomputing the bounds~\eqref{eq:leg-chain} of every reordered route would cost $O(k)$ per position pair and $O(k^3)$ per route. The test is decided in $O(1)$ per pair instead by summarizing the reordered part of the route. For a segment $\sigma = (s_1, \ldots, s_m)$ of targets flown in this order, let the arrival at $s_1$ be $a \ge e_{s_1}$. The earliest arrival at $s_m$ that the segment permits is then $\max(a + D_\sigma, W_\sigma)$, and every window of the segment is met if and only if $a \le L_\sigma$, where $D_\sigma$ is the travel time of the segment at $v_{\max}$, $W_\sigma$ the earliest arrival at $s_m$ forced by the windows inside the segment, and $L_\sigma$ the latest entry that keeps those windows reachable. A single target $s$ has $D = 0$, $W = e_s$ and $L = \ell_s$, and the three numbers of a longer segment follow from those of a shorter one in $O(1)$ time. Placing a target $x$ in front of a segment whose first target is $y$, with $\tau = d_{xy}/v_{\max}$, gives
+Swap and 2-opt reorder several targets at once, and recomputing the bounds~\eqref{eq:leg-chain} of every reordered route would cost $O(k)$ per position pair and $O(k^3)$ per route. The test is decided in $O(1)$ per pair instead by summarizing the reordered part of the route with three numbers. Let $\sigma = (s_1, \ldots, s_m)$ be a segment of targets flown in this order, write $d_\sigma(j, j') = \sum_{i = j}^{j' - 1} d_{s_i, s_{i+1}}$ for the length of its part from $s_j$ to $s_{j'}$, and $d_\sigma = d_\sigma(1, m)$ for the length of the whole segment, so that $d_\sigma / v_{\max}$ is its travel time at maximum speed. The recursion~\eqref{eq:leg-chain} applied to the segment alone, the forward bound started at $e_{s_1}$ and the backward bound at $\ell_{s_m}$, gives
+\begin{equation}\label{eq:seg-summary}
+    \omega^{\min}_\sigma \;=\; \max_{1 \le j \le m} \Bigl( e_{s_j} + \frac{d_\sigma(j, m)}{v_{\max}} \Bigr),
+    \qquad
+    \omega^{\max}_\sigma \;=\; \min_{1 \le j \le m} \Bigl( \ell_{s_j} - \frac{d_\sigma(1, j)}{v_{\max}} \Bigr).
+\end{equation}
+The first is the earliest arrival at the last target $s_m$ that the windows inside the segment force: entered at any time $a \ge e_{s_1}$, the segment reaches $s_m$ no earlier than $\max(a + d_\sigma / v_{\max},\; \omega^{\min}_\sigma)$. The second is the latest arrival at the first target $s_1$ from which every window of the segment can still be met, and every window is met if and only if $a \le \omega^{\max}_\sigma$. When the two bounds of the recursion cross at some position of the segment, no entry time meets all of its windows, and we set $\omega^{\max}_\sigma = -\infty$. A single target $s$ has $d = 0$, $\omega^{\min} = e_s$ and $\omega^{\max} = \ell_s$, and the three numbers of a longer segment follow from those of a shorter one in $O(1)$ time. Placing the target $r_{q+1}$ in front of a segment $\sigma$ whose first target is $r_q$ gives the segment $\sigma' = (r_{q+1}, \sigma)$ with
 \begin{equation}\label{eq:seg-prepend}
-    D' = \tau + D, \qquad W' = \max(e_y + D,\; W), \qquad
-    L' = \begin{cases} \min(\ell_x,\; L - \tau) & \text{if } e_y \le L, \\ -\infty & \text{otherwise,} \end{cases}
+\begin{aligned}
+    d_{\sigma'} &= d_{r_{q+1}, r_q} + d_\sigma, \\
+    \omega^{\min}_{\sigma'} &= \max\Bigl( e_{r_{q+1}} + \frac{d_{\sigma'}}{v_{\max}},\; \omega^{\min}_\sigma \Bigr), \\
+    \omega^{\max}_{\sigma'} &= \begin{cases} \min\Bigl( \ell_{r_{q+1}},\; \omega^{\max}_\sigma - \dfrac{d_{r_{q+1}, r_q}}{v_{\max}} \Bigr) & \text{if } e_{r_q} \le \omega^{\max}_\sigma, \\[4pt] -\infty & \text{otherwise,} \end{cases}
+\end{aligned}
 \end{equation}
-and appending a target $z$ after a segment whose last target is $w$, with $\tau = d_{wz}/v_{\max}$, gives
+and appending the target $r_q$ after a segment $\sigma$ whose last target is $r_{q-1}$ gives $\sigma' = (\sigma, r_q)$ with
 \begin{equation}\label{eq:seg-append}
-    D' = D + \tau, \qquad W' = \max(W + \tau,\; e_z), \qquad
-    L' = \begin{cases} \min(L,\; \ell_z - D - \tau) & \text{if } W + \tau \le \ell_z, \\ -\infty & \text{otherwise.} \end{cases}
+\begin{aligned}
+    d_{\sigma'} &= d_\sigma + d_{r_{q-1}, r_q}, \\
+    \omega^{\min}_{\sigma'} &= \max\Bigl( \omega^{\min}_\sigma + \frac{d_{r_{q-1}, r_q}}{v_{\max}},\; e_{r_q} \Bigr), \\
+    \omega^{\max}_{\sigma'} &= \begin{cases} \min\Bigl( \omega^{\max}_\sigma,\; \ell_{r_q} - \dfrac{d_{\sigma'}}{v_{\max}} \Bigr) & \text{if } \omega^{\min}_\sigma + \dfrac{d_{r_{q-1}, r_q}}{v_{\max}} \le \ell_{r_q}, \\[4pt] -\infty & \text{otherwise.} \end{cases}
+\end{aligned}
 \end{equation}
-Both follow from the recursion~\eqref{eq:leg-chain} written for the segment, and $L' = -\infty$ records that some window of the segment is missed however early it is entered. This is the concatenation of time-window segments of \citep{savelsbergh1992vehicle}, in the form that allows waiting, which here is loitering. The 2-opt move $\langle p, q \rangle$ flies the prefix $(0, \ldots, r_{p-1})$, the reversed segment $(r_q, r_{q-1}, \ldots, r_p)$ and the suffix $(r_{q+1}, \ldots, 0)$; for a fixed $p$ the reversed segment of $q + 1$ is that of $q$ with $r_{q+1}$ placed in front, so~\eqref{eq:seg-prepend} yields its summary as $q$ advances. The Swap move $\langle p, q \rangle$ flies the prefix, $r_q$, the interior $(r_{p+1}, \ldots, r_{q-1})$, $r_p$ and the suffix; for a fixed $p$ the interior of $q + 1$ is that of $q$ with $r_q$ appended, so~\eqref{eq:seg-append} applies. In both cases $r_q$ is the first reordered target and its earliest arrival is $\max(e_{r_q},\, a^{\min}_{r_{p-1}} + d_{r_{p-1}, r_q}/v_{\max})$; the reordered route satisfies every time window if and only if this arrival and the summaries of the reordered part keep every window of that part reachable, by the rules~\eqref{eq:seg-prepend}--\eqref{eq:seg-append}, and the earliest arrival at the last reordered target, carried over the connecting leg, does not exceed $a^{\max}_{r_{q+1}}$ of the unchanged suffix. The arrival bounds of $R$ serve every pair, so the Swap and 2-opt sets are built in $O(k^2)$ time, and every position pair that passes enters the set, whether the reordering shortens the route or lengthens it. Without the summaries the construction of these sets, and not the subproblem, would be the dominant cost of an iteration on the longest routes.
+Both follow from~\eqref{eq:seg-summary}, and $\omega^{\max}_{\sigma'} = -\infty$ records that some window of the segment is missed however early it is entered. This is the concatenation of time-window segments of \citep{savelsbergh1992vehicle}, in the form that allows waiting, which here is loitering.
+
+The 2-opt move $\langle p, q \rangle$ reverses the segment $\sigma = (r_p, r_{p+1}, \ldots, r_q)$: the route flies the prefix $(0, \ldots, r_{p-1})$, then $(r_q, r_{q-1}, \ldots, r_p)$, then the suffix $(r_{q+1}, \ldots, 0)$. The distances being symmetric, the reversed segment has the length $d_\sigma$ of $\sigma$, and for a fixed $p$ the reversed segment of the pair $(p, q+1)$ is that of $(p, q)$ with $r_{q+1}$ placed in front, so~\eqref{eq:seg-prepend} yields its summary as $q$ advances. The Swap move $\langle p, q \rangle$ flies the prefix, then $(r_q, r_{p+1}, \ldots, r_{q-1}, r_p)$, then the suffix; for a fixed $p$ the interior $(r_{p+1}, \ldots, r_{q-1})$ of the pair $(p, q+1)$ is that of $(p, q)$ with $r_q$ appended, so~\eqref{eq:seg-append} yields the summary of the interior as $q$ advances, and one prepend of $r_q$ and one append of $r_p$ complete the reordered part. In both moves the reordered part starts at $r_q$, which is entered from $r_{p-1}$ no earlier than
+\begin{equation}\label{eq:reorder-entry}
+    a_{r_q} \;=\; \max\bigl( e_{r_q},\; a^{\min}_{r_{p-1}} + d_{r_{p-1}, r_q} / v_{\max} \bigr),
+\end{equation}
+and ends at $r_p$, from where the route continues to $r_{q+1}$. Writing $(d, \omega^{\min}, \omega^{\max})$ for the summary of the reordered part, the reordered route satisfies every time window if and only if
+\begin{equation}\label{eq:reorder-test}
+    a_{r_q} \;\le\; \omega^{\max}
+    \qquad \text{and} \qquad
+    \max\Bigl( a_{r_q} + \frac{d}{v_{\max}},\; \omega^{\min} \Bigr) + \frac{d_{r_p, r_{q+1}}}{v_{\max}} \;\le\; a^{\max}_{r_{q+1}},
+\end{equation}
+since $a^{\max}_{r_{q+1}}$ already accounts for the windows of the unchanged suffix and for the return to the depot. The arrival bounds of $R$ serve every pair, so the Swap and 2-opt sets are built in $O(k^2)$ time, and every position pair that passes enters the set, whether the reordering shortens the route or lengthens it. Without the summaries the construction of these sets, and not the subproblem, would be the dominant cost of an iteration on the longest routes.
 
 Swap and 2-opt interact with the time windows in a way that Insert and Replace do not. On instances whose time windows fix the visiting order, the leg condition~\eqref{eq:leg-cond} fails in the reversed direction for most pairs and both operators are rejected in most iterations. Since this depends on the instance and not on the operators, both are kept in the local search, and Section~\ref{subsec:solomon} quantifies how often they can be applied on the benchmark instances.
 
 \paragraph{Feasible moves.}
 Since solving the SOCP subproblem is the most time-consuming step of an iteration, the local search determines the set $\mathcal{M}_o(R)$ of moves of an operator $o$ that pass the following two conditions before any subproblem is solved, and draws the move to evaluate from that set. Neither requires the subproblem.
 \begin{enumerate}[noitemsep, topsep=4pt, leftmargin=2em]
-    \item \textbf{Time window feasibility.} The route produced by the move passes the test~\eqref{eq:slot-test}, or for a reordering the concatenation test of~\eqref{eq:seg-prepend}--\eqref{eq:seg-append}.
+    \item \textbf{Time window feasibility.} The route produced by the move passes the test~\eqref{eq:slot-test}, or for a reordering the test~\eqref{eq:reorder-test}.
     \item \textbf{Minimum energy of the route.} A leg consumes at least its length times $E(v_{mr}, 1)$, the energy per meter of~\eqref{eq:energy} at the maximum-range speed, but the time windows may force it to be flown at another speed and so to cost more. Read the schedule in cumulative distance: the cumulative arrival time must stay inside the time window $W_{r_q} = [e_{r_q}, \ell_{r_q}]$ at every target $r_q$ and inside $[0, T_{\max}]$ at the depot return. A leg of length $d$ flown in time $t$ has slope $s = t/d$ in that plane, so it is flown at speed $1/s$ and costs $d\,\psi(s)$ with
     \begin{equation}\label{eq:psi}
         \psi(s) = s\, P\!\bigl(\max(v_{mp},\, 1/s)\bigr),
@@ -775,10 +799,10 @@ select an operator $o$ uniformly at random among Insert, Replace, Swap and 2-opt
         $\mathcal{M}_o(\Rcurr) \leftarrow \bigcup_{p = 1}^{k} \{\, \langle u, p \rangle : u \in N' \text{ whose insertion into the gap of } \Rcurr \ominus r_p \text{ passes~\eqref{eq:slot-test}} \,\}$\;
     }
     \uElseIf{$o$ is Swap}{
-        $\mathcal{M}_o(\Rcurr) \leftarrow \{\, \langle p, q \rangle : 1 \le p < q \le k,\; \Rcurr \text{ with } r_p \text{ and } r_q \text{ exchanged passes the test of~\eqref{eq:seg-append}} \,\}$\;
+        $\mathcal{M}_o(\Rcurr) \leftarrow \{\, \langle p, q \rangle : 1 \le p < q \le k,\; \Rcurr \text{ with } r_p \text{ and } r_q \text{ exchanged passes the test~\eqref{eq:reorder-test}} \,\}$\;
     }
     \Else{
-        $\mathcal{M}_o(\Rcurr) \leftarrow \{\, \langle p, q \rangle : 1 \le p < q \le k,\; \Rcurr \text{ with } (r_p, \ldots, r_q) \text{ reversed passes the test of~\eqref{eq:seg-prepend}} \,\}$\;
+        $\mathcal{M}_o(\Rcurr) \leftarrow \{\, \langle p, q \rangle : 1 \le p < q \le k,\; \Rcurr \text{ with } (r_p, \ldots, r_q) \text{ reversed passes the test~\eqref{eq:reorder-test}} \,\}$\;
     }
     discard from $\mathcal{M}_o(\Rcurr)$ the moves that violate the energy bound\;
     \lIf{$o$ is Swap or 2-opt \KwSty{and} $|\mathcal{M}_o(\Rcurr)| > L_r$}{keep the $L_r$ moves of largest exchange value~\eqref{eq:exch}, ties to the larger distance saving}

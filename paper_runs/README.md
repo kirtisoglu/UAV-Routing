@@ -85,7 +85,7 @@ listed in its docstring and used step by step in `experiments/RERUN_PLAN.md`.
 | 4.1 nondimensional subproblem, solver settings | `uav_routing/solver/socp.py`, `Solver(scaled=True)` (set through `instance.socp_scaled`; runner flag `--scaled-socp`) |
 | 4.2 construction heuristics R1 to R4 | `uav_routing/local_search/initial_solution.py`, `build_R1` to `build_R4`; each candidate is evaluated by the subproblem of the run (variable or fixed speed, loitering or `L_ij = d_ij`) |
 | 4.3 leg sets, arrival bounds, slot test | `experiments/fast_sets.py`: `chain_bounds`, `chained_sets`, `build_add`, `build_replace` |
-| 4.3 reorderings in O(1) (segment summaries D, W, L) | `fast_sets.build_two_opt` (prepend), `fast_sets.build_swap` (append) |
+| 4.3 reorderings in O(1) (segment summaries d_sigma, omega^min, omega^max; named D, W, L in the code) | `fast_sets.build_two_opt` (prepend), `fast_sets.build_swap` (append) |
 | 4.3 propagated information estimate | `fast_sets.delta_insert`, `fast_sets.delta_replace` |
 | 4.3 2-opt weight by the recursion S(p,q) = x(p,q) + S(p+1,q-1) | `fast_sets.build_two_opt` |
 | 4.3 restricted candidate list L_r for Swap and 2-opt, ties to the distance saving | `run_ils_time_matched.py`, `--reorder-rcl` (`heapq.nlargest` on `(exchange value, -dd)` before the roulette) |
