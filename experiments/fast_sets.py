@@ -204,8 +204,9 @@ def build_two_opt(nd, route, amin, amax, d_room, arr=None, counters=None, mode=N
     k = len(route) - 1
     if k < 2:
         return []
-    if mode == "midall":
-        return build_two_opt_midall(nd, route, amin, amax, d_room, counters)
+    if mode in ("midall", "boundall"):
+        return build_two_opt_midall(nd, route, amin, amax, d_room, counters,
+                                    read=("bound" if mode == "boundall" else "mid"))
     ext = route + [depot]
     A = amin if arr is None else arr
     S = [[0.0] * (k + 2) for _ in range(k + 2)]
@@ -269,8 +270,9 @@ def build_swap(nd, route, amin, amax, d_room, arr=None, counters=None, mode=None
     k = len(route) - 1
     if k < 2:
         return []
-    if mode == "midall":
-        return build_swap_midall(nd, route, amin, amax, d_room, counters)
+    if mode in ("midall", "boundall"):
+        return build_swap_midall(nd, route, amin, amax, d_room, counters,
+                                 read=("bound" if mode == "boundall" else "mid"))
     ext = route + [depot]
     A = amin if arr is None else arr
     moves = []
@@ -349,6 +351,19 @@ def build_swap(nd, route, amin, amax, d_room, arr=None, counters=None, mode=None
 # per target, so a feasible pair costs O(q - p) instead of O(1).
 # ---------------------------------------------------------------------------
 
+def _readings(nd, ext, amin, amax, read):
+    """The point of its realized window each target is read at.  read="mid" is the
+    midpoint of (55); read="bound" is the end that maximises the reward, which for
+    I_i(a) = gamma_i (a - e_i) + I_0i is the upper bound when gamma_i > 0 and the
+    lower one when gamma_i < 0.  Returns the reading before the move, position by
+    position, and, for "bound", the flag saying which end to read after it."""
+    GAM = nd.GAM
+    if read == "bound":
+        up = [GAM[ext[j]] > 0.0 for j in range(len(ext))]
+        return [(amax[j] if up[j] else amin[j]) for j in range(len(ext))], up
+    return [0.5 * (a + b) for a, b in zip(amin, amax)], None
+
+
 def _forward_tables(nd, route):
     """Summaries of every forward segment (r_j, ..., r_i), 1 <= j <= i <= k, by the
     append rule: Df = travel time at v_max, Wf = earliest arrival at r_i forced by the
@@ -374,16 +389,19 @@ def _forward_tables(nd, route):
     return Df, Wf, Lf
 
 
-def build_swap_midall(nd, route, amin, amax, d_room, counters=None):
+def build_swap_midall(nd, route, amin, amax, d_room, counters=None, read="mid"):
     """Same feasible set as build_swap; score = sum over the reordered part
-    (r_q, r_{p+1}, ..., r_{q-1}, r_p) of gamma times (new midpoint - old midpoint)."""
+    (r_q, r_{p+1}, ..., r_{q-1}, r_p) of gamma times the change of the point each
+    target is read at.  read="mid" takes the midpoint of the realized window,
+    read="bound" ("boundall") the end that maximises the reward: the upper bound
+    for a positive slope, the lower for a negative one."""
     depot, EW, LW, GAM, DM, inv_v = nd.depot, nd.EW, nd.LW, nd.GAM, nd.DM, nd.inv_v
     k = len(route) - 1
     if k < 2:
         return []
     ext = route + [depot]
     Df, Wf, Lf = _forward_tables(nd, route)
-    mid_old = [0.5 * (a + b) for a, b in zip(amin, amax)]
+    mid_old, up = _readings(nd, ext, amin, amax, read)
     moves = []
     for p in range(1, k):
         x = ext[p]; pre = ext[p - 1]; gx = GAM[x]
@@ -438,19 +456,27 @@ def build_swap_midall(nd, route, amin, amax, d_room, counters=None):
                     if lo < Wf[p + 1][j]: lo = Wf[p + 1][j]
                     hi = amax_u - tau_e - Df[j][q - 1]
                     if hi > Lf[j][q - 1]: hi = Lf[j][q - 1]
-                    inner += GAM[ext[j]] * (0.5 * (lo + hi) - mid_old[j])
+                    new_j = (hi if up[j] else lo) if up is not None else 0.5 * (lo + hi)
+                    inner += GAM[ext[j]] * (new_j - mid_old[j])
             if amax_v > LW[xq]: amax_v = LW[xq]
-            score = (gx * (0.5 * (ap + amax_u) - mid_old[p])
-                     + GAM[xq] * (0.5 * (aq + amax_v) - mid_old[q]) + inner)
+            if up is not None:
+                new_p = amax_u if up[p] else ap
+                new_q = amax_v if up[q] else aq
+            else:
+                new_p, new_q = 0.5 * (ap + amax_u), 0.5 * (aq + amax_v)
+            score = (gx * (new_p - mid_old[p])
+                     + GAM[xq] * (new_q - mid_old[q]) + inner)
             moves.append((score, ("swap", p, q), dd))
     return moves
 
 
-def build_two_opt_midall(nd, route, amin, amax, d_room, counters=None):
+def build_two_opt_midall(nd, route, amin, amax, d_room, counters=None, read="mid"):
     """Same feasible set as build_two_opt; score = sum over the reversed segment
-    (r_q, ..., r_p) of gamma times (new midpoint - old midpoint).  The tables of the
-    reversed segments are filled with p descending, so the inner segments
-    (r_q, ..., r_j), j > p, exist when the pair (p, q) is scored."""
+    (r_q, ..., r_p) of gamma times the change of the point each target is read at,
+    the midpoint of its realized window for read="mid" and the reward-maximising end
+    for read="bound" ("boundall").  The tables of the reversed segments are filled
+    with p descending, so the inner segments (r_q, ..., r_j), j > p, exist when the
+    pair (p, q) is scored."""
     depot, EW, LW, GAM, DM, inv_v = nd.depot, nd.EW, nd.LW, nd.GAM, nd.DM, nd.inv_v
     k = len(route) - 1
     if k < 2:
@@ -459,7 +485,7 @@ def build_two_opt_midall(nd, route, amin, amax, d_room, counters=None):
     Dt = [[0.0] * (k + 2) for _ in range(k + 2)]
     Wt = [[-INF] * (k + 2) for _ in range(k + 2)]
     Lt = [[-INF] * (k + 2) for _ in range(k + 2)]
-    mid_old = [0.5 * (a + b) for a, b in zip(amin, amax)]
+    mid_old, up = _readings(nd, ext, amin, amax, read)
     moves = []
     for p in range(k - 1, 0, -1):
         x = ext[p]; pre = ext[p - 1]; gx = GAM[x]
@@ -503,8 +529,14 @@ def build_two_opt_midall(nd, route, amin, amax, d_room, counters=None):
                 if lo < Wt[j][q]: lo = Wt[j][q]
                 hi = amax_u - Dt[p][j]
                 if hi > Lt[p][j]: hi = Lt[p][j]
-                inner += GAM[ext[j]] * (0.5 * (lo + hi) - mid_old[j])
-            score = (gx * (0.5 * (ap + amax_u) - mid_old[p])
-                     + GAM[xq] * (0.5 * (aq + amax_v) - mid_old[q]) + inner)
+                new_j = (hi if up[j] else lo) if up is not None else 0.5 * (lo + hi)
+                inner += GAM[ext[j]] * (new_j - mid_old[j])
+            if up is not None:
+                new_p = amax_u if up[p] else ap
+                new_q = amax_v if up[q] else aq
+            else:
+                new_p, new_q = 0.5 * (ap + amax_u), 0.5 * (aq + amax_v)
+            score = (gx * (new_p - mid_old[p])
+                     + GAM[xq] * (new_q - mid_old[q]) + inner)
             moves.append((score, ("two_opt", p, q), dd))
     return moves
