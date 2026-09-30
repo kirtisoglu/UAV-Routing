@@ -193,10 +193,13 @@ def build_replace(nd, route, Nprime, amin, amax, d_room, counters=None):
     return moves
 
 
-def build_two_opt(nd, route, amin, amax, d_room, arr=None, counters=None):
+def build_two_opt(nd, route, amin, amax, d_room, arr=None, counters=None, mode=None):
     """Every reversal (p, q), 1 <= p < q <= k, whose route passes the realized-
     window test, decided in O(1) per pair; weight = exchange value summed over the
-    reversed pairs, read at the arrivals `arr` (a^min when arr is None)."""
+    reversed pairs, read at the arrivals `arr` (a^min when arr is None).
+    mode="mid" (TEST_RUNBOOK.md): the outer pair (r_p, r_q) is read instead at the
+    midpoints of its realized windows before and after the move, the new windows
+    coming from the segment summaries in O(1); the inner pairs keep their value."""
     depot, EW, LW, GAM, DM, inv_v = nd.depot, nd.EW, nd.LW, nd.GAM, nd.DM, nd.inv_v
     k = len(route) - 1
     if k < 2:
@@ -240,14 +243,26 @@ def build_two_opt(nd, route, amin, amax, d_room, arr=None, counters=None):
             if ap + DM[x][nxt] * inv_v > amax[q + 1]:
                 if counters is not None: counters["label_excluded"] += 1
                 continue
+            if mode == "mid":
+                # new realized windows: r_q at position p (entered at aq), r_p at position q (reached at ap)
+                amax_u = LW[x] if LW[x] < amax[q + 1] - DM[x][nxt] * inv_v else amax[q + 1] - DM[x][nxt] * inv_v
+                amax_v = L if L < amax_u - D else amax_u - D
+                x_mid = (GAM[x] * (0.5 * (ap + amax_u) - 0.5 * (amin[p] + amax[p]))
+                         + GAM[xq] * (0.5 * (aq + amax_v) - 0.5 * (amin[q] + amax[q])))
+                inner = S[p + 1][q - 1] if q - 1 > p + 1 else 0.0
+                moves.append((x_mid + inner, ("two_opt", p, q), dd))
+                continue
             moves.append((S[p][q], ("two_opt", p, q), dd))
     return moves
 
 
-def build_swap(nd, route, amin, amax, d_room, arr=None, counters=None):
+def build_swap(nd, route, amin, amax, d_room, arr=None, counters=None, mode=None):
     """Every exchange (p, q) whose route passes the realized-window test, in O(1)
     per pair: the interior r_{p+1..q-1} grows by one target at its end as q
-    advances.  Weight = (gamma_p - gamma_q)(a_q - a_p)."""
+    advances.  Weight = (gamma_p - gamma_q)(a_q - a_p).
+    mode="mid" (TEST_RUNBOOK.md): both targets read at the midpoints of their
+    realized windows before and after the move, the new windows from the
+    interior summary in O(1)."""
     depot, EW, LW, GAM, DM, inv_v = nd.depot, nd.EW, nd.LW, nd.GAM, nd.DM, nd.inv_v
     k = len(route) - 1
     if k < 2:
@@ -305,6 +320,19 @@ def build_swap(nd, route, amin, amax, d_room, arr=None, counters=None):
             if ap < EW[x]: ap = EW[x]
             if ap > LW[x] or ap + DM[x][nxt] * inv_v > amax[q + 1]:
                 if counters is not None: counters["label_excluded"] += 1
+                continue
+            if mode == "mid":
+                # new realized windows: r_q at position p (entered at aq), r_p at position q (reached at ap)
+                amax_u = LW[x] if LW[x] < amax[q + 1] - DM[x][nxt] * inv_v else amax[q + 1] - DM[x][nxt] * inv_v
+                if q == p + 1:
+                    amax_v = amax_u - DM[xq][x] * inv_v
+                else:
+                    c = ext[p + 1]
+                    amax_v = min(L - DM[xq][c] * inv_v, amax_u - DM[xq][c] * inv_v - D - DM[ext[q - 1]][x] * inv_v)
+                if amax_v > LW[xq]: amax_v = LW[xq]
+                x_mid = (gx * (0.5 * (ap + amax_u) - 0.5 * (amin[p] + amax[p]))
+                         + GAM[xq] * (0.5 * (aq + amax_v) - 0.5 * (amin[q] + amax[q])))
+                moves.append((x_mid, ("swap", p, q), dd))
                 continue
             moves.append(((gx - GAM[xq]) * (A[q] - ax), ("swap", p, q), dd))
     return moves

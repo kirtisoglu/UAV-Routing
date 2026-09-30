@@ -635,7 +635,7 @@ class TimedILS:
                 self.DM[_a][_b] = float(_dd); self.DM[_b][_a] = float(_dd)
         self._nd = (_fs.NodeData(self.graph, self.depot, self.T_max, self.v_max, self.DM,
                                  self.F_leg, self.B_leg) if hasattr(self, 'F_leg') else None)
-        if self.fast_sets and not (INSERT_RATIO and REORDER_W in ("exch", "signs", "signsm")):
+        if self.fast_sets and not (INSERT_RATIO and REORDER_W in ("exch", "signs", "signsm", "mid")):
             raise SystemExit("--fast-sets builds the weights of ILS_INSERT_RATIO=1 ILS_REORDER_W=exch")
 
         # Energy per meter is E_arc / L = P(v)/v with v = L/t. Since L >= d_ij,
@@ -1976,9 +1976,11 @@ class TimedILS:
                 elif op == "replace":
                     moves = _fs.build_replace(self._nd, route, Nprime, amin0, amax0, d_room, self.counters)
                 elif op == "swap":
-                    moves = _fs.build_swap(self._nd, route, amin0, amax0, d_room, None, self.counters)
+                    moves = _fs.build_swap(self._nd, route, amin0, amax0, d_room, None, self.counters,
+                                           mode=("mid" if REORDER_W == "mid" else None))
                 else:
-                    moves = _fs.build_two_opt(self._nd, route, amin0, amax0, d_room, None, self.counters)
+                    moves = _fs.build_two_opt(self._nd, route, amin0, amax0, d_room, None, self.counters,
+                                              mode=("mid" if REORDER_W == "mid" else None))
             elif op == "add":
                 FR, BR = chained_sets(route, F, B, depot)
                 for p in range(1, k + 2):

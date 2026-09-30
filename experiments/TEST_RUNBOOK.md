@@ -26,10 +26,23 @@ values. The test replaces this by a rule that needs no arrival times:
   kept are the highest tiers first, in random order within a tier. A run with
   `DESIGN_RCL=0` removes the cap.
 
-The driver knob is `DESIGN_REORDER_W` (default `exch`, the paper); the value is
-recorded in the `extra` column of every row as `reorder=signs` or `reorder=signsm`.
+A third variant keeps the exchange value's form but changes what it reads:
 
-## Runs, about 2 hours in total
+* `mid`: the paper's x(p, q) reads both targets at the earliest arrivals a^min of
+  their old positions and holds those times fixed. `mid` reads each of the two
+  exchanged targets at the midpoint of its realized window, before the move (its old
+  position in the current route) and after the move (its new position in the
+  reordered route, with the new legs), and takes the change of the two rewards. The
+  new windows come from the segment summaries of Section 4.3 in O(1), so the cost per
+  pair is unchanged. For a 2-opt only the outer pair (r_p, r_q) is read this way; the
+  nested pairs keep the paper's value. The draw (roulette over the shifted values)
+  and the list length L_r are unchanged, so this isolates the effect of the reading.
+
+The driver knob is `DESIGN_REORDER_W` (default `exch`, the paper); the value is
+recorded in the `extra` column of every row as `reorder=signs`, `reorder=signsm` or
+`reorder=mid`.
+
+## Runs, about 2.5 hours in total
 
 The six instances where reorderings matter (the L_r grid set of Section 5.8):
 
@@ -38,6 +51,7 @@ The six instances where reorderings matter (the L_r grid set of Section 5.8):
     DESIGN_INSTANCES="$G" DESIGN_REORDER_W=signs                 DESIGN_OUT=_signs      python3 paper_runs/run_design.py new
     DESIGN_INSTANCES="$G" DESIGN_REORDER_W=signsm                DESIGN_OUT=_signsm     python3 paper_runs/run_design.py new
     DESIGN_INSTANCES="$G" DESIGN_REORDER_W=signs  DESIGN_RCL=0   DESIGN_OUT=_signs_Lall python3 paper_runs/run_design.py new
+    DESIGN_INSTANCES="$G" DESIGN_REORDER_W=mid                   DESIGN_OUT=_mid        python3 paper_runs/run_design.py new
 
 The reference is replication 1, `paper_runs/results/design_new.csv` (and
 `design_new_rep2.csv` if Step 9 of the runbook has run, which says how large the
@@ -55,6 +69,7 @@ Expected: `stop=max_idle_shakes`, `extra` reads `reorder=signs`, an objective ne
     python3 paper_runs/compare_runs.py paper_runs/results/design_new_signs.csv      paper_runs/results/design_new.csv
     python3 paper_runs/compare_runs.py paper_runs/results/design_new_signsm.csv     paper_runs/results/design_new.csv
     python3 paper_runs/compare_runs.py paper_runs/results/design_new_signs_Lall.csv paper_runs/results/design_new.csv
+    python3 paper_runs/compare_runs.py paper_runs/results/design_new_mid.csv        paper_runs/results/design_new.csv
 
 Write into `experiments/DESIGN.md`, under a heading with the date and the commit, one
 table with a row per instance and variant: objective, change in percent against
@@ -62,7 +77,8 @@ replication 1, t_best, Run, shakes (all from the CSVs), and, if `design_new_rep2
 exists, the replication-1 to replication-2 difference on the same instance as the
 noise reference. Then three sentences: whether the sign rule is within noise of the
 exchange value on the objective, what it does to the run time and the shake count,
-and whether `signs` or `signsm` is the better 2-opt rule. No recommendation beyond
+whether `signs` or `signsm` is the better 2-opt rule, and whether `mid` moves the
+objective against the paper's reading in either direction. No recommendation beyond
 that; the author decides.
 
 ## What must not happen
