@@ -1,0 +1,9 @@
+[plan] new_signsm: 6 runs, 1 at a time; start R4, L_r=20 S=100 D=3 eta=1 reorder=signsm budget 14400s extra=[] dynamics=off commit 41ba1ea
+[saved] PR11 (48): obj=6509.95 tour=33 t_best=28.0 wall=37.5 shakes=307 stop=max_idle_shakes
+[saved] R104 (100): obj=36726.35 tour=32 t_best=12.3 wall=33.9 shakes=137 stop=max_idle_shakes
+[saved] RC104 (100): obj=36308.67 tour=32 t_best=26.0 wall=39.2 shakes=234 stop=max_idle_shakes
+[saved] C104 (100): obj=18465.66 tour=90 t_best=341.0 wall=436.4 shakes=453 stop=max_idle_shakes
+[saved] PR15 (240): obj=18797.74 tour=104 t_best=893.6 wall=1027.7 shakes=931 stop=max_idle_shakes
+[saved] PR10 (288): obj=16554.08 tour=79 t_best=127.5 wall=203.5 shakes=293 stop=max_idle_shakes
+
+DONE -> /Users/kirtisoglu/GitHub/UAV-Routing/paper_runs/results/design_new_signsm.csv

@@ -1,0 +1,4 @@
+[plan] new_signs_Lall: 6 runs, 1 at a time; start R4, L_r=0 S=100 D=3 eta=1 reorder=signs budget 14400s extra=[] dynamics=off commit 41ba1ea
+[saved] PR11 (48): obj=6477.84 tour=31 t_best=14.5 wall=23.6 shakes=206 stop=max_idle_shakes
+[saved] R104 (100): obj=38210.34 tour=39 t_best=22.8 wall=43.3 shakes=182 stop=max_idle_shakes
+[saved] RC104 (100): obj=36242.76 tour=31 t_best=14.9 wall=28.3 shakes=184 stop=max_idle_shakes

@@ -1,0 +1,4 @@
+[plan] new_D6dyn: 1 runs, 1 at a time; start R4, L_r=20 S=100 D=6 budget 14400s extra=[] dynamics=on commit 46ae2bf
+[saved] PR15 (240): obj=19549.30 tour=106 t_best=941.3 wall=1020.2 shakes=1257 stop=max_idle_shakes
+
+DONE -> /Users/kirtisoglu/GitHub/UAV-Routing/paper_runs/results/design_new_D6dyn.csv

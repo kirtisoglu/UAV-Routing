@@ -1,0 +1,2 @@
+Instance,design,init,init_seed,D,L_r,S,extra,commit,init_obj,init_size,Objective,Tour,flown_km,energy_pct,time_s,t_best (s),Wall (s),stop,iterations,shakes,iter_of_best,accepted,socp_calls,socp_ms,reorder_trimmed,socp_numeric_infeasible,Route,sets_s,sets_pct
+R104 (100),new,R4,,3,20,100,reorder=tiers,18092d4,15524.43,10,37669.29,33,470.13,100.0,10285.3,5.5,23.9,max_idle_shakes,21836,121,4789,1815,4268,3.81,20410,0,0-89-18-82-48-47-19-62-31-1-50-33-81-79-3-68-80-12-26-72-21-40-13-95-93-85-16-86-91-100-98-59-96-94,4.78,20.0

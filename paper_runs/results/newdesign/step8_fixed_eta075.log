@@ -1,0 +1,17 @@
+[plan] new_fixed_eta075: 14 runs, 1 at a time; start R4, L_r=20 S=100 D=3 eta=0.75 budget 14400s extra=['--fixed-speed'] dynamics=off commit ff89d15
+[saved] R101 (50): obj=8653.00 tour=7 t_best=0.0 wall=1.6 shakes=100 stop=max_idle_shakes
+[saved] R101 (100): obj=16385.00 tour=13 t_best=0.4 wall=3.1 shakes=110 stop=max_idle_shakes
+[saved] R1_2_1 (200): obj=10613.46 tour=22 t_best=9.0 wall=22.8 shakes=163 stop=max_idle_shakes
+[saved] C101 (50): obj=7155.38 tour=33 t_best=6.1 wall=20.0 shakes=127 stop=max_idle_shakes
+[saved] C101 (100): obj=9120.35 tour=36 t_best=22.1 wall=40.0 shakes=203 stop=max_idle_shakes
+[saved] C1_2_1 (200): obj=8683.57 tour=40 t_best=27.1 wall=56.5 shakes=184 stop=max_idle_shakes
+[saved] RC1_2_1 (200): obj=12774.53 tour=30 t_best=6.3 wall=18.0 shakes=140 stop=max_idle_shakes
+[saved] R102 (100): obj=22298.65 tour=22 t_best=15.5 wall=25.7 shakes=221 stop=max_idle_shakes
+[saved] R104 (100): obj=29585.52 tour=28 t_best=9.5 wall=20.8 shakes=154 stop=max_idle_shakes
+[saved] C104 (100): obj=16769.25 tour=87 t_best=589.1 wall=753.9 shakes=457 stop=max_idle_shakes
+[saved] RC104 (100): obj=25511.20 tour=24 t_best=10.9 wall=19.5 shakes=199 stop=max_idle_shakes
+[saved] PR11 (48): obj=5386.81 tour=26 t_best=4.1 wall=10.9 shakes=144 stop=max_idle_shakes
+[saved] PR15 (240): obj=15304.67 tour=82 t_best=190.7 wall=253.9 shakes=440 stop=max_idle_shakes
+[saved] PR10 (288): obj=13672.01 tour=62 t_best=120.6 wall=152.6 shakes=498 stop=max_idle_shakes
+
+DONE -> /Users/kirtisoglu/GitHub/UAV-Routing/paper_runs/results/design_new_fixed_eta075.csv

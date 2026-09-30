@@ -1,0 +1,9 @@
+[plan] new_mid: 6 runs, 1 at a time; start R4, L_r=20 S=100 D=3 eta=1 reorder=mid budget 14400s extra=[] dynamics=off commit 4bc1366
+[saved] PR11 (48): obj=6459.52 tour=32 t_best=13.3 wall=25.6 shakes=183 stop=max_idle_shakes
+[saved] R104 (100): obj=35444.59 tour=37 t_best=35.0 wall=54.1 shakes=248 stop=max_idle_shakes
+[saved] RC104 (100): obj=36231.33 tour=30 t_best=6.7 wall=21.6 shakes=127 stop=max_idle_shakes
+[saved] C104 (100): obj=18583.79 tour=91 t_best=515.5 wall=597.1 shakes=779 stop=max_idle_shakes
+[saved] PR15 (240): obj=19116.16 tour=105 t_best=545.0 wall=676.8 shakes=650 stop=max_idle_shakes
+[saved] PR10 (288): obj=17318.01 tour=78 t_best=737.5 wall=799.5 shakes=1299 stop=max_idle_shakes
+
+DONE -> /Users/kirtisoglu/GitHub/UAV-Routing/paper_runs/results/design_new_mid.csv

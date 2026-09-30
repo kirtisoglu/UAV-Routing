@@ -1,0 +1,9 @@
+[plan] new_boundall: 6 runs, 1 at a time; start R4, L_r=20 S=100 D=3 eta=1 reorder=boundall budget 14400s extra=[] dynamics=off commit 4bc1366
+[saved] PR11 (48): obj=6374.21 tour=32 t_best=20.9 wall=30.1 shakes=270 stop=max_idle_shakes
+[saved] R104 (100): obj=37147.14 tour=34 t_best=17.2 wall=39.6 shakes=147 stop=max_idle_shakes
+[saved] RC104 (100): obj=36231.33 tour=30 t_best=17.6 wall=30.6 shakes=182 stop=max_idle_shakes
+[saved] C104 (100): obj=18888.24 tour=90 t_best=364.1 wall=539.6 shakes=335 stop=max_idle_shakes
+[saved] PR15 (240): obj=18709.71 tour=103 t_best=195.1 wall=310.4 shakes=299 stop=max_idle_shakes
+[saved] PR10 (288): obj=16749.24 tour=76 t_best=263.7 wall=337.3 shakes=476 stop=max_idle_shakes
+
+DONE -> /Users/kirtisoglu/GitHub/UAV-Routing/paper_runs/results/design_new_boundall.csv

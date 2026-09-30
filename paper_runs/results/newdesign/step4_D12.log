@@ -1,0 +1,4 @@
+[plan] new_D12dyn: 1 runs, 1 at a time; start R4, L_r=20 S=100 D=12 budget 14400s extra=[] dynamics=on commit 46ae2bf
+[saved] PR15 (240): obj=18946.54 tour=106 t_best=251.2 wall=318.6 shakes=461 stop=max_idle_shakes
+
+DONE -> /Users/kirtisoglu/GitHub/UAV-Routing/paper_runs/results/design_new_D12dyn.csv

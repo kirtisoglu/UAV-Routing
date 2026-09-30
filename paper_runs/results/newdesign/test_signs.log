@@ -1,0 +1,9 @@
+[plan] new_signs: 6 runs, 1 at a time; start R4, L_r=20 S=100 D=3 eta=1 reorder=signs budget 14400s extra=[] dynamics=off commit 41ba1ea
+[saved] PR11 (48): obj=6477.84 tour=31 t_best=21.9 wall=30.8 shakes=258 stop=max_idle_shakes
+[saved] R104 (100): obj=37091.61 tour=35 t_best=22.5 wall=41.2 shakes=191 stop=max_idle_shakes
+[saved] RC104 (100): obj=35624.62 tour=29 t_best=21.4 wall=35.3 shakes=198 stop=max_idle_shakes
+[saved] C104 (100): obj=18364.34 tour=90 t_best=216.6 wall=296.0 shakes=371 stop=max_idle_shakes
+[saved] PR15 (240): obj=19075.64 tour=104 t_best=249.5 wall=389.6 shakes=303 stop=max_idle_shakes
+[saved] PR10 (288): obj=16909.10 tour=74 t_best=378.8 wall=443.9 shakes=687 stop=max_idle_shakes
+
+DONE -> /Users/kirtisoglu/GitHub/UAV-Routing/paper_runs/results/design_new_signs.csv

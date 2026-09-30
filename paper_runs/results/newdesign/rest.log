@@ -1,0 +1,24 @@
+[waiting] Step 2 (fixed-speed, no-loiter)
+  ok: Step 2 --fixed-speed
+  ok: Step 2 --no-loiter
+[written] tab:fixed-speed, tab:coverage
+[done] Step 2
+  ok: Step 3 D=6
+  ok: Step 3 D=12
+[written] tab:theta
+[done] Step 3
+  ok: Step 4 D=3
+  ok: Step 4 D=6
+  ok: Step 4 D=12
+wrote /Users/kirtisoglu/GitHub/UAV-Routing/paper/fig/ils_capdiv.png
+[done] Step 4
+  ok: Step 5 R1
+  ok: Step 5 R2
+  ok: Step 5 R3 seed 1
+  ok: Step 5 R3 seed 2
+  ok: Step 5 R3 seed 3
+[written] tab:initial-tour
+[done] Step 5
+  latex errors: 0
+Output written on ArXiv-version.pdf (42 pages, 1070864 bytes).
+CAMPAIGN_REST_COMPLETE

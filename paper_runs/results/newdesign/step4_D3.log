@@ -1,0 +1,4 @@
+[plan] new_D3dyn: 1 runs, 1 at a time; start R4, L_r=20 S=100 D=3 budget 14400s extra=[] dynamics=on commit 46ae2bf
+[saved] PR15 (240): obj=19639.68 tour=108 t_best=600.6 wall=695.8 shakes=691 stop=max_idle_shakes
+
+DONE -> /Users/kirtisoglu/GitHub/UAV-Routing/paper_runs/results/design_new_D3dyn.csv

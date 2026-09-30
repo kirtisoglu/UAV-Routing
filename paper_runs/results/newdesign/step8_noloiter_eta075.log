@@ -1,0 +1,17 @@
+[plan] new_noloiter_eta075: 14 runs, 1 at a time; start R4, L_r=20 S=100 D=3 eta=0.75 budget 14400s extra=['--no-loiter'] dynamics=off commit ff89d15
+[saved] R101 (50): obj=9570.65 tour=7 t_best=0.1 wall=2.0 shakes=106 stop=max_idle_shakes
+[saved] R101 (100): obj=18823.46 tour=14 t_best=0.2 wall=2.4 shakes=100 stop=max_idle_shakes
+[saved] R1_2_1 (200): obj=11786.04 tour=24 t_best=3.0 wall=7.8 shakes=188 stop=max_idle_shakes
+[saved] C101 (50): obj=7509.72 tour=34 t_best=4.8 wall=21.6 shakes=203 stop=max_idle_shakes
+[saved] C101 (100): obj=9589.73 tour=36 t_best=5.5 wall=12.4 shakes=192 stop=max_idle_shakes
+[saved] C1_2_1 (200): obj=9290.13 tour=41 t_best=23.0 wall=33.4 shakes=302 stop=max_idle_shakes
+[saved] RC1_2_1 (200): obj=15027.23 tour=32 t_best=23.0 wall=34.3 shakes=300 stop=max_idle_shakes
+[saved] R102 (100): obj=23286.39 tour=22 t_best=5.6 wall=14.6 shakes=155 stop=max_idle_shakes
+[saved] R104 (100): obj=30651.88 tour=28 t_best=21.8 wall=36.5 shakes=205 stop=max_idle_shakes
+[saved] C104 (100): obj=17023.43 tour=89 t_best=104.3 wall=132.1 shakes=583 stop=max_idle_shakes
+[saved] RC104 (100): obj=25891.41 tour=24 t_best=9.2 wall=22.2 shakes=155 stop=max_idle_shakes
+[saved] PR11 (48): obj=6395.74 tour=32 t_best=40.0 wall=54.3 shakes=272 stop=max_idle_shakes
+[saved] PR15 (240): obj=16282.55 tour=86 t_best=53.2 wall=153.0 shakes=168 stop=max_idle_shakes
+[saved] PR10 (288): obj=14007.49 tour=65 t_best=121.5 wall=186.1 shakes=329 stop=max_idle_shakes
+
+DONE -> /Users/kirtisoglu/GitHub/UAV-Routing/paper_runs/results/design_new_noloiter_eta075.csv

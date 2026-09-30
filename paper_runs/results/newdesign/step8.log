@@ -1,0 +1,11 @@
+  ok: Step 8 eta=0.75 reference
+  ok: Step 8 eta=0.75 fixed-speed
+  ok: Step 8 eta=0.75 no-loiter
+  ok: Step 8 eta=1.25 reference
+  ok: Step 8 eta=1.25 fixed-speed
+  ok: Step 8 eta=1.25 no-loiter
+[written] tab:levers-eta
+[written] tab:levers-eta
+  latex errors: 0
+Output written on ArXiv-version.pdf (42 pages, 1074041 bytes).
+STEP8_COMPLETE

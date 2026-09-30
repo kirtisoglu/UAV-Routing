@@ -1,0 +1,6 @@
+[plan] new_route: 3 runs, 1 at a time; start R4, L_r=20 S=100 D=3 eta=1 reorder=route budget 14400s extra=[] dynamics=off commit 637f0a3
+[saved] PR11 (48): obj=6432.28 tour=31 t_best=7.9 wall=18.2 shakes=149 stop=max_idle_shakes
+[saved] C104 (100): obj=18788.55 tour=92 t_best=418.6 wall=546.9 shakes=475 stop=max_idle_shakes
+[saved] PR15 (240): obj=18926.15 tour=102 t_best=181.5 wall=294.5 shakes=239 stop=max_idle_shakes
+
+DONE -> /Users/kirtisoglu/GitHub/UAV-Routing/paper_runs/results/design_new_route.csv

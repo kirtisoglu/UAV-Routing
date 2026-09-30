@@ -623,3 +623,219 @@ Files identified as superseded, to be removed by the author (git history keeps t
 theta_traces,ils_traces,gain1h_traces}`, `details/*.log`, and every `newdesign/*.log`
 except `anim_*.log` and `design_*.log`. Kept on purpose: `animation/datasets/` (the
 built viewer pages), the MISOCP result files, `design_*.csv`, `paper/fig/`.
+
+
+## Reordering weight test, 2026-09-30 -- commits 41ba1ea (signs, signsm) and 4bc1366 (mid, midall)
+
+`experiments/TEST_RUNBOOK.md`. Five variants of the reordering weight against
+replication 1 (`paper_runs/results/design_new.csv`) on the six instances where
+reorderings matter. Nothing in the paper, in `design_new.csv` or in any file the
+tables read was changed; L_r, S and D keep the driver's defaults (20, 100, 3)
+except in the one run that removes the cap. No run printed `[warn]` and none
+raised. Sanity checks on R101 (50) returned 11 902.02 for `signs`, `mid` and
+`midall`, matching replication 1 to the cent.
+
+The `signs, L_r = 0` run covers three of the six. It was stopped by the author
+after its C104 (100) run passed 43 minutes against 302 s for replication 1,
+having written no result; PR15 (240) and PR10 (288) were never started. Removing
+the cap leaves the draw scanning the whole move set on every failed draw and
+sends each drawn move to an SOCP solve, so the cost grows with the square of the
+reordering set and C104 (100) carries the longest tour of the set at 91 targets.
+
+| instance | variant | objective | change % | t_best (s) | Run (s) | shakes |
+|---|---|---|---|---|---|---|
+| PR11 (48) | reference | 6,473.95 | - | 6.7 | 17.0 | 146 |
+|  | signs | 6,477.84 | +0.06 | 21.9 | 30.8 | 258 |
+|  | signsm | 6,509.95 | +0.56 | 28.0 | 37.5 | 307 |
+|  | signs, L_r=0 | 6,477.84 | +0.06 | 14.5 | 23.6 | 206 |
+|  | mid | 6,459.52 | -0.22 | 13.3 | 25.6 | 183 |
+|  | midall | 6,456.58 | -0.27 | 30.0 | 41.7 | 294 |
+| R104 (100) | reference | 38,105.79 | - | 41.8 | 60.0 | 262 |
+|  | signs | 37,091.61 | -2.66 | 22.5 | 41.2 | 191 |
+|  | signsm | 36,726.35 | -3.62 | 12.3 | 33.9 | 137 |
+|  | signs, L_r=0 | 38,210.34 | +0.27 | 22.8 | 43.3 | 182 |
+|  | mid | 35,444.59 | -6.98 | 35.0 | 54.1 | 248 |
+|  | midall | 38,210.34 | +0.27 | 51.5 | 68.2 | 329 |
+| RC104 (100) | reference | 36,231.33 | - | 17.0 | 27.1 | 203 |
+|  | signs | 35,624.62 | -1.67 | 21.4 | 35.3 | 198 |
+|  | signsm | 36,308.67 | +0.21 | 26.0 | 39.2 | 234 |
+|  | signs, L_r=0 | 36,242.76 | +0.03 | 14.9 | 28.3 | 184 |
+|  | mid | 36,231.33 | +0.00 | 6.7 | 21.6 | 127 |
+|  | midall | 36,231.33 | +0.00 | 26.6 | 42.1 | 239 |
+| C104 (100) | reference | 18,414.60 | - | 215.9 | 302.0 | 381 |
+|  | signs | 18,364.34 | -0.27 | 216.6 | 296.0 | 371 |
+|  | signsm | 18,465.66 | +0.28 | 341.0 | 436.4 | 453 |
+| C104 (100) | signs, L_r=0 | not run | - | - | - | - |
+|  | mid | 18,583.79 | +0.92 | 515.5 | 597.1 | 779 |
+|  | midall | 18,331.18 | -0.45 | 307.4 | 374.3 | 553 |
+| PR15 (240) | reference | 19,639.68 | - | 609.8 | 705.5 | 691 |
+|  | signs | 19,075.64 | -2.87 | 249.5 | 389.6 | 303 |
+|  | signsm | 18,797.74 | -4.29 | 893.6 | 1027.7 | 931 |
+| PR15 (240) | signs, L_r=0 | not run | - | - | - | - |
+|  | mid | 19,116.16 | -2.67 | 545.0 | 676.8 | 650 |
+|  | midall | 18,530.74 | -5.65 | 136.7 | 251.6 | 251 |
+| PR10 (288) | reference | 16,696.23 | - | 126.5 | 196.4 | 311 |
+|  | signs | 16,909.10 | +1.27 | 378.8 | 443.9 | 687 |
+|  | signsm | 16,554.08 | -0.85 | 127.5 | 203.5 | 293 |
+| PR10 (288) | signs, L_r=0 | not run | - | - | - | - |
+|  | mid | 17,318.01 | +3.72 | 737.5 | 799.5 | 1299 |
+|  | midall | 16,889.80 | +1.16 | 98.4 | 173.8 | 263 |
+
+| variant | n | mean change % | better / worse / tied | total Run (s) | vs reference |
+|---|---|---|---|---|---|
+| signs | 6 | -1.02 | 4 / 2 / 0 | 1237 | 0.95x |
+| signsm | 6 | -1.29 | 3 / 3 / 0 | 1778 | 1.36x |
+| signs, L_r=0 | 3 | +0.12 | 0 / 3 / 0 | 95 | 0.91x |
+| mid | 6 | -0.87 | 3 / 2 / 1 | 2175 | 1.66x |
+| midall | 6 | -0.82 | 3 / 2 / 1 | 952 | 0.73x |
+
+### What the runbook asks
+
+**Within noise?** Unanswerable from what is on disk. The noise reference is the
+replication-1 to replication-2 difference, and `design_new_rep2.csv` does not
+exist: Step 9 of `experiments/RERUN_PLAN.md` has not been run, on the author's
+instruction. Without it there is no seed-to-seed spread to compare against, so
+whether `signs` at -1.02% or `midall` at -0.82% differs from the exchange value
+by more than a reseed would cannot be decided here. Only the two extremes are
+large enough to be worth a second look on their own: `mid` at +3.72% on PR10
+(288) and `midall` at -5.65% on PR15 (240).
+
+**Run time and shake count.** Run time follows the shake count on every row and
+is not explained by the cost of the weight: iterations per second are level with
+replication 1 for both readings (PR11 693 against 703, C104 594 against 565 for
+`midall`), and the SOCP solve holds 75-85% of the wall throughout, so a richer
+weight is close to free per move. `signs` totals 0.95x the wall at the same 2 008
+shakes against 1 994; `signsm` 1.36x at 2 355 shakes; `mid` 1.66x at 3 286
+shakes; `midall` 0.73x at 1 929 shakes. The two variants that cost time do so by
+searching longer, not by searching more slowly, and in `mid`'s case the extra is
+concentrated in the two instances that churn, C104 (100) at 2.04x the shakes and
+PR10 (288) at 4.18x, both of which also lose on the objective.
+
+**Correction, entered 30 September.** The objective is maximised (the information
+bound at `run_ils_time_matched.py` prunes a candidate when its upper bound is at
+or below the incumbent), so in the `change %` column a positive number is a gain
+and a negative one a loss. The sentences below were first written the other way
+round. Corrected: all five variants of this test are *worse* than the paper's
+exchange value on the objective, `signs` by 1.02%, `signsm` by 1.29%, `mid` by
+0.87%, `midall` by 0.82%, and the numbers in the tables are unchanged.
+
+**signs or signsm for 2-opt?** `signs`. It gives up less than `signsm` does,
+-1.02% against -1.29%, and does so at 0.95x the wall where `signsm` takes
+1.36x, and it loses on four instances where `signsm` loses on three. `signsm`'s
+mean is dragged down by one run, -4.29% on PR15 (240), incurred in the longest
+run in the test at 1 027.7 s.
+
+**Does `mid` move the objective?** Yes, in both directions, and further than the
+sign rules do either way: -6.98% on R104 (100), the largest single loss of the
+test, and +3.72% on PR10 (288), the largest single gain. Its mean of -0.87% sits
+between the two sign rules, so the movement is in the spread rather than the
+centre.
+
+**Does `midall` add anything to `mid` beyond its cost in run time?** It does not
+cost run time: `midall` totals 952 s against `mid`'s 2 175 s and replication 1's
+1 308 s, so the fuller reading is 0.44x the wall of the partial one, for the same
+mean objective to within five hundredths of a point (-0.82% against -0.87%). The
+saving is one instance: PR15 (240) at 251.6 s against 705.5 s, where `midall` is
+also -5.65%. It is slower than replication 1 on the four instances that finish in
+under seven minutes and faster on the two that do not.
+
+
+## Tiered weights, 2026-09-30 -- commit 18092d4
+
+`experiments/TEST_RUNBOOK.md`, "tiers on all fourteen instances". One tiered rule
+for all four operators on the `routebest` reading, run two ways: the weighted
+shake (`DESIGN_SHAKE_KNAP=6`, the knapsack look-ahead over the next six removals)
+and the unweighted one (`DESIGN_SHAKE_KNAP=0`). The reference is replication 1,
+now `paper_runs/results/previous_design/design_new.csv`. Nothing in the paper was
+changed from here and the reference was not rerun. Neither run printed `[warn]`
+and neither raised.
+
+Step 1 of the runbook passed: R104 (100) gave 37 669.29 both with the fast
+computation of dI and dd and with `ILS_TIERS_REFERENCE=1` forcing a full
+recomputation of every move, `+0.00` and `same` best route, iterations and shakes.
+That extends the cloud container's check past the 32-target cap of its license;
+R104's routes reach 40.
+
+The objective is maximised, so in `change %` a positive number is a gain.
+
+| instance | variant | objective | change % | t_best | Run | shakes | iterations | sets_pct |
+|---|---|---|---|---|---|---|---|---|
+| R101 (50) | reference | 11,902.02 | - | 0.1 | 1.8 | 100 | 4997 | - |
+|  | tiers | 11,902.02 | +0.00 | 0.6 | 2.3 | 171 | 7243 | 2.1 |
+|  | tiers knap=0 | 11,921.13 | +0.16 | 0.9 | 2.6 | 228 | 9709 | 2.2 |
+| R101 (100) | reference | 22,884.44 | - | 0.2 | 4.3 | 100 | 12017 | - |
+|  | tiers | 22,884.44 | +0.00 | 0.2 | 3.8 | 100 | 11918 | 2.4 |
+|  | tiers knap=0 | 22,884.44 | +0.00 | 0.2 | 3.2 | 100 | 10675 | 2.2 |
+| R1_2_1 (200) | reference | 16,586.35 | - | 9.2 | 17.9 | 167 | 26443 | - |
+|  | tiers | 16,950.19 | +2.19 | 18.7 | 25.2 | 239 | 33597 | 3.1 |
+|  | tiers knap=0 | 16,950.19 | +2.19 | 15.4 | 21.0 | 258 | 32140 | 3.1 |
+| C101 (50) | reference | 8,591.92 | - | 1.5 | 33.7 | 101 | 17904 | - |
+|  | tiers | 8,591.92 | +0.00 | 12.9 | 30.0 | 145 | 20473 | 2.8 |
+|  | tiers knap=0 | 8,591.92 | +0.00 | 14.0 | 28.1 | 170 | 21997 | 2.7 |
+| C101 (100) | reference | 11,324.41 | - | 116.9 | 157.4 | 318 | 128949 | - |
+|  | tiers | 11,342.99 | +0.16 | 48.2 | 83.1 | 214 | 64961 | 3.0 |
+|  | tiers knap=0 | 11,342.99 | +0.16 | 43.7 | 73.4 | 239 | 63048 | 3.1 |
+| C1_2_1 (200) | reference | 11,146.32 | - | 82.1 | 144.8 | 235 | 99297 | - |
+|  | tiers | 11,127.65 | -0.17 | 40.5 | 82.7 | 182 | 58337 | 3.0 |
+|  | tiers knap=0 | 11,127.65 | -0.17 | 30.1 | 63.3 | 197 | 50053 | 3.2 |
+| RC1_2_1 (200) | reference | 17,973.77 | - | 71.1 | 91.3 | 293 | 51134 | - |
+|  | tiers | 17,716.01 | -1.43 | 52.8 | 70.9 | 316 | 47004 | 2.6 |
+|  | tiers knap=0 | 16,365.79 | -8.95 | 18.1 | 33.3 | 208 | 28926 | 2.9 |
+| R102 (100) | reference | 30,443.78 | - | 45.0 | 62.2 | 317 | 61492 | - |
+|  | tiers | 30,443.78 | +0.00 | 18.8 | 34.8 | 194 | 34574 | 3.4 |
+|  | tiers knap=0 | 30,532.75 | +0.29 | 23.9 | 32.5 | 316 | 36589 | 3.1 |
+| R104 (100) | reference | 38,105.79 | - | 41.8 | 60.0 | 262 | 58287 | - |
+|  | tiers | 37,669.29 | -1.15 | 4.6 | 20.0 | 121 | 21836 | 5.6 |
+|  | tiers knap=0 | 37,729.30 | -0.99 | 34.2 | 48.8 | 316 | 41233 | 5.2 |
+| C104 (100) | reference | 18,414.60 | - | 215.9 | 302.0 | 381 | 170569 | - |
+|  | tiers | 18,779.62 | +1.98 | 56.3 | 248.8 | 125 | 38599 | 16.6 |
+|  | tiers knap=0 | 19,068.59 | +3.55 | 626.4 | 804.6 | 466 | 123309 | 13.2 |
+| RC104 (100) | reference | 36,231.33 | - | 17.0 | 27.1 | 203 | 19875 | - |
+|  | tiers | 36,231.33 | +0.00 | 12.3 | 24.1 | 175 | 15373 | 4.9 |
+|  | tiers knap=0 | 34,996.57 | -3.41 | 24.0 | 32.9 | 309 | 23454 | 5.2 |
+| PR11 (48) | reference | 6,473.95 | - | 6.7 | 17.0 | 146 | 11945 | - |
+|  | tiers | 6,546.11 | +1.11 | 18.9 | 27.9 | 240 | 21271 | 6.3 |
+|  | tiers knap=0 | 6,539.21 | +1.01 | 1.3 | 8.6 | 115 | 6040 | 4.8 |
+| PR15 (240) | reference | 19,639.68 | - | 609.8 | 705.5 | 691 | 117835 | - |
+|  | tiers | 19,560.17 | -0.40 | 265.9 | 404.8 | 335 | 48381 | 31.5 |
+|  | tiers knap=0 | 18,977.63 | -3.37 | 459.2 | 550.8 | 634 | 70916 | 33.8 |
+| PR10 (288) | reference | 16,696.23 | - | 126.5 | 196.4 | 311 | 80546 | - |
+|  | tiers | 16,813.83 | +0.70 | 438.2 | 509.0 | 814 | 235885 | 9.6 |
+|  | tiers knap=0 | 16,974.75 | +1.67 | 275.7 | 323.3 | 753 | 125394 | 9.1 |
+
+| comparison | n | mean change % | better / worse / tied | wall | t_best |
+|---|---|---|---|---|---|
+| tiers vs replication 1, all fourteen | 14 | +0.21 | 5 / 4 / 5 | 0.86x | 0.74x |
+| tiers knap=0 vs replication 1, all fourteen | 14 | -0.56 | 7 / 5 / 2 | 1.11x | 1.17x |
+| tiers vs replication 1, the six | 6 | +0.38 | 3 / 2 / 1 | 0.94x | 0.78x |
+| tiers knap=0 vs replication 1, the six | 6 | -0.26 | 3 / 3 / 0 | 1.35x | 1.40x |
+| tiers knap=0 vs tiers, all fourteen | 14 | -0.79 | 5 / 4 / 5 | 1.29x | 1.58x |
+
+### What the runbook asks
+
+**Within noise?** Still unanswerable. `design_new_rep2.csv` does not exist, so
+there is no seed-to-seed spread to compare against. It matters more here than in
+the earlier tests, because `tiers` wins by +0.21% over fourteen instances with
+five of them tying to the cent, which is well inside what a reseed could produce.
+Only RC1_2_1 (200) at -8.95% and C104 (100) at +3.55%, both under `knap=0`, are
+clearly larger than a single run's wobble.
+
+**Run time and the shake count.** `tiers` is the faster of the two and faster than
+replication 1: 0.86x the wall over the fourteen and 0.74x the t_best, so it
+reaches its best markedly sooner (C104 (100) 56.3 s against 215.9, PR15 (240)
+265.9 against 609.8). `knap=0` takes 1.11x the wall and 1.17x the t_best. The
+tiered classification itself costs 6.9 percent of the wall over the fourteen and
+12.4 percent over the six harder ones, so it is a real but not dominant cost.
+
+**Weighted or unweighted shake?** Weighted, on every axis measured. `tiers` is
++0.21% against replication 1 where `knap=0` is -0.56%; head to head `knap=0` is
+0.79% behind at 1.29x the wall and 1.58x the t_best. `knap=0` also swings far
+wider, from +3.55% on C104 (100) to -8.95% on RC1_2_1 (200), against `tiers`'s
+range of +2.19% to -1.43%. Its RC1_2_1 (200) run is the clearest case: it stopped
+after 208 shakes and 6 358 SOCP solves against replication 1's 293 and 18 775,
+visiting 41 targets against 38 and collecting 9 percent less information from
+them, which is what a shake that does not weigh what it removes would produce.
+
+Recorded for the author, without recommendation: commit db43421 sets the driver's
+`DESIGN_SHAKE_KNAP` default to 0 and labels it "the paper". The runs above are the
+only evidence on this machine about that choice, and they favour 6.
