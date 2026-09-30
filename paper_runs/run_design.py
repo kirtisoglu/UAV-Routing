@@ -70,6 +70,7 @@ INIT_SEED = int(os.environ.get("DESIGN_INIT_SEED", 1))
 DYNAMICS = os.environ.get("DESIGN_DYNAMICS", "") not in ("", "0")
 ETA = float(os.environ.get("DESIGN_ETA", 1.0))
 OUT = os.environ.get("DESIGN_OUT", "")
+REORDER_W = os.environ.get("DESIGN_REORDER_W", "exch")   # exch (the paper) | signs | signsm (experiments/TEST_RUNBOOK.md)
 EXTRA = os.environ.get("DESIGN_EXTRA", "").split()
 TRACE_DIR = os.path.join(HERE, "results", "details", "design_traces")
 DYN_DIR = os.path.join(HERE, "results", "details", "dynamics")
@@ -96,7 +97,7 @@ COMMIT = git_commit()
 
 def run_one(name, design):
     env = dict(os.environ, ILS_INSERT_RATIO="1", ILS_SHAKE_KNAP="6", ILS_NO_RETURN="2",
-               ILS_REORDER_W="exch")
+               ILS_REORDER_W=REORDER_W)
     tag = f"design_{design}{OUT}"
     stem = stem_of(name)
     args = [sys.executable, "experiments/run_ils_time_matched.py", "--instance", name,
@@ -140,7 +141,7 @@ def run_one(name, design):
     socp_ms = (cnt.get("socp_us", 0) / 1000.0 / cnt["socp_calls"]) if cnt.get("socp_calls") else ""
     return {"Instance": name, "design": design, "init": INIT, "init_seed": INIT_SEED if INIT == "R3" else "",
             "D": CAPDIV, "L_r": RCL if design == "new" else "", "S": IDLE if design == "new" else "",
-            "extra": " ".join(EXTRA + (["--eta", str(ETA)] if ETA != 1.0 else [])), "commit": COMMIT,
+            "extra": " ".join(EXTRA + (["--eta", str(ETA)] if ETA != 1.0 else []) + ([f"reorder={REORDER_W}"] if REORDER_W != "exch" else [])), "commit": COMMIT,
             "init_obj": float(init.group(1)) if init else "", "init_size": int(init.group(2)) if init else "",
             "Objective": float(m.group(1)), "Tour": int(m.group(2)),
             "flown_km": round(float(phys.group(1)) / 1000.0, 2) if phys else "",
@@ -193,7 +194,7 @@ def main():
     jobs = [n for n in order if n not in done]
     print(f"[plan] {design}{OUT}: {len(jobs)} runs, {WORKERS} at a time; start {INIT}"
           f"{' seed ' + str(INIT_SEED) if INIT == 'R3' else ''}, L_r={RCL} S={IDLE} D={CAPDIV} "
-          f"eta={ETA:g} budget {BUDGET:.0f}s extra={EXTRA} dynamics={'on' if DYNAMICS else 'off'} commit {COMMIT}",
+          f"eta={ETA:g} reorder={REORDER_W} budget {BUDGET:.0f}s extra={EXTRA} dynamics={'on' if DYNAMICS else 'off'} commit {COMMIT}",
           flush=True)
     with ThreadPoolExecutor(max_workers=WORKERS) as ex:
         futs = {ex.submit(run_one, n, design): n for n in jobs}

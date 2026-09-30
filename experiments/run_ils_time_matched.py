@@ -635,7 +635,7 @@ class TimedILS:
                 self.DM[_a][_b] = float(_dd); self.DM[_b][_a] = float(_dd)
         self._nd = (_fs.NodeData(self.graph, self.depot, self.T_max, self.v_max, self.DM,
                                  self.F_leg, self.B_leg) if hasattr(self, 'F_leg') else None)
-        if self.fast_sets and not (INSERT_RATIO and REORDER_W == "exch"):
+        if self.fast_sets and not (INSERT_RATIO and REORDER_W in ("exch", "signs", "signsm")):
             raise SystemExit("--fast-sets builds the weights of ILS_INSERT_RATIO=1 ILS_REORDER_W=exch")
 
         # Energy per meter is E_arc / L = P(v)/v with v = L/t. Since L >= d_ij,
@@ -2115,6 +2115,28 @@ class TimedILS:
                                   score_of(info_new - info0, dd))
                         moves.append((_s, ("two_opt", p, q), dd))
 
+            if cached_set is None and REORDER_W in ("signs", "signsm") and op in ("swap", "two_opt") and moves:
+                # TEST MODE (experiments/TEST_RUNBOOK.md): the exchange value is replaced by a
+                # sign tier of the pair of targets exchanged: 2 when the earlier target has a
+                # positive slope and the later a negative one, 0 for the opposite signs, 1
+                # otherwise. "signsm" scores a 2-opt by the majority of its nested pairs.
+                # The draw is uniform within the highest tier still in the set.
+                GAMs = self._nd.GAM if self.fast_sets else {n: float(G.nodes[n].get("info_slope", 0.0)) for n in G.nodes}
+
+                def _tier(m):
+                    _, p_, q_ = m[1]
+                    if op == "two_opt" and REORDER_W == "signsm":
+                        good = bad = 0; i_, j_ = p_, q_
+                        while i_ < j_:
+                            gi, gj = GAMs[route[i_]], GAMs[route[j_]]
+                            if gi > 0 and gj < 0: good += 1
+                            elif gi < 0 and gj > 0: bad += 1
+                            i_ += 1; j_ -= 1
+                        return 2.0 if good > bad else (0.0 if bad > good else 1.0)
+                    gp, gq = GAMs[route[p_]], GAMs[route[q_]]
+                    return 2.0 if (gp > 0 and gq < 0) else (0.0 if (gp < 0 and gq > 0) else 1.0)
+                random.shuffle(moves)                      # uniform order within a tier
+                moves = [(_tier(m), m[1], m[2]) for m in moves]
             if cached_set is None and self.reorder_rcl and op in ("swap", "two_opt") \
                     and len(moves) > self.reorder_rcl:
                 # restricted candidate list: only the L_r reorderings of largest exchange
@@ -2123,7 +2145,9 @@ class TimedILS:
                 # exchange value is zero, and without the tie-break nlargest would keep
                 # the first L_r pairs in construction order, all sharing position p = 1.
                 self.counters["reorder_trimmed"] += len(moves) - self.reorder_rcl
-                moves = heapq.nlargest(self.reorder_rcl, moves, key=lambda m: (m[0], -m[2]))
+                moves = heapq.nlargest(self.reorder_rcl, moves,
+                                       key=(lambda m: m[0]) if REORDER_W in ("signs", "signsm")
+                                       else (lambda m: (m[0], -m[2])))
             if cached_set is None:
                 random.shuffle(moves)          # break ties between equal weights
                 self._msets[op] = moves
@@ -2148,6 +2172,11 @@ class TimedILS:
                         wts = None; idx = random.randrange(len(moves))
                     else:
                         idx = random.choices(range(len(moves)), weights=wts, k=1)[0]
+                elif REORDER_W in ("signs", "signsm") and op in ("swap", "two_opt"):
+                    # sign tiers: uniform among the moves of the highest tier still in the set
+                    top = max(m[0] for m in moves)
+                    wts = None
+                    idx = random.choice([i for i, m in enumerate(moves) if m[0] == top])
                 elif REORDER_W == "best" and op in ("swap", "two_opt"):
                     # take the highest-scoring reordering: no shift, no epsilon.
                     # The score already ranks accepted moves above the median, so
