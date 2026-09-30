@@ -72,11 +72,11 @@ def chained_sets(route, F, B, depot):
     return FR, BR
 
 
-def delta_insert(nd, ext, k, amin, amax, p, u, lo, hi):
+def delta_insert(nd, ext, k, amin, amax, p, u, lo, hi, best=False):
     """Route-wide change of the midpoint estimate for u inserted at p with
     realized slot window [lo, hi]; propagation stops where the bound is unchanged."""
     EW, LW, GAM, DM, inv_v = nd.EW, nd.LW, nd.GAM, nd.DM, nd.inv_v
-    dI = nd.I0[u] + GAM[u] * (0.5 * (lo + hi) - EW[u])
+    dI = nd.I0[u] + GAM[u] * (((lo if GAM[u] < 0 else hi) if best else 0.5 * (lo + hi)) - EW[u])
     prev, pn = lo, u
     for q in range(p, k + 1):
         nq = ext[q]
@@ -84,7 +84,7 @@ def delta_insert(nd, ext, k, amin, amax, p, u, lo, hi):
         if a < EW[nq]: a = EW[nq]
         if a <= amin[q] + 1e-9:
             break
-        dI += GAM[nq] * 0.5 * (a - amin[q])
+        dI += GAM[nq] * (((a - amin[q]) if GAM[nq] < 0 else 0.0) if best else 0.5 * (a - amin[q]))
         prev, pn = a, nq
     nxt, nn = hi, u
     for q in range(p - 1, 0, -1):
@@ -93,17 +93,17 @@ def delta_insert(nd, ext, k, amin, amax, p, u, lo, hi):
         if b > LW[nq]: b = LW[nq]
         if b >= amax[q] - 1e-9:
             break
-        dI += GAM[nq] * 0.5 * (b - amax[q])
+        dI += GAM[nq] * (((b - amax[q]) if GAM[nq] >= 0 else 0.0) if best else 0.5 * (b - amax[q]))
         nxt, nn = b, nq
     return dI
 
 
-def delta_replace(nd, ext, k, amin, amax, p, u, lo, hi):
+def delta_replace(nd, ext, k, amin, amax, p, u, lo, hi, best=False):
     """Route-wide change of the midpoint estimate for u in place of r_p."""
     EW, LW, GAM, DM, inv_v = nd.EW, nd.LW, nd.GAM, nd.DM, nd.inv_v
     v = ext[p]
-    dI = (nd.I0[u] + GAM[u] * (0.5 * (lo + hi) - EW[u])
-          - (nd.I0[v] + GAM[v] * (0.5 * (amin[p] + amax[p]) - EW[v])))
+    dI = (nd.I0[u] + GAM[u] * (((lo if GAM[u] < 0 else hi) if best else 0.5 * (lo + hi)) - EW[u])
+          - (nd.I0[v] + GAM[v] * (((amin[p] if GAM[v] < 0 else amax[p]) if best else 0.5 * (amin[p] + amax[p])) - EW[v])))
     prev, pn = lo, u
     for q in range(p + 1, k + 1):
         nq = ext[q]
@@ -111,7 +111,7 @@ def delta_replace(nd, ext, k, amin, amax, p, u, lo, hi):
         if a < EW[nq]: a = EW[nq]
         if abs(a - amin[q]) <= 1e-9:
             break
-        dI += GAM[nq] * 0.5 * (a - amin[q])
+        dI += GAM[nq] * (((a - amin[q]) if GAM[nq] < 0 else 0.0) if best else 0.5 * (a - amin[q]))
         prev, pn = a, nq
     nxt, nn = hi, u
     for q in range(p - 1, 0, -1):
@@ -120,12 +120,12 @@ def delta_replace(nd, ext, k, amin, amax, p, u, lo, hi):
         if b > LW[nq]: b = LW[nq]
         if abs(b - amax[q]) <= 1e-9:
             break
-        dI += GAM[nq] * 0.5 * (b - amax[q])
+        dI += GAM[nq] * (((b - amax[q]) if GAM[nq] >= 0 else 0.0) if best else 0.5 * (b - amax[q]))
         nxt, nn = b, nq
     return dI
 
 
-def build_add(nd, route, Nprime, amin, amax, d_room, counters=None):
+def build_add(nd, route, Nprime, amin, amax, d_room, counters=None, point="mid"):
     """[(score, ("add", u, p), dd)], score = dI / dd (dI if dd ~ 0), the weight of
     run_start_paper with ILS_INSERT_RATIO=1 and route-wide information change."""
     depot, EW, LW, DM, inv_v = nd.depot, nd.EW, nd.LW, nd.DM, nd.inv_v
@@ -152,12 +152,12 @@ def build_add(nd, route, Nprime, amin, amax, d_room, counters=None):
             if lo > hi:
                 if counters is not None: counters["label_excluded"] += 1
                 continue
-            dI = delta_insert(nd, ext, k, amin, amax, p, u, lo, hi)
+            dI = delta_insert(nd, ext, k, amin, amax, p, u, lo, hi, best=(point == "best"))
             moves.append((dI / dd if dd > 1e-9 else dI, ("add", u, p), dd))
     return moves
 
 
-def build_replace(nd, route, Nprime, amin, amax, d_room, counters=None):
+def build_replace(nd, route, Nprime, amin, amax, d_room, counters=None, point="mid"):
     """[(score, ("replace", u, p), dd)], score = dI / dd_w (dI if dd_w ~ 0) with
     dd_w the detour of u into the gap left by r_p and dd the change of the route
     length, as in run_start_paper."""
@@ -188,7 +188,7 @@ def build_replace(nd, route, Nprime, amin, amax, d_room, counters=None):
             if lo > hi:
                 if counters is not None: counters["label_excluded"] += 1
                 continue
-            dI = delta_replace(nd, ext, k, amin, amax, p, u, lo, hi)
+            dI = delta_replace(nd, ext, k, amin, amax, p, u, lo, hi, best=(point == "best"))
             moves.append((dI / dd_w if dd_w > 1e-9 else dI, ("replace", u, p), dd))
     return moves
 
@@ -204,10 +204,9 @@ def build_two_opt(nd, route, amin, amax, d_room, arr=None, counters=None, mode=N
     k = len(route) - 1
     if k < 2:
         return []
-    if mode in ("midall", "boundall", "route"):
-        return build_two_opt_midall(nd, route, amin, amax, d_room, counters,
-                                    read=("bound" if mode == "boundall" else "mid"),
-                                    route_wide=(mode == "route"))
+    if mode in ("midall", "boundall", "route", "routebest"):
+        return build_two_opt_midall(nd, route, amin, amax, d_room, counters, route_wide=(mode in ("route", "routebest")),
+                                    point=("best" if mode in ("boundall", "routebest") else "mid"))
     ext = route + [depot]
     A = amin if arr is None else arr
     S = [[0.0] * (k + 2) for _ in range(k + 2)]
@@ -271,10 +270,9 @@ def build_swap(nd, route, amin, amax, d_room, arr=None, counters=None, mode=None
     k = len(route) - 1
     if k < 2:
         return []
-    if mode in ("midall", "boundall", "route"):
-        return build_swap_midall(nd, route, amin, amax, d_room, counters,
-                                 read=("bound" if mode == "boundall" else "mid"),
-                                 route_wide=(mode == "route"))
+    if mode in ("midall", "boundall", "route", "routebest"):
+        return build_swap_midall(nd, route, amin, amax, d_room, counters, route_wide=(mode in ("route", "routebest")),
+                                 point=("best" if mode in ("boundall", "routebest") else "mid"))
     ext = route + [depot]
     A = amin if arr is None else arr
     moves = []
@@ -353,19 +351,6 @@ def build_swap(nd, route, amin, amax, d_room, arr=None, counters=None, mode=None
 # per target, so a feasible pair costs O(q - p) instead of O(1).
 # ---------------------------------------------------------------------------
 
-def _readings(nd, ext, amin, amax, read):
-    """The point of its realized window each target is read at.  read="mid" is the
-    midpoint of (55); read="bound" is the end that maximises the reward, which for
-    I_i(a) = gamma_i (a - e_i) + I_0i is the upper bound when gamma_i > 0 and the
-    lower one when gamma_i < 0.  Returns the reading before the move, position by
-    position, and, for "bound", the flag saying which end to read after it."""
-    GAM = nd.GAM
-    if read == "bound":
-        up = [GAM[ext[j]] > 0.0 for j in range(len(ext))]
-        return [(amax[j] if up[j] else amin[j]) for j in range(len(ext))], up
-    return [0.5 * (a + b) for a, b in zip(amin, amax)], None
-
-
 def _forward_tables(nd, route):
     """Summaries of every forward segment (r_j, ..., r_i), 1 <= j <= i <= k, by the
     append rule: Df = travel time at v_max, Wf = earliest arrival at r_i forced by the
@@ -391,19 +376,18 @@ def _forward_tables(nd, route):
     return Df, Wf, Lf
 
 
-def build_swap_midall(nd, route, amin, amax, d_room, counters=None, read="mid", route_wide=False):
+def build_swap_midall(nd, route, amin, amax, d_room, counters=None, route_wide=False, point="mid"):
     """Same feasible set as build_swap; score = sum over the reordered part
-    (r_q, r_{p+1}, ..., r_{q-1}, r_p) of gamma times the change of the point each
-    target is read at.  read="mid" takes the midpoint of the realized window,
-    read="bound" ("boundall") the end that maximises the reward: the upper bound
-    for a positive slope, the lower for a negative one."""
+    (r_q, r_{p+1}, ..., r_{q-1}, r_p) of gamma times (new midpoint - old midpoint)."""
     depot, EW, LW, GAM, DM, inv_v = nd.depot, nd.EW, nd.LW, nd.GAM, nd.DM, nd.inv_v
     k = len(route) - 1
     if k < 2:
         return []
     ext = route + [depot]
     Df, Wf, Lf = _forward_tables(nd, route)
-    mid_old, up = _readings(nd, ext, amin, amax, read)
+    best = (point == "best")   # routebest: the end of each realized window that gives the most information
+    mid_old = ([(a if nd.GAM[ext[j]] < 0 else b) for j, (a, b) in enumerate(zip(amin, amax))] if best
+               else [0.5 * (a + b) for a, b in zip(amin, amax)])
     moves = []
     for p in range(1, k):
         x = ext[p]; pre = ext[p - 1]; gx = GAM[x]
@@ -458,33 +442,25 @@ def build_swap_midall(nd, route, amin, amax, d_room, counters=None, read="mid", 
                     if lo < Wf[p + 1][j]: lo = Wf[p + 1][j]
                     hi = amax_u - tau_e - Df[j][q - 1]
                     if hi > Lf[j][q - 1]: hi = Lf[j][q - 1]
-                    new_j = (hi if up[j] else lo) if up is not None else 0.5 * (lo + hi)
-                    inner += GAM[ext[j]] * (new_j - mid_old[j])
+                    inner += GAM[ext[j]] * (((lo if GAM[ext[j]] < 0 else hi) if best else 0.5 * (lo + hi)) - mid_old[j])
             if amax_v > LW[xq]: amax_v = LW[xq]
-            if up is not None:
-                new_p = amax_u if up[p] else ap
-                new_q = amax_v if up[q] else aq
-            else:
-                new_p, new_q = 0.5 * (ap + amax_u), 0.5 * (aq + amax_v)
-            score = (gx * (new_p - mid_old[p])
-                     + GAM[xq] * (new_q - mid_old[q]) + inner)
+            score = (gx * (((ap if gx < 0 else amax_u) if best else 0.5 * (ap + amax_u)) - mid_old[p])
+                     + GAM[xq] * (((aq if GAM[xq] < 0 else amax_v) if best else 0.5 * (aq + amax_v)) - mid_old[q]) + inner)
             if route_wide:
                 # the insertion's weight (Section 4.3, eq. cand-weight) and the insertion code's
                 # fallback: the route-wide change over the length change when the move lengthens
                 # the route, the change itself otherwise
-                score += _outside(nd, ext, k, amin, amax, p, q, xq, amax_v, x, ap)
+                score += _outside(nd, ext, k, amin, amax, p, q, xq, amax_v, x, ap, best)
                 score = score / dd if dd > 1e-9 else score
             moves.append((score, ("swap", p, q), dd))
     return moves
 
 
-def build_two_opt_midall(nd, route, amin, amax, d_room, counters=None, read="mid", route_wide=False):
+def build_two_opt_midall(nd, route, amin, amax, d_room, counters=None, route_wide=False, point="mid"):
     """Same feasible set as build_two_opt; score = sum over the reversed segment
-    (r_q, ..., r_p) of gamma times the change of the point each target is read at,
-    the midpoint of its realized window for read="mid" and the reward-maximising end
-    for read="bound" ("boundall").  The tables of the reversed segments are filled
-    with p descending, so the inner segments (r_q, ..., r_j), j > p, exist when the
-    pair (p, q) is scored."""
+    (r_q, ..., r_p) of gamma times (new midpoint - old midpoint).  The tables of the
+    reversed segments are filled with p descending, so the inner segments
+    (r_q, ..., r_j), j > p, exist when the pair (p, q) is scored."""
     depot, EW, LW, GAM, DM, inv_v = nd.depot, nd.EW, nd.LW, nd.GAM, nd.DM, nd.inv_v
     k = len(route) - 1
     if k < 2:
@@ -493,7 +469,9 @@ def build_two_opt_midall(nd, route, amin, amax, d_room, counters=None, read="mid
     Dt = [[0.0] * (k + 2) for _ in range(k + 2)]
     Wt = [[-INF] * (k + 2) for _ in range(k + 2)]
     Lt = [[-INF] * (k + 2) for _ in range(k + 2)]
-    mid_old, up = _readings(nd, ext, amin, amax, read)
+    best = (point == "best")   # routebest: the end of each realized window that gives the most information
+    mid_old = ([(a if nd.GAM[ext[j]] < 0 else b) for j, (a, b) in enumerate(zip(amin, amax))] if best
+               else [0.5 * (a + b) for a, b in zip(amin, amax)])
     moves = []
     for p in range(k - 1, 0, -1):
         x = ext[p]; pre = ext[p - 1]; gx = GAM[x]
@@ -537,26 +515,20 @@ def build_two_opt_midall(nd, route, amin, amax, d_room, counters=None, read="mid
                 if lo < Wt[j][q]: lo = Wt[j][q]
                 hi = amax_u - Dt[p][j]
                 if hi > Lt[p][j]: hi = Lt[p][j]
-                new_j = (hi if up[j] else lo) if up is not None else 0.5 * (lo + hi)
-                inner += GAM[ext[j]] * (new_j - mid_old[j])
-            if up is not None:
-                new_p = amax_u if up[p] else ap
-                new_q = amax_v if up[q] else aq
-            else:
-                new_p, new_q = 0.5 * (ap + amax_u), 0.5 * (aq + amax_v)
-            score = (gx * (new_p - mid_old[p])
-                     + GAM[xq] * (new_q - mid_old[q]) + inner)
+                inner += GAM[ext[j]] * (((lo if GAM[ext[j]] < 0 else hi) if best else 0.5 * (lo + hi)) - mid_old[j])
+            score = (gx * (((ap if gx < 0 else amax_u) if best else 0.5 * (ap + amax_u)) - mid_old[p])
+                     + GAM[xq] * (((aq if GAM[xq] < 0 else amax_v) if best else 0.5 * (aq + amax_v)) - mid_old[q]) + inner)
             if route_wide:
                 # the insertion's weight (Section 4.3, eq. cand-weight) and the insertion code's
                 # fallback: the route-wide change over the length change when the move lengthens
                 # the route, the change itself otherwise
-                score += _outside(nd, ext, k, amin, amax, p, q, xq, amax_v, x, ap)
+                score += _outside(nd, ext, k, amin, amax, p, q, xq, amax_v, x, ap, best)
                 score = score / dd if dd > 1e-9 else score
             moves.append((score, ("two_opt", p, q), dd))
     return moves
 
 
-def _outside(nd, ext, k, amin, amax, p, q, first, amax_first, last, amin_last):
+def _outside(nd, ext, k, amin, amax, p, q, first, amax_first, last, amin_last, best=False):
     """TEST MODE "route": the change of the midpoint estimate of the targets outside the
     reordered part. Before it (positions p-1 .. 1) only the latest arrivals move, after it
     (positions q+1 .. k) only the earliest ones; each shift is propagated with the
@@ -571,7 +543,7 @@ def _outside(nd, ext, k, amin, amax, p, q, first, amax_first, last, amin_last):
         hi = LW[rj] if LW[rj] < nxt else nxt
         if hi == amax[j]:
             break
-        tot += GAM[rj] * 0.5 * (hi - amax[j])
+        tot += GAM[rj] * (((hi - amax[j]) if GAM[rj] >= 0 else 0.0) if best else 0.5 * (hi - amax[j]))
         nxt_node = rj
     prv_node, lo = last, amin_last
     for j in range(q + 1, k + 1):
@@ -579,6 +551,6 @@ def _outside(nd, ext, k, amin, amax, p, q, first, amax_first, last, amin_last):
         lo = max(EW[rj], lo + DM[prv_node][rj] * inv_v)
         if lo == amin[j]:
             break
-        tot += GAM[rj] * 0.5 * (lo - amin[j])
+        tot += GAM[rj] * (((lo - amin[j]) if GAM[rj] < 0 else 0.0) if best else 0.5 * (lo - amin[j]))
         prv_node = rj
     return tot

@@ -635,7 +635,7 @@ class TimedILS:
                 self.DM[_a][_b] = float(_dd); self.DM[_b][_a] = float(_dd)
         self._nd = (_fs.NodeData(self.graph, self.depot, self.T_max, self.v_max, self.DM,
                                  self.F_leg, self.B_leg) if hasattr(self, 'F_leg') else None)
-        if self.fast_sets and not (INSERT_RATIO and REORDER_W in ("exch", "signs", "signsm", "mid", "midall", "boundall", "route", "route")):
+        if self.fast_sets and not (INSERT_RATIO and REORDER_W in ("exch", "signs", "signsm", "mid", "midall", "boundall", "route", "routebest")):
             raise SystemExit("--fast-sets builds the weights of ILS_INSERT_RATIO=1 ILS_REORDER_W=exch")
 
         # Energy per meter is E_arc / L = P(v)/v with v = L/t. Since L >= d_ij,
@@ -1957,6 +1957,7 @@ class TimedILS:
                 self.counters["sets_built"] += 1
             f, T_R, E_R, cap_R, eps, beta, d_room, info0, amin0, amax0 = self._mctx
             ext = route + [depot]                                # ext[p] = r_p, ext[k+1] = depot
+            _t_set = time.perf_counter()                        # set-construction timer
             cached_set = self._msets.get(op)
             moves = [] if cached_set is None else cached_set     # (score, key, dd)
 
@@ -1972,15 +1973,15 @@ class TimedILS:
             elif self.fast_sets:
                 # the same sets and weights as the four blocks below, in O(1) per candidate
                 if op == "add":
-                    moves = _fs.build_add(self._nd, route, Nprime, amin0, amax0, d_room, self.counters)
+                    moves = _fs.build_add(self._nd, route, Nprime, amin0, amax0, d_room, self.counters, point=("best" if REORDER_W == "routebest" else "mid"))
                 elif op == "replace":
-                    moves = _fs.build_replace(self._nd, route, Nprime, amin0, amax0, d_room, self.counters)
+                    moves = _fs.build_replace(self._nd, route, Nprime, amin0, amax0, d_room, self.counters, point=("best" if REORDER_W == "routebest" else "mid"))
                 elif op == "swap":
                     moves = _fs.build_swap(self._nd, route, amin0, amax0, d_room, None, self.counters,
-                                           mode=(REORDER_W if REORDER_W in ("mid", "midall", "boundall", "route", "route") else None))
+                                           mode=(REORDER_W if REORDER_W in ("mid", "midall", "boundall", "route", "routebest") else None))
                 else:
                     moves = _fs.build_two_opt(self._nd, route, amin0, amax0, d_room, None, self.counters,
-                                              mode=(REORDER_W if REORDER_W in ("mid", "midall", "boundall", "route", "route") else None))
+                                              mode=(REORDER_W if REORDER_W in ("mid", "midall", "boundall", "route", "routebest") else None))
             elif op == "add":
                 FR, BR = chained_sets(route, F, B, depot)
                 for p in range(1, k + 2):
@@ -2153,6 +2154,9 @@ class TimedILS:
             if cached_set is None:
                 random.shuffle(moves)          # break ties between equal weights
                 self._msets[op] = moves
+                _dt = int((time.perf_counter() - _t_set) * 1e6)   # built, weighted and trimmed
+                self.counters["sets_us"] += _dt
+                self.counters[f"sets_us_{op}"] += _dt
                 if SCORE_DIAG and moves:
                     self.counters[f"sneg_{op}"] += sum(1 for m in moves if m[0] < 0.0)
                     self.counters[f"szero_{op}"] += sum(1 for m in moves if m[0] == 0.0)
@@ -2167,7 +2171,7 @@ class TimedILS:
                 # positive scale over the set being drawn from before the roulette.
                 # The shift leaves the least attractive move a small probability.
                 if (INSERT_RATIO and op in ("add", "replace")) or \
-                   (REORDER_W in ("dsave", "route") and op in ("swap", "two_opt")):
+                   (REORDER_W in ("dsave", "route", "routebest") and op in ("swap", "two_opt")):
                     # weights are already non-negative: plain roulette, ratios kept
                     wts = [m[0] if m[0] > 0.0 else 0.0 for m in moves]
                     if sum(wts) <= 0.0:
