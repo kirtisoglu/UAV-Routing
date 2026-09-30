@@ -50,17 +50,21 @@ A third variant keeps the exchange value's form but changes what it reads:
   feasible Swap and 2-opt of the best routes of nine instances (2352 moves, largest
   difference 4e-12), with feasible sets identical to the default builders'. Building
   the Swap and 2-opt sets of those best routes takes C104 (100) 4.9 against 11.4 ms, PR15 (240) 6.8 against 7.2 ms, PR10 (288) 3.3 against 3.4 ms (default against `midall`).
-* `route`: the insertion's weight applied to reorderings. The score is the change of
-  the midpoint estimate over the whole new route, the route-wide information change of
-  Section 4.3 (label `eq:info-change`): the targets of the reordered part as in
-  `midall`, plus the targets before it, whose latest arrivals the new legs move, and
-  the targets after it, whose earliest arrivals they move. The shifts outside the part
-  are propagated as for an insertion and stop where a window end absorbs them. It is
-  not divided by the length change, which can be zero or negative for a reordering;
-  the roulette shift and L_r apply as in the other modes. Checked against a full
-  recomputation of the arrival chain on every feasible Swap and 2-opt of the best
-  routes of nine instances (2352 moves, largest difference 4e-12). Building the Swap
-  and 2-opt sets of those routes takes C104 (100) 5.6 against 20.6 ms, PR15 (240) 6.6 against 7.9 ms, PR10 (288) 3.1 against 3.7 ms (default against `route`).
+* `route`: the insertion's weight, applied to reorderings exactly as to Insert and
+  Replace. The information part is the route-wide change of the estimate of Section
+  4.3 (labels `eq:info-mid` and `eq:info-change`) on the reordered route: every target
+  of the new route, each read at the midpoint of its realized window, which is how the
+  insertion weight reads it. The weight is that change divided by the length change
+  when the move lengthens the route by more than 1e-9 m, and the change itself
+  otherwise, clamped at zero and drawn by the plain roulette, uniform when no move has
+  a positive weight: the insertion code's rule, fallback included. The fallback matters
+  here: 7 percent of the feasible reorderings on the best routes of the reference run
+  do not lengthen the route, and one that also gains information gets its raw gain as
+  weight, which on the meter scale dwarfs every quotient, so such moves are drawn
+  first. L_r still trims the Swap and 2-opt sets, now by this weight. Checked against a
+  full recomputation of the arrival chain on every feasible Swap and 2-opt of those
+  routes (2352 moves, largest relative difference 3e-13). Building the sets takes
+  C104 (100) 4.7 against 20.1 ms, PR15 (240) 6.5 against 7.5 ms, PR10 (288) 3.0 against 3.7 ms (default against `route`).
 
 The driver knob is `DESIGN_REORDER_W` (default `exch`, the paper); the value is
 recorded in the `extra` column of every row as `reorder=signs`, `reorder=signsm`,
@@ -108,8 +112,8 @@ noise reference. Then three sentences: whether the sign rule is within noise of 
 exchange value on the objective, what it does to the run time and the shake count,
 whether `signs` or `signsm` is the better 2-opt rule, whether `mid` moves the
 objective against the paper's reading in either direction, and whether `midall` adds
-anything to `mid` beyond its cost in run time, and whether `route` differs from
-`midall`, which says whether the retiming outside the reordered part is signal or noise. No recommendation beyond
+anything to `mid` beyond its cost in run time, and whether `route`, the insertion's rule
+as a whole, does better than the paper's exchange value. No recommendation beyond
 that; the author decides.
 
 ## What must not happen

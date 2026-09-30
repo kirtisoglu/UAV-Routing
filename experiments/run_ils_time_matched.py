@@ -2167,7 +2167,7 @@ class TimedILS:
                 # positive scale over the set being drawn from before the roulette.
                 # The shift leaves the least attractive move a small probability.
                 if (INSERT_RATIO and op in ("add", "replace")) or \
-                   (REORDER_W == "dsave" and op in ("swap", "two_opt")):
+                   (REORDER_W in ("dsave", "route") and op in ("swap", "two_opt")):
                     # weights are already non-negative: plain roulette, ratios kept
                     wts = [m[0] if m[0] > 0.0 else 0.0 for m in moves]
                     if sum(wts) <= 0.0:

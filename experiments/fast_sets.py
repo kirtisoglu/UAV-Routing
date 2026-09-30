@@ -443,7 +443,11 @@ def build_swap_midall(nd, route, amin, amax, d_room, counters=None, route_wide=F
             score = (gx * (0.5 * (ap + amax_u) - mid_old[p])
                      + GAM[xq] * (0.5 * (aq + amax_v) - mid_old[q]) + inner)
             if route_wide:
+                # the insertion's weight (Section 4.3, eq. cand-weight) and the insertion code's
+                # fallback: the route-wide change over the length change when the move lengthens
+                # the route, the change itself otherwise
                 score += _outside(nd, ext, k, amin, amax, p, q, xq, amax_v, x, ap)
+                score = score / dd if dd > 1e-9 else score
             moves.append((score, ("swap", p, q), dd))
     return moves
 
@@ -509,7 +513,11 @@ def build_two_opt_midall(nd, route, amin, amax, d_room, counters=None, route_wid
             score = (gx * (0.5 * (ap + amax_u) - mid_old[p])
                      + GAM[xq] * (0.5 * (aq + amax_v) - mid_old[q]) + inner)
             if route_wide:
+                # the insertion's weight (Section 4.3, eq. cand-weight) and the insertion code's
+                # fallback: the route-wide change over the length change when the move lengthens
+                # the route, the change itself otherwise
                 score += _outside(nd, ext, k, amin, amax, p, q, xq, amax_v, x, ap)
+                score = score / dd if dd > 1e-9 else score
             moves.append((score, ("two_opt", p, q), dd))
     return moves
 
