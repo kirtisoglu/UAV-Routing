@@ -31,6 +31,7 @@
 \newcommand{\Rref}{R^{\mathrm{ref}}}     % reference the shake enumerates
 \newcommand{\Rinit}{R^{\mathrm{init}}}   % route from the construction heuristic
 \newcommand{\Rshk}{R^{\mathrm{shk}}}     % route returned by the shake step
+\newcommand{\tbd}{\textbf{[TBD]}}   % a number the rerun campaign fills (experiments/RERUN_PLAN.md); delete when none is left
 
 % Let long aligned model displays break across pages instead of being
 % shifted whole to the next page, as the CAS submission class does.
@@ -739,9 +740,9 @@ select an operator $o$ uniformly at random among Insert, Replace, Swap and 2-opt
 
 An Insert or a Replace move is accepted only if it raises the value of the route, so a move whose value cannot exceed $f(\Rcurr)$ need not be solved at all. Every visit contributes at most the upper end $I^+$ of its information interval~\eqref{eq:info-bounds}, so the value $\bar{f}(\Rcand)$ of~\eqref{eq:info-bound} bounds $f(\Rcand)$ from above: it grants every visit its best arrival at once, which the chain forbids, and it ignores the energy budget. It is read from the arrival bounds~\eqref{eq:leg-chain} in one pass. When $\bar{f}(\Rcand) \le f(\Rcurr)$ the move is discarded and the iteration passes without a subproblem. Since $f(\Rcurr) \le \bar{f}(\Rcurr)$, a move discarded in this way has $\Delta I_m \le 0$ and belongs to the third or the fourth tier, so the bound never discards a move of the first two. A reordering is exempt, because the capacity clause of Section~\ref{subsec:ils} can accept one whose value is not larger.
 
-The route $\Rcand$ returned by Algorithm~\ref{alg:localmove} is evaluated by the SOCP subproblem. If the subproblem is infeasible, which happens when the energy budget cannot accommodate the new legs at any speed, the move is rejected and the search continues from $\Rcurr$, and the same holds when no move is drawn. The two conditions leave the subproblem little to reject: on the runs of Section~\ref{subsec:matheuristic-vs-exact} it returns an infeasible verdict on at most two routes per run.
-% TEXT PENDING (30 September 2026): recount from the column socp_numeric_infeasible of the new
-% design_new.csv and design_new_rep2.csv (RERUN_PLAN.md, prose item on Section 4.3).
+The route $\Rcand$ returned by Algorithm~\ref{alg:localmove} is evaluated by the SOCP subproblem. If the subproblem is infeasible, which happens when the energy budget cannot accommodate the new legs at any speed, the move is rejected and the search continues from $\Rcurr$, and the same holds when no move is drawn. The two conditions leave the subproblem little to reject: on the runs of Section~\ref{subsec:matheuristic-vs-exact} it returns an infeasible verdict on at most \tbd{} routes per run.
+% TEXT PENDING (30 September 2026): \tbd is the largest socp_numeric_infeasible of the new
+% design_new.csv and design_new_rep2.csv (RERUN_PLAN.md, prose item 1).
  Whether a feasible route replaces $\Rcurr$ is decided by the acceptance criterion of the iterated local search, to which we now turn.
 
 % ============================================================
@@ -869,7 +870,10 @@ PR10 (288)      & 289 & 1000 & 135.1 & 0.14 \\
 
 The regimes load the optimizer differently. Within the co-monotone block, R-type instances expose the time-window tightness directly. A width of $\bar\Delta = 10$~Solomon units leaves little arrival-time slack, but uniform-random positions and a short mission horizon $T_{\max} = 230$ keep the feasible tour set small and the branch-and-bound tree narrow. C-type instances differ in both respects. Windows are six times wider ($\bar\Delta \approx 60$), but target clustering means many feasible permutations have nearly identical spatial cost, and the mission horizon is five times longer, $T_{\max}$ between $1\,236$ and $1\,351$, so the combinatorial space the MISOCP has to explore is far larger. Section~\ref{subsec:scalability} shows that this asymmetry, rather than instance size alone, determines whether the exact solver closes. The inverted and overlapping blocks change the problem in a different direction. The windows no longer dictate the visiting order, tours grow long because wide windows admit many targets, and the reordering operators of Section~\ref{subsec:operators} become genuine search moves rather than near-inert ones. The Cordeau block finally probes scale, with up to $288$ candidate targets under windows that barely constrain the order.
 
-The regimes also decide how much work the reordering operators of Section~\ref{subsec:operators} can do. A Swap or a 2-opt move is feasible only if every pair of targets it reorders satisfies the leg condition~\eqref{eq:leg-cond} in the reversed direction, so on the co-monotone instances, where openings and closings rise together, most reorderings are excluded before any subproblem is solved. On the best routes of Table~\ref{tab:matheuristic-vs-exact}, the share of position pairs whose Swap or 2-opt keeps every window reachable is $0.2$ to $2.6\%$ on the co-monotone block and $14$ to $23\%$ on the inverted block. On the Cordeau block the windows leave the order open, and over a run the reordering sets offer far more pairs than the list of Section~\ref{subsec:proposal} admits, but the best routes pack up to $108$ targets into the horizon and leave under one percent of their pairs feasible at the end. Near-inertness is therefore a property of the window structure and of the slack a route keeps, not of the operators.
+The regimes also decide how much work the reordering operators of Section~\ref{subsec:operators} can do. A Swap or a 2-opt move is feasible only if every pair of targets it reorders satisfies the leg condition~\eqref{eq:leg-cond} in the reversed direction, so on the co-monotone instances, where openings and closings rise together, most reorderings are excluded before any subproblem is solved. On the best routes of Table~\ref{tab:matheuristic-vs-exact}, the share of position pairs whose Swap or 2-opt keeps every window reachable is \tbd{} to \tbd{}\,\% on the co-monotone block and \tbd{} to \tbd{}\,\% on the inverted block. On the Cordeau block the windows leave the order open, and over a run the reordering sets offer far more pairs than the list of Section~\ref{subsec:proposal} admits, but the best routes pack up to \tbd{} targets into the horizon and leave \tbd{}\,\% of their pairs feasible at the end.%
+% TEXT PENDING (30 September 2026): every \tbd of this paragraph from paper_runs/reorder_share.py on the
+% new design_new.csv (RERUN_PLAN.md, prose item 5).
+ Near-inertness is therefore a property of the window structure and of the slack a route keeps, not of the operators.
 
 \subsection{Information decay and growth model}\label{subsec:info-model}
 
@@ -1130,24 +1134,24 @@ Instance & $\eta$ & Obj & Tour & Obj & Tour & Gain (\%) \\
 \toprule
 Instance & R1 & R2 & R3 (mean / best) & R4 \\
 \midrule
-R101 (50)       & \textbf{11\,921.13} & \textbf{11\,921.13} & \textbf{11\,921.13} / 11\,921.13 & 11\,902.02 \\
-R101 (100)      & \textbf{22\,884.44} & \textbf{22\,884.44} & \textbf{22\,884.44} / 22\,884.44 & \textbf{22\,884.44} \\
-R1\_2\_1 (200)  & \textbf{16\,950.19} & \textbf{16\,950.19} & \textbf{16\,950.19} / 16\,950.19 & 16\,586.35 \\
+R101 (50) & & & & \\
+R101 (100) & & & & \\
+R1\_2\_1 (200) & & & & \\
 \midrule
-C101 (50)       & \textbf{8\,591.92} & \textbf{8\,591.92} & \textbf{8\,591.92} / 8\,591.92 & \textbf{8\,591.92} \\
-C101 (100)      & \textbf{11\,342.99} & \textbf{11\,342.99} & 11\,314.72 / 11\,327.75 & 11\,324.41 \\
-C1\_2\_1 (200)  & 11\,142.72 & 11\,146.32 & \textbf{11\,147.07} / 11\,185.90 & 11\,146.32 \\
+C101 (50) & & & & \\
+C101 (100) & & & & \\
+C1\_2\_1 (200) & & & & \\
 \midrule
-RC1\_2\_1 (200) & \textbf{17\,973.77} & 17\,425.98 & 17\,723.70 / 17\,947.01 & \textbf{17\,973.77} \\
+RC1\_2\_1 (200) & & & & \\
 \midrule
-R102 (100)      & 28\,904.37 & 28\,748.29 & 29\,913.57 / 30\,501.13 & \textbf{30\,443.78} \\
-R104 (100)      & 38\,210.34 & \textbf{38\,230.58} & 37\,391.95 / 37\,777.10 & 38\,105.79 \\
-C104 (100)      & \textbf{18\,458.91} & 18\,377.04 & 18\,354.05 / 18\,523.55 & 18\,414.60 \\
-RC104 (100)     & \textbf{36\,231.33} & \textbf{36\,231.33} & 34\,584.20 / 35\,804.10 & \textbf{36\,231.33} \\
+R102 (100) & & & & \\
+R104 (100) & & & & \\
+C104 (100) & & & & \\
+RC104 (100) & & & & \\
 \midrule
-PR11 (48)       & 6\,477.84 & 6\,516.92 & \textbf{6\,517.17} / 6\,594.46 & 6\,473.95 \\
-PR15 (240)      & 19\,332.81 & 18\,631.18 & 18\,857.85 / 19\,397.36 & \textbf{19\,639.68} \\
-PR10 (288)      & 16\,817.40 & 16\,814.11 & \textbf{16\,825.32} / 17\,074.09 & 16\,696.23 \\
+PR11 (48) & & & & \\
+PR15 (240) & & & & \\
+PR10 (288) & & & & \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1156,13 +1160,14 @@ PR10 (288)      & 16\,817.40 & 16\,814.11 & \textbf{16\,825.32} / 17\,074.09 & 1
 
 The three parameters of Section~\ref{subsec:ils} are set once for every instance and every experiment that follows: the cap divisor $D = 3$, so that a shake removes at most $c = \lceil k/3 \rceil$ targets, the length $L_r = 20$ of the restricted candidate list of the reordering operators, and the shake limit $S = 100$. Table~\ref{tab:theta} reports the choice of $D$; a smaller $D$ is a larger cap, so it removes more targets per shake and fires the shake less often.
 
-% TEXT PENDING (30 September 2026): the numbers of this paragraph (the longest gap between
-% improvements, the losses at S = 50 and 25, and the L_r = 20 against unrestricted comparison) are
-% from the previous design (exchange value, six-removal look-ahead). Replace them from the runs of
-% experiments/RERUN_PLAN.md (Steps 1 and 8) and delete this comment.
-The shake limit is read from the traces rather than tuned by repeated runs, since every run records the shake count at each improvement of the best found solution. On the fourteen runs of Table~\ref{tab:matheuristic-vs-exact} the longest gap between two successive improvements is $88$ shakes, on PR11~(48), and at most $46$ elsewhere, so $S = 100$ is the smallest round value that cuts no improvement; $S = 50$ would have lost $0.95\%$ on PR11 and saved a third of the shakes, and $S = 25$ up to $6.1\%$ on PR15~(240). The restricted list is a trade. Against the unrestricted reordering sets, $L_r = 20$ raises the objective by $7.78\%$ on PR15~(240), $4.62\%$ on PR10~(288) and $0.99\%$ on C104~(100), where it multiplies the shakes a run affords from $116$, $89$ and $36$ to $691$, $311$ and $381$; on PR11~(48), whose $33$ scheduled targets leave a reordering set that is affordable in full, it costs $0.70\%$, of which the unrestricted set recovers $0.56$ points at $313$ shakes in $43$\,s against $146$ shakes in $17$\,s. On the instances whose windows fix the order the list is not binding.
+% TEXT PENDING (30 September 2026): every \tbd of this paragraph comes from Step 8 of
+% experiments/RERUN_PLAN.md (prose item 3). Say whether S = 100 cuts any improvement and whether
+% L_r = 20 gains or loses against no list, with the shakes and run times of both, then delete this comment.
+The shake limit is read from the traces rather than tuned by repeated runs, since every run records the shake count at each improvement of the best found solution. On the fourteen runs of Table~\ref{tab:matheuristic-vs-exact} the longest gap between two successive improvements is \tbd{} shakes, on \tbd{}, and at most \tbd{} elsewhere; $S = 50$ would have changed the objective by up to \tbd{} and $S = 25$ by up to \tbd{}. The restricted list is a trade. Against the unrestricted reordering sets, $L_r = 20$ changes the objective by \tbd{} to \tbd{} on the six instances where reorderings matter, and the number of shakes a run affords by \tbd{}. On the instances whose windows fix the order the list is not binding.
 
-The solver settings of Section~\ref{subsec:socp} were checked on forty routes per instance drawn from the traces of the runs, each solved in physical units at the solver's most conservative numerical settings and in the scaled units with presolve disabled and the homogeneous barrier. On the routes of R101~(100), R102~(100) and RC104~(100) the two agree on every verdict and on every value within the solver tolerance, in $11$ to $18$ barrier iterations against $56$ to $87$. On the long routes of C104~(100) the scaled model agrees with the taut-string test of Section~\ref{subsec:proposal} on all forty, where the physical model disagrees on one, and on PR15~(240) it declares infeasible one route in forty that the physical model and the taut string both accept. Such a false infeasibility costs one refused move and nothing else, since the search continues from the current route. In the loop a solve takes $0.9$ to $11$\,ms in the scaled units against $7$ to $60$\,ms in physical units on the same machine, measured on the runs of Table~\ref{tab:matheuristic-vs-exact} and on the same runs with the subproblem in physical units.
+The solver settings of Section~\ref{subsec:socp} were checked on forty routes per instance drawn from the traces of the runs, each solved in physical units at the solver's most conservative numerical settings and in the scaled units with presolve disabled and the homogeneous barrier. On the routes of R101~(100), R102~(100) and RC104~(100) the two agree on every verdict and on every value within the solver tolerance, in $11$ to $18$ barrier iterations against $56$ to $87$. On the long routes of C104~(100) the scaled model agrees with the taut-string test of Section~\ref{subsec:proposal} on all forty, where the physical model disagrees on one, and on PR15~(240) it declares infeasible one route in forty that the physical model and the taut string both accept. Such a false infeasibility costs one refused move and nothing else, since the search continues from the current route. In the loop a solve takes \tbd{} to \tbd{}\,ms in the scaled units against \tbd{} to \tbd{}\,ms in physical units on the same machine, measured on the runs of Table~\ref{tab:matheuristic-vs-exact} and on the same runs with the subproblem in physical units.%
+% TEXT PENDING (30 September 2026): the four \tbd are the range of socp_ms in design_new.csv and in
+% design_new_physical.csv (RERUN_PLAN.md, Step 8 and prose item 3).
 
 \begin{table}[H]
 \centering\small
@@ -1174,20 +1179,20 @@ The solver settings of Section~\ref{subsec:socp} were checked on forty routes pe
 \cmidrule(lr){2-5}\cmidrule(lr){6-9}\cmidrule(lr){10-13}
 Instance & Obj & Shakes & $t_{\mathrm{best}}$ & Run & Obj & Shakes & $t_{\mathrm{best}}$ & Run & Obj & Shakes & $t_{\mathrm{best}}$ & Run \\
 \midrule
-R101 (50)       & \textbf{11\,902.02} & 100 & 0 & 2 & \textbf{11\,902.02} & 100 & 0 & 2 & \textbf{11\,902.02} & 100 & 0 & 1 \\
-R101 (100)      & \textbf{22\,884.44} & 100 & 0 & 4 & \textbf{22\,884.44} & 100 & 0 & 3 & \textbf{22\,884.44} & 100 & 0 & 3 \\
-R1\_2\_1 (200)  & \textbf{16\,586.35} & 167 & 9 & 18 & 16\,367.83 & 310 & 16 & 23 & 16\,401.19 & 131 & 4 & 9 \\
-C101 (50)       & \textbf{8\,591.92} & 101 & 2 & 34 & \textbf{8\,591.92} & 101 & 1 & 21 & \textbf{8\,591.92} & 108 & 3 & 17 \\
-C101 (100)      & 11\,324.41 & 318 & 117 & 157 & \textbf{11\,342.99} & 259 & 56 & 84 & \textbf{11\,342.99} & 223 & 31 & 45 \\
-C1\_2\_1 (200)  & 11\,146.32 & 235 & 82 & 145 & \textbf{11\,204.55} & 476 & 172 & 214 & 11\,172.23 & 370 & 66 & 89 \\
-RC1\_2\_1 (200) & \textbf{17\,973.77} & 293 & 71 & 91 & 15\,441.65 & 134 & 10 & 27 & 15\,441.65 & 223 & 19 & 31 \\
-R102 (100)      & \textbf{30\,443.78} & 317 & 45 & 62 & \textbf{30\,443.78} & 183 & 12 & 24 & \textbf{30\,443.78} & 146 & 5 & 16 \\
-R104 (100)      & 38\,105.79 & 262 & 42 & 60 & 37\,644.57 & 226 & 21 & 30 & \textbf{38\,230.58} & 226 & 11 & 20 \\
-C104 (100)      & 18\,414.60 & 381 & 216 & 302 & 18\,498.48 & 965 & 465 & 1035 & \textbf{18\,830.00} & 1953 & 738 & 786 \\
-RC104 (100)     & \textbf{36\,231.33} & 203 & 17 & 27 & \textbf{36\,231.33} & 123 & 288 & 338 & \textbf{36\,231.33} & 227 & 8 & 13 \\
-PR11 (48)       & \textbf{6\,473.95} & 146 & 7 & 17 & 6\,374.21 & 170 & 6 & 13 & 5\,920.89 & 130 & 3 & 10 \\
-PR15 (240)      & \textbf{19\,639.68} & 691 & 610 & 706 & 19\,549.30 & 1257 & 958 & 1036 & 18\,946.54 & 461 & 250 & 317 \\
-PR10 (288)      & 16\,696.23 & 311 & 126 & 196 & 16\,696.15 & 571 & 244 & 300 & \textbf{16\,860.65} & 460 & 129 & 165 \\
+R101 (50) & & & & & & & & & & & & \\
+R101 (100) & & & & & & & & & & & & \\
+R1\_2\_1 (200) & & & & & & & & & & & & \\
+C101 (50) & & & & & & & & & & & & \\
+C101 (100) & & & & & & & & & & & & \\
+C1\_2\_1 (200) & & & & & & & & & & & & \\
+RC1\_2\_1 (200) & & & & & & & & & & & & \\
+R102 (100) & & & & & & & & & & & & \\
+R104 (100) & & & & & & & & & & & & \\
+C104 (100) & & & & & & & & & & & & \\
+RC104 (100) & & & & & & & & & & & & \\
+PR11 (48) & & & & & & & & & & & & \\
+PR15 (240) & & & & & & & & & & & & \\
+PR10 (288) & & & & & & & & & & & & \\
 \bottomrule
 \end{tabular}%
 }
@@ -1203,11 +1208,12 @@ PR10 (288)      & 16\,696.23 & 311 & 126 & 196 & 16\,696.15 & 571 & 244 & 300 & 
 \subsection{Matheuristic vs.\ exact solver}\label{subsec:matheuristic-vs-exact}
 
 % TEXT REMOVED (September 2026): to be rewritten after the rerun campaign on the expanded benchmark.
-% Tables and figures below keep the old results. Plan: UAV-Routing/experiments/RERUN_PLAN.md
+% The ILS columns of the tables are empty until the campaign has run; the two ILS figures still show
+% the previous design. Plan: UAV-Routing/experiments/RERUN_PLAN.md
 
-% ILS columns refreshed on 2026-09-27 from paper_runs/results/design_new.csv
-% (paper_runs/run_design.py new: --fast-sets --scaled-socp --reorder-rcl 20 --sweep enum
-% --max-idle-shakes 100, D = 3), single start from R4 on the M3 Pro.
+% ILS columns emptied on 2026-09-30 for the campaign under the tiers design (paper_runs/run_design.py new:
+% --fast-sets --scaled-socp --reorder-rcl 20 --sweep enum --max-idle-shakes 100, D = 3, ILS_REORDER_W=tiers,
+% ILS_SHAKE_KNAP=0), single start from R4 on the M3 Pro; RERUN_PLAN.md Steps 1 and 2 fill them.
 % The MISOCP columns and the Greedy (R4) column are unchanged.
 
 \begin{table}[H]
@@ -1221,20 +1227,20 @@ PR10 (288)      & 16\,696.23 & 311 & 126 & 196 & 16\,696.15 & 571 & 244 & 300 & 
 \cmidrule(lr){2-2}\cmidrule(lr){3-5}\cmidrule(lr){6-8}\cmidrule(lr){9-11}\cmidrule(lr){12-13}
 Instance & $f(R_4)$ & $f_1$ & $t_{\mathrm{best}}$ & Run & $f_2$ & $t_{\mathrm{best}}$ & Run & $f^{\star}$ & time & gap (\%) & $\Delta_1$ & $\Delta_2$ \\
 \midrule
-R101 (50)       & 5\,863.95 & 11\,902.02 & 0.1 & 1.8 &  &  &  & \textbf{11\,921.13} & \textbf{7.7} & \textbf{0.00} & $+0.16$ &  \\
-R101 (100)      & 8\,830.39 & 22\,884.44 & 0.2 & 4.3 &  &  &  & \textbf{22\,886.91} & \textbf{40.9} & \textbf{0.00} & $+0.01$ &  \\
-R1\_2\_1 (200)  & 5\,024.46 & 16\,586.35 & 9.2 & 17.9 &  &  &  & \textbf{16\,954.02} & \textbf{99.6} & \textbf{0.00} & $+2.17$ &  \\
-C101 (50)       & 3\,119.99 & 8\,591.92 & 1.5 & 33.7 &  &  &  & 8\,594.11 & 3\,600.0 & 2.61 & $+0.03$ &  \\
-C101 (100)      & 4\,330.59 & 11\,324.41 & 116.9 & 157.4 &  &  &  & 11\,328.36 & 3\,600.1 & 32.19 & $+0.03$ &  \\
-C1\_2\_1 (200)  & 4\,583.74 & 11\,146.32 & 82.1 & 144.8 &  &  &  & 10\,747.43 & 3\,600.4 & 87.46 & $\mathbf{-3.71}$ &  \\
-RC1\_2\_1 (200) & 4\,007.52 & 17\,973.77 & 71.1 & 91.3 &  &  &  & 16\,746.34 & 3\,600.2 & 209.93 & $\mathbf{-7.33}$ &  \\
-R102 (100)      & 12\,701.51 & 30\,443.78 & 45.0 & 62.2 &  &  &  & 27\,941.61 & 3\,600.1 & 108.51 & $\mathbf{-8.95}$ &  \\
-R104 (100)      & 15\,524.43 & 38\,105.79 & 41.8 & 60.0 &  &  &  & 25\,377.52 & 3\,600.1 & 271.42 & $\mathbf{-50.16}$ &  \\
-C104 (100)      & 11\,285.90 & 18\,414.60 & 215.9 & 302.0 &  &  &  & 16\,468.21 & 3\,600.2 & 32.01 & $\mathbf{-11.82}$ &  \\
-RC104 (100)     & 17\,538.11 & 36\,231.33 & 17.0 & 27.1 &  &  &  & 27\,439.42 & 3\,600.1 & 289.22 & $\mathbf{-32.04}$ &  \\
-PR11 (48)       & 2\,608.05 & 6\,473.95 & 6.7 & 17.0 &  &  &  & 5\,401.01 & 3\,600.0 & 78.53 & $\mathbf{-19.87}$ &  \\
-PR15 (240)      & 3\,623.26 & 19\,639.68 & 609.8 & 705.5 &  &  &  & 6\,005.65 & 3\,600.8 & 713.79 & $\mathbf{-227.02}$ &  \\
-PR10 (288)      & 2\,333.43 & 16\,696.23 & 126.5 & 196.4 &  &  &  & 5\,377.05 & 3\,600.9 & 984.58 & $\mathbf{-210.51}$ &  \\
+R101 (50) & 5\,863.95 & & & & & & & \textbf{11\,921.13} & \textbf{7.7} & \textbf{0.00} & & \\
+R101 (100) & 8\,830.39 & & & & & & & \textbf{22\,886.91} & \textbf{40.9} & \textbf{0.00} & & \\
+R1\_2\_1 (200) & 5\,024.46 & & & & & & & \textbf{16\,954.02} & \textbf{99.6} & \textbf{0.00} & & \\
+C101 (50) & 3\,119.99 & & & & & & & 8\,594.11 & 3\,600.0 & 2.61 & & \\
+C101 (100) & 4\,330.59 & & & & & & & 11\,328.36 & 3\,600.1 & 32.19 & & \\
+C1\_2\_1 (200) & 4\,583.74 & & & & & & & 10\,747.43 & 3\,600.4 & 87.46 & & \\
+RC1\_2\_1 (200) & 4\,007.52 & & & & & & & 16\,746.34 & 3\,600.2 & 209.93 & & \\
+R102 (100) & 12\,701.51 & & & & & & & 27\,941.61 & 3\,600.1 & 108.51 & & \\
+R104 (100) & 15\,524.43 & & & & & & & 25\,377.52 & 3\,600.1 & 271.42 & & \\
+C104 (100) & 11\,285.90 & & & & & & & 16\,468.21 & 3\,600.2 & 32.01 & & \\
+RC104 (100) & 17\,538.11 & & & & & & & 27\,439.42 & 3\,600.1 & 289.22 & & \\
+PR11 (48) & 2\,608.05 & & & & & & & 5\,401.01 & 3\,600.0 & 78.53 & & \\
+PR15 (240) & 3\,623.26 & & & & & & & 6\,005.65 & 3\,600.8 & 713.79 & & \\
+PR10 (288) & 2\,333.43 & & & & & & & 5\,377.05 & 3\,600.9 & 984.58 & & \\
 \bottomrule
 \end{tabular}%
 }
@@ -1250,20 +1256,20 @@ PR10 (288)      & 2\,333.43 & 16\,696.23 & 126.5 & 196.4 &  &  &  & 5\,377.05 & 
 \cmidrule(lr){2-4}\cmidrule(lr){5-7}
 Instance & Obj & $k$ & $E$ (\%) & Obj & $k$ & $E$ (\%) & Gain (\%) \\
 \midrule
-R101 (50)       & 10\,540.63 & 9 & 91.8 & 11\,902.02 & 10 & 99.8 & 12.92 \\
-R101 (100)      & 19\,545.28 & 15 & 97.9 & 22\,884.44 & 16 & 100.0 & 17.08 \\
-R1\_2\_1 (200)  & 14\,102.21 & 26 & 98.5 & 16\,586.35 & 30 & 100.0 & 17.62 \\
-C101 (50)       & 7\,467.68 & 35 & 98.0 & 8\,591.92 & 42 & 100.0 & 15.05 \\
-C101 (100)      & 9\,831.14 & 41 & 98.0 & 11\,324.41 & 48 & 100.0 & 15.19 \\
-C1\_2\_1 (200)  & 9\,642.81 & 45 & 98.8 & 11\,146.32 & 50 & 100.0 & 15.59 \\
-RC1\_2\_1 (200) & 15\,758.32 & 35 & 99.6 & 17\,973.77 & 38 & 100.0 & 14.06 \\
-R102 (100)      & 28\,689.40 & 26 & 97.8 & 30\,443.78 & 27 & 100.0 & 6.12 \\
-R104 (100)      & 34\,948.65 & 31 & 97.8 & 38\,105.79 & 40 & 100.0 & 9.03 \\
-C104 (100)      & 18\,042.08 & 89 & 99.1 & 18\,414.60 & 91 & 100.0 & 2.06 \\
-RC104 (100)     & 33\,035.14 & 29 & 98.7 & 36\,231.33 & 30 & 100.0 & 9.68 \\
-PR11 (48)       & 5\,386.81 & 26 & 95.3 & 6\,473.95 & 33 & 99.2 & 20.18 \\
-PR15 (240)      & 14\,233.58 & 79 & 99.3 & 19\,639.68 & 108 & 99.9 & 37.98 \\
-PR10 (288)      & 12\,681.68 & 58 & 98.5 & 16\,696.23 & 77 & 100.0 & 31.66 \\
+R101 (50) & & & & & & & \\
+R101 (100) & & & & & & & \\
+R1\_2\_1 (200) & & & & & & & \\
+C101 (50) & & & & & & & \\
+C101 (100) & & & & & & & \\
+C1\_2\_1 (200) & & & & & & & \\
+RC1\_2\_1 (200) & & & & & & & \\
+R102 (100) & & & & & & & \\
+R104 (100) & & & & & & & \\
+C104 (100) & & & & & & & \\
+RC104 (100) & & & & & & & \\
+PR11 (48) & & & & & & & \\
+PR15 (240) & & & & & & & \\
+PR10 (288) & & & & & & & \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1303,24 +1309,24 @@ PR10 (288)      & 12\,681.68 & 58 & 98.5 & 16\,696.23 & 77 & 100.0 & 31.66 \\
 \cmidrule(lr){2-4}\cmidrule(lr){5-7}
 Instance & Obj & $k$ & Tour (km) & Obj & $k$ & Tour (km) & Gain (\%) \\
 \midrule
-R101 (50)       & 11\,881.71 & 10 & 383.5 & 11\,902.02 & 10 & 405.6 & 0.17 \\
-R101 (100)      & 22\,801.75 & 16 & 424.3 & 22\,884.44 & 16 & 435.8 & 0.36 \\
-R1\_2\_1 (200)  & 16\,077.46 & 31 & 408.6 & 16\,586.35 & 30 & 427.9 & 3.17 \\
+R101 (50) & & & & & & & \\
+R101 (100) & & & & & & & \\
+R1\_2\_1 (200) & & & & & & & \\
 \midrule
-C101 (50)       & 8\,207.28 & 41 & 422.9 & 8\,591.92 & 42 & 435.4 & 4.69 \\
-C101 (100)      & 11\,166.87 & 48 & 444.1 & 11\,324.41 & 48 & 445.6 & 1.41 \\
-C1\_2\_1 (200)  & 10\,682.22 & 47 & 446.5 & 11\,146.32 & 50 & 446.8 & 4.34 \\
+C101 (50) & & & & & & & \\
+C101 (100) & & & & & & & \\
+C1\_2\_1 (200) & & & & & & & \\
 \midrule
-RC1\_2\_1 (200) & 17\,966.01 & 38 & 423.9 & 17\,973.77 & 38 & 428.1 & 0.04 \\
+RC1\_2\_1 (200) & & & & & & & \\
 \midrule
-R102 (100)      & 30\,139.04 & 28 & 455.1 & 30\,443.78 & 27 & 460.4 & 1.01 \\
-R104 (100)      & 36\,794.92 & 31 & 469.8 & 38\,105.79 & 40 & 466.8 & 3.56 \\
-C104 (100)      & 18\,056.07 & 88 & 457.3 & 18\,414.60 & 91 & 451.0 & 1.99 \\
-RC104 (100)     & 35\,823.27 & 31 & 472.7 & 36\,231.33 & 30 & 472.7 & 1.14 \\
+R102 (100) & & & & & & & \\
+R104 (100) & & & & & & & \\
+C104 (100) & & & & & & & \\
+RC104 (100) & & & & & & & \\
 \midrule
-PR11 (48)       & 6\,415.90 & 32 & 328.6 & 6\,473.95 & 33 & 378.5 & 0.90 \\
-PR15 (240)      & 18\,497.64 & 105 & 380.0 & 19\,639.68 & 108 & 385.7 & 6.17 \\
-PR10 (288)      & 16\,643.97 & 73 & 391.2 & 16\,696.23 & 77 & 413.5 & 0.31 \\
+PR11 (48) & & & & & & & \\
+PR15 (240) & & & & & & & \\
+PR10 (288) & & & & & & & \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1335,24 +1341,24 @@ PR10 (288)      & 16\,643.97 & 73 & 391.2 & 16\,696.23 & 77 & 413.5 & 0.31 \\
 \cmidrule(lr){2-4}\cmidrule(lr){5-7}
 Instance & $\eta = 0.75$ & $\eta = 1$ & $\eta = 1.25$ & $\eta = 0.75$ & $\eta = 1$ & $\eta = 1.25$ \\
 \midrule
-R101 (50)       & 15.81 & 12.92 & 15.19 & 4.71 & 0.17 & 0.00 \\
-R101 (100)      & 14.88 & 17.08 & 23.69 & 0.00 & 0.36 & 0.93 \\
-R1\_2\_1 (200)  & 20.54 & 17.62 & 26.70 & 8.55 & 3.17 & 7.44 \\
+R101 (50) & & & & & & \\
+R101 (100) & & & & & & \\
+R1\_2\_1 (200) & & & & & & \\
 \midrule
-C101 (50)       & 8.46 & 15.05 & 17.37 & 3.34 & 4.69 & 4.53 \\
-C101 (100)      & 5.83 & 15.19 & 22.98 & 0.65 & 1.41 & 1.00 \\
-C1\_2\_1 (200)  & 10.66 & 15.59 & 21.80 & 3.44 & 4.34 & 2.41 \\
+C101 (50) & & & & & & \\
+C101 (100) & & & & & & \\
+C1\_2\_1 (200) & & & & & & \\
 \midrule
-RC1\_2\_1 (200) & 2.77 & 14.06 & 22.26 & -12.64 & 0.04 & 0.32 \\
+RC1\_2\_1 (200) & & & & & & \\
 \midrule
-R102 (100)      & 5.16 & 6.12 & 18.63 & 0.70 & 1.01 & 2.55 \\
-R104 (100)      & 2.15 & 9.03 & 18.80 & -1.40 & 3.56 & 2.59 \\
-C104 (100)      & 2.19 & 2.06 & 6.35 & 0.66 & 1.99 & 0.24 \\
-RC104 (100)     & 1.49 & 9.68 & 21.85 & 0.00 & 1.14 & -0.36 \\
+R102 (100) & & & & & & \\
+R104 (100) & & & & & & \\
+C104 (100) & & & & & & \\
+RC104 (100) & & & & & & \\
 \midrule
-PR11 (48)       & 20.03 & 20.18 & 20.06 & 1.10 & 0.90 & -0.07 \\
-PR15 (240)      & 14.31 & 37.98 & 25.53 & 7.44 & 6.17 & 1.41 \\
-PR10 (288)      & 8.38 & 31.66 & 30.40 & 5.79 & 0.31 & -2.71 \\
+PR11 (48) & & & & & & \\
+PR15 (240) & & & & & & \\
+PR10 (288) & & & & & & \\
 \bottomrule
 \end{tabular}
 \end{table}

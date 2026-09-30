@@ -33,6 +33,7 @@ previous numbers.
 | `details/dynamics/pr15_240_new_D{3,6,12}dyn.csv` (ignored by git, regenerated) | PR15 with the per-iteration trace | `fig:ils-capdiv` |
 | `design_new_eta075.csv`, `design_new_fixed_eta075.csv`, `design_new_noloiter_eta075.csv`, and the same with `_eta125` | the reference run and both variants at `eta = 0.75` and `1.25` (runbook Step 7) | `tab:levers-eta` |
 | `design_new_Lall.csv` | no restricted list (`DESIGN_RCL=0`) on the six instances where reorderings matter (runbook Step 8) | the L_r numbers of the Parameter analysis prose |
+| `design_new_physical.csv` | replication 1 with the subproblem in physical units (`DESIGN_SCALED=0`, runbook Step 8) | the solve times of the Parameter analysis prose (`socp_ms` only) |
 
 ## Records (not inputs to any table)
 

@@ -29,6 +29,9 @@ Knobs (environment variables; every one defaults to the paper's setting):
                     previous design; the test modes are in experiments/TEST_RUNBOOK.md)
   DESIGN_SHAKE_KNAP removals the shake looks ahead over (default 0 = the next removal only,
                     the paper; 6 is the previous design's look-ahead)
+  DESIGN_SCALED     0 = the subproblem in physical units instead of the scaled units of
+                    Section 4.1 (default 1); only for the solve-time comparison of the
+                    Parameter analysis, recorded as "physical-units" in the extra column
   DESIGN_BUDGET     wall-clock safeguard per run, seconds (default 14400)
   DESIGN_WORKERS    parallel runs (default 1; keep 1 whenever t_best or Run is reported)
 
@@ -78,6 +81,7 @@ DYNAMICS = os.environ.get("DESIGN_DYNAMICS", "") not in ("", "0")
 ETA = float(os.environ.get("DESIGN_ETA", 1.0))
 OUT = os.environ.get("DESIGN_OUT", "")
 SHAKE_KNAP_ENV = os.environ.get("DESIGN_SHAKE_KNAP", "0")   # 0 = the next removal only (the paper), 6 = the previous look-ahead
+SCALED = os.environ.get("DESIGN_SCALED", "1") != "0"      # 0 = physical units (solve-time comparison only)
 REORDER_W = os.environ.get("DESIGN_REORDER_W", "tiers")  # tiers (the paper) | exch (previous design) | signs | signsm | mid | midall | route | routebest
 EXTRA = os.environ.get("DESIGN_EXTRA", "").split()
 TRACE_DIR = os.path.join(HERE, "results", "details", "design_traces")
@@ -114,7 +118,7 @@ def run_one(name, design):
             "--shake-return", "--shake-backtrack", "--sweep-cap-div", str(CAPDIV), "--tag", tag]
     if design == "new":
         env["ILS_SHAKE_STALL"] = "0"
-        args += ["--fast-sets", "--scaled-socp", "--reorder-rcl", str(RCL), "--sweep", "enum",
+        args += ["--fast-sets"] + (["--scaled-socp"] if SCALED else []) + ["--reorder-rcl", str(RCL), "--sweep", "enum",
                  "--max-idle-shakes", str(IDLE)]
     else:
         env["ILS_SHAKE_STALL"] = "1000"
@@ -152,7 +156,8 @@ def run_one(name, design):
     return {"Instance": name, "design": design, "init": INIT, "init_seed": INIT_SEED if INIT == "R3" else "",
             "D": CAPDIV, "L_r": RCL if design == "new" else "", "S": IDLE if design == "new" else "",
             "extra": " ".join(EXTRA + (["--eta", str(ETA)] if ETA != 1.0 else []) + ([f"reorder={REORDER_W}"] if REORDER_W != "tiers" else [])
-                               + ([f"knap={SHAKE_KNAP_ENV}"] if SHAKE_KNAP_ENV != "0" else [])), "commit": COMMIT,
+                               + ([f"knap={SHAKE_KNAP_ENV}"] if SHAKE_KNAP_ENV != "0" else [])
+                               + ([] if SCALED else ["physical-units"])), "commit": COMMIT,
             "init_obj": float(init.group(1)) if init else "", "init_size": int(init.group(2)) if init else "",
             "Objective": float(m.group(1)), "Tour": int(m.group(2)),
             "flown_km": round(float(phys.group(1)) / 1000.0, 2) if phys else "",
@@ -209,7 +214,7 @@ def main():
     jobs = [n for n in order if n not in done]
     print(f"[plan] {design}{OUT}: {len(jobs)} runs, {WORKERS} at a time; start {INIT}"
           f"{' seed ' + str(INIT_SEED) if INIT == 'R3' else ''}, L_r={RCL} S={IDLE} D={CAPDIV} "
-          f"eta={ETA:g} reorder={REORDER_W} knap={SHAKE_KNAP_ENV} budget {BUDGET:.0f}s extra={EXTRA} dynamics={'on' if DYNAMICS else 'off'} commit {COMMIT}",
+          f"eta={ETA:g} reorder={REORDER_W} knap={SHAKE_KNAP_ENV} units={'scaled' if SCALED else 'physical'} budget {BUDGET:.0f}s extra={EXTRA} dynamics={'on' if DYNAMICS else 'off'} commit {COMMIT}",
           flush=True)
     with ThreadPoolExecutor(max_workers=WORKERS) as ex:
         futs = {ex.submit(run_one, n, design): n for n in jobs}

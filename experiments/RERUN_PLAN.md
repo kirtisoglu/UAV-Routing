@@ -13,6 +13,12 @@ the default of `paper_runs/run_design.py`. Every ILS table and both ILS figures 
 Section 5 are regenerated under it; no number of the previous design stays in the paper.
 Table `tab:matheuristic-vs-exact` (Table 10) reports two replications.
 
+The ILS cells of the six tables are empty in the tex (Table 10 keeps its Greedy and
+MISOCP columns), and every number of the prose that came from the previous runs is a
+`\tbd{}` marker, printed as **[TBD]**: Section 4.3 (one), Section 5.1 (six) and the
+Parameter analysis (twelve). The steps below fill the tables; the prose items at the end
+replace the markers.
+
 ## What is where
 
 | Thing | Location |
@@ -50,6 +56,10 @@ Table `tab:matheuristic-vs-exact` (Table 10) reports two replications.
    continues from the rows already on disk.
 
 ## Step 0: set the previous results aside, check the installation (2 minutes)
+
+Start only when no campaign is running: the `tiers` test runs of `TEST_RUNBOOK.md` must
+have finished (the `knap=0` one is the comparison of Step 1), since the commands below
+move their CSVs.
 
 The driver resumes from any CSV of the same name, so a `design_new*.csv` of the
 previous design left in `paper_runs/results/` would make the step that writes that file
@@ -158,16 +168,24 @@ Six campaigns of fourteen runs; the `eta = 1` columns come from Steps 1 and 3. C
 every `stop` is `max_idle_shakes`; at `eta = 0.75` the objectives and `Tour` are below the
 reference run's, at `1.25` above.
 
-## Step 8: the numbers of Section 5.9 (Parameter analysis) on L_r and S
+## Step 8: the numbers of Section 5.9 (Parameter analysis) on L_r, S and the solve time
 
 The second paragraph of Section 5.9 quotes the restricted list against the unrestricted
-reordering sets and the shake gaps behind S = 100; both are measured again:
+reordering sets and the shake gaps behind S = 100, and the third the time of a solve in
+the scaled units against physical units; all are measured again:
 
     G="PR11 (48);R104 (100);RC104 (100);C104 (100);PR15 (240);PR10 (288)"
     DESIGN_INSTANCES="$G" DESIGN_RCL=0 DESIGN_OUT=_Lall python3 paper_runs/run_design.py new
     python3 paper_runs/compare_runs.py paper_runs/results/design_new.csv paper_runs/results/design_new_Lall.csv
     python3 paper_runs/analyze_traces.py shakes paper_runs/results/details/design_traces '*_new.csv'
     python3 paper_runs/analyze_traces.py stop   paper_runs/results/details/design_traces '*_new.csv'
+    DESIGN_SCALED=0 DESIGN_OUT=_physical python3 paper_runs/run_design.py new
+
+The last command repeats replication 1 with the subproblem in physical units
+(`physical-units` in `extra`); only its `socp_ms` column is used, since its search
+diverges from the scaled run's at the first differing verdict. Solves are about five
+times slower there (R101 (50): 12.4 against 2.3 ms in the container), so allow several
+hours.
 
 The first run is the six instances where reorderings matter with no list at all
 (`L_r=0` in the CSV); the unrestricted runs on C104, PR15 and PR10 are long, and the
@@ -175,16 +193,17 @@ wall-clock safeguard of four hours per run bounds them (report it if it binds). 
 comparison gives the objective change of L_r = 20 against no list, and the shakes and
 run times of both. `shakes` gives, for each run of replication 1, the longest gap
 between two improvements of the best (`max gap`); `stop` gives the objective and the
-stopping shake the run would have had with S = 25, 50, 100, .... Write the three outputs
-into `DESIGN.md`; prose item 3 below turns them into the paragraph.
+stopping shake the run would have had with S = 25, 50, 100, .... Write the outputs and
+the `socp_ms` range (smallest and largest over the fourteen rows) of `design_new.csv` and
+of `design_new_physical.csv` into `DESIGN.md`; prose item 3 below turns them into the text.
 
 ## Step 9: compile
 
     cd paper && pdflatex -interaction=nonstopmode ArXiv-version && bibtex ArXiv-version \
       && pdflatex -interaction=nonstopmode ArXiv-version && pdflatex -interaction=nonstopmode ArXiv-version
 
-Expected: no line starting with `!` in `ArXiv-version.log`, no `??` in the PDF, the
-seven tables filled (Tables `tab:matheuristic-vs-exact` with both replications,
+Expected: no line starting with `!` in `ArXiv-version.log`, no `??` in the PDF (the
+**[TBD]** markers stay until the prose items are done), the seven tables filled (Tables `tab:matheuristic-vs-exact` with both replications,
 `tab:fixed-speed`, `tab:coverage`, `tab:theta`, `tab:initial-tour`, `tab:levers-eta`),
 both ILS figures replaced (check the file dates in `paper/fig/`).
 
@@ -204,25 +223,27 @@ by git and must stay out of the commit.
 
 Only after every table above is written. Write one paragraph per item from the numbers
 in the tables, in the style of Sections 5.4 to 5.7, and delete the `% TEXT PENDING` or
-`% TEXT REMOVED` comment it replaces. Subsections are named by title, since the
-numbers moved.
+`% TEXT REMOVED` comment it replaces. Every `\tbd{}` gets its number; where a sentence
+around a marker no longer fits the numbers, rewrite the sentence rather than force the
+number into it. Subsections are named by title, since the numbers moved.
 
-1. Section 4.3, the paragraph after Algorithm 1: "at most two routes per run". Recount
-   from the column `socp_numeric_infeasible` of `design_new.csv` and `design_new_rep2.csv`,
-   correct the number if it changed, and delete the `% TEXT PENDING` comment. Nothing else
-   in Section 4 is touched.
+1. Section 4.3, the paragraph after Algorithm 1: "at most \tbd{} routes per run" is the
+   largest `socp_numeric_infeasible` of `design_new.csv` and `design_new_rep2.csv`; then
+   delete the `% TEXT PENDING` comment. Nothing else in Section 4 is touched.
 2. "Initial tour selection for the matheuristic", before Table `tab:initial-tour`: which
    start wins where, how far the three R3 draws spread, whether the start decides the
    outcome on any instance, and the conclusion that a single start from R4 is the
    protocol of the tables that follow.
 3. "Parameter analysis": in the first paragraph, after "Table `tab:theta` reports the
    choice of D", two sentences reading the table (where D = 3 wins, where it loses,
-   shakes and run times). The second paragraph carries the previous design's numbers
-   under a `% TEXT PENDING` comment: replace them from Step 8, keeping its structure
-   (the longest gap and where, the loss at S = 50 and at S = 25 and the shakes saved, the
-   gain or loss of L_r = 20 against no list on the six instances with the shakes and run
-   times of both), then delete the comment. In the third paragraph (solver settings),
-   update the range "0.9 to 11 ms" from the `socp_ms` column of `design_new.csv`.
+   shakes and run times). The second paragraph has nine markers, filled from Step 8: the
+   longest gap and where, the most elsewhere, the objective change at S = 50 and at
+   S = 25, the objective change of L_r = 20 against no list over the six instances
+   (smallest and largest) and what the list does to the shakes a run affords; say
+   whether S = 100 cuts any improvement and whether the list gains or loses, and delete
+   the comment. The third paragraph (solver settings) has four markers: the `socp_ms`
+   range of `design_new.csv` (scaled units) and of `design_new_physical.csv` (physical
+   units), Step 8.
 4. "Matheuristic vs. exact solver", before Table `tab:matheuristic-vs-exact`: where the
    ILS reaches the proven optimum, where it beats the one-hour incumbent and by how much,
    `t_best` against the MISOCP time, and Figure `fig:ils-convergence` after the table.
@@ -232,10 +253,11 @@ numbers moved.
    largest difference and where it is, and whether both beat the incumbent on the same
    instances. Replace the `% TEXT REMOVED` comment, and update the comment block above
    the table (date, commit, design: tiers weights, no look-ahead).
-5. Section 5.1, last paragraph before Section 5.2: the shares of window-feasible Swap
-   and 2-opt pairs on the best routes are quoted there. Run
-   `python3 paper_runs/reorder_share.py` after Step 1 and update the sentence if the
-   shares moved.
+5. Section 5.1, last paragraph before Section 5.2: six markers, the shares of
+   window-feasible Swap and 2-opt pairs on the best routes (smallest and largest on the
+   co-monotone and on the inverted block), the largest number of scheduled targets on the
+   Cordeau block and the share of its pairs left feasible. Run
+   `python3 paper_runs/reorder_share.py` after Step 1.
 6. Table `tab:fixed-speed`: one paragraph (loss from fixing the speed, change in the
    number of scheduled targets, where the loss is largest).
 7. "Value of loitering for the matheuristic", Table `tab:coverage`: the `% TEXT PENDING`
@@ -246,7 +268,8 @@ numbers moved.
    is plentiful).
 8. Every `% Moved out of the caption` comment in the tex holds material for the prose
    of its subsection; work it in and delete the comment.
-9. Recompile (Step 9) and commit (Step 10).
+9. When no `\tbd` is left in the tex, delete the line `\newcommand{\tbd}...` in the
+   preamble; then recompile (Step 9) and commit (Step 10).
 
 ## Optional, only if the author asks
 
