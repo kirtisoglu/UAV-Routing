@@ -635,7 +635,7 @@ class TimedILS:
                 self.DM[_a][_b] = float(_dd); self.DM[_b][_a] = float(_dd)
         self._nd = (_fs.NodeData(self.graph, self.depot, self.T_max, self.v_max, self.DM,
                                  self.F_leg, self.B_leg) if hasattr(self, 'F_leg') else None)
-        if self.fast_sets and not (INSERT_RATIO and REORDER_W in ("exch", "signs", "signsm", "mid", "midall", "boundall")):
+        if self.fast_sets and not (INSERT_RATIO and REORDER_W in ("exch", "signs", "signsm", "mid", "midall", "boundall", "route", "route")):
             raise SystemExit("--fast-sets builds the weights of ILS_INSERT_RATIO=1 ILS_REORDER_W=exch")
 
         # Energy per meter is E_arc / L = P(v)/v with v = L/t. Since L >= d_ij,
@@ -1977,10 +1977,10 @@ class TimedILS:
                     moves = _fs.build_replace(self._nd, route, Nprime, amin0, amax0, d_room, self.counters)
                 elif op == "swap":
                     moves = _fs.build_swap(self._nd, route, amin0, amax0, d_room, None, self.counters,
-                                           mode=(REORDER_W if REORDER_W in ("mid", "midall", "boundall") else None))
+                                           mode=(REORDER_W if REORDER_W in ("mid", "midall", "boundall", "route", "route") else None))
                 else:
                     moves = _fs.build_two_opt(self._nd, route, amin0, amax0, d_room, None, self.counters,
-                                              mode=(REORDER_W if REORDER_W in ("mid", "midall", "boundall") else None))
+                                              mode=(REORDER_W if REORDER_W in ("mid", "midall", "boundall", "route", "route") else None))
             elif op == "add":
                 FR, BR = chained_sets(route, F, B, depot)
                 for p in range(1, k + 2):
@@ -2167,7 +2167,7 @@ class TimedILS:
                 # positive scale over the set being drawn from before the roulette.
                 # The shift leaves the least attractive move a small probability.
                 if (INSERT_RATIO and op in ("add", "replace")) or \
-                   (REORDER_W == "dsave" and op in ("swap", "two_opt")):
+                   (REORDER_W in ("dsave", "route") and op in ("swap", "two_opt")):
                     # weights are already non-negative: plain roulette, ratios kept
                     wts = [m[0] if m[0] > 0.0 else 0.0 for m in moves]
                     if sum(wts) <= 0.0:
