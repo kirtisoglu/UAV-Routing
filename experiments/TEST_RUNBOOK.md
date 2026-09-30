@@ -1,4 +1,4 @@
-# Test runbook: sign tiers instead of the exchange value for Swap and 2-opt
+# Test runbook: alternative move weights
 
 For the local agent. This is an experiment, not a change of the design: nothing in
 the paper is edited, the reference results stay, and the outcome is written to
@@ -75,11 +75,48 @@ A third variant keeps the exchange value's form but changes what it reads:
   Checked against a full recomputation of the arrival chain on every feasible move of
   the four operators on the best routes of nine instances (3633 moves, largest
   relative difference 6e-12).
+* `tiers`: one rule for all four operators, on the reading of `routebest`. For a move
+  that takes the current route R to R'', ΔI is the change of the route-wide
+  information from R to R'', every target read at the end of its realized window that
+  gives the most information, and Δd is the change of the route length. For Replace,
+  R'' has the new target u in the position p of the removed target r_p, and both
+  changes are taken between R and R''. Every feasible move falls in one of four tiers:
+  1. ΔI > 0 and Δd ≤ 0 (gains information, does not lengthen the route),
+  2. ΔI > 0 and Δd > 0,
+  3. ΔI ≤ 0 and Δd ≤ 0,
+  4. ΔI ≤ 0 and Δd > 0.
+
+  A change within 1e-9 of zero counts as zero. The weight is
+  |ΔI|^sign(ΔI) / |Δd|^sign(Δd) with 0^0 = 1: ΔI·|Δd| in tier 1, ΔI/Δd in tier 2,
+  |Δd|/|ΔI| in tier 3 and 1/(|ΔI|·Δd) in tier 4. The operator is drawn uniformly as
+  before. Within its set, the move is drawn by roulette in proportion to the weight
+  among the moves of the best tier still in the set; the next tier is drawn from only
+  when that one is exhausted. Each operator's feasible set is built and classified
+  once per route, and L_r = 20 still trims the Swap and 2-opt sets, keeping the best
+  tiers and, within a tier, the largest weights. Acceptance, the no-return rule, the
+  information bound, the energy tests, D, S and the R4 start are unchanged.
+
+  The shake is run two ways. Weighted: the paper's knapsack look-ahead over the next
+  six removals of the enumeration (`DESIGN_SHAKE_KNAP=6`, the default). Unweighted:
+  the next removal of the enumeration, with no look-ahead (`DESIGN_SHAKE_KNAP=0`).
+
+  Checked in the cloud container. ΔI, Δd and the tier of every feasible move of the
+  four operators on the best routes of all fourteen instances, against a full
+  recomputation of both routes: 3922 moves, largest relative difference of ΔI 6e-12,
+  of Δd 2e-10 m, no tier differs, and the feasible sets and their order are those of
+  the default builders. On those routes 77 moves are in tier 1, 501 in tier 2, 168 in
+  tier 3 and 3176 in tier 4. Whole runs with a fixed seed are identical with the fast
+  computation and with the full recomputation (`ILS_TIERS_REFERENCE=1`): R101 (100)
+  and R102 (100), both shakes, the same best route, iterations, shakes and counters.
+  The container caps routes at 32 targets, so step 1 below repeats this on R104 (100).
+  Code: `_tier_weight` and the draw in `experiments/run_ils_time_matched.py`; ΔI and
+  Δd come from the builders in `experiments/fast_sets.py`.
 
 The driver knob is `DESIGN_REORDER_W` (default `exch`, the paper); the value is
 recorded in the `extra` column of every row as `reorder=signs`, `reorder=signsm`,
-`reorder=mid`, `reorder=midall`
-or `reorder=route`.
+`reorder=mid`, `reorder=midall`, `reorder=route`, `reorder=routebest` or
+`reorder=tiers`. `DESIGN_SHAKE_KNAP` (default 6) sets the shake's look-ahead; a value
+other than 6 is recorded as `knap=` followed by the value.
 
 ## Runs, about 3.5 hours in total
 
@@ -121,6 +158,48 @@ targets. Run both variants on the same six instances here:
 The first command resumes `design_new_route.csv` and runs only the three instances it
 lacks. About 25 minutes in total at the reference run times; C104 and PR15 dominate.
 Report the three comparisons and the `sets_pct` column of both CSVs.
+
+## Added 30 September: `tiers` on all fourteen instances
+
+Pull first. Three steps, one run at a time.
+
+1. Check that the fast computation of ΔI and Δd gives the same run as the full
+   recomputation of every move (a few minutes). R104 (100) is used because its routes
+   reach 40 targets, beyond what the container could check.
+
+       DESIGN_INSTANCES="R104 (100)" DESIGN_REORDER_W=tiers DESIGN_OUT=_tiers python3 paper_runs/run_design.py new
+       ILS_TIERS_REFERENCE=1 DESIGN_INSTANCES="R104 (100)" DESIGN_REORDER_W=tiers DESIGN_OUT=_tiers_refcheck python3 paper_runs/run_design.py new
+       python3 paper_runs/compare_runs.py paper_runs/results/design_new_tiers_refcheck.csv paper_runs/results/design_new_tiers.csv
+
+   Expected: the R104 (100) row reads `+0.00` and, in the last column, `same` (same
+   best route, iterations and shakes); the other thirteen rows show `-`. If it reads
+   `differs`, stop and report both rows. `design_new_tiers_refcheck.csv` plays no
+   further part.
+
+2. The two runs, weighted and unweighted shake, on all fourteen instances:
+
+       DESIGN_REORDER_W=tiers                     DESIGN_OUT=_tiers       python3 paper_runs/run_design.py new
+       DESIGN_REORDER_W=tiers DESIGN_SHAKE_KNAP=0 DESIGN_OUT=_tiers_knap0 python3 paper_runs/run_design.py new
+
+   The first resumes `design_new_tiers.csv` from step 1 and runs the thirteen
+   instances it lacks. `extra` reads `reorder=tiers` and `reorder=tiers knap=0`. The
+   reference run of the fourteen took 30 minutes on this machine; a variant that
+   shakes more takes longer, so allow an hour for each.
+
+3. Compare:
+
+       python3 paper_runs/compare_runs.py paper_runs/results/design_new_tiers.csv       paper_runs/results/design_new.csv
+       python3 paper_runs/compare_runs.py paper_runs/results/design_new_tiers_knap0.csv paper_runs/results/design_new.csv
+       python3 paper_runs/compare_runs.py paper_runs/results/design_new_tiers_knap0.csv paper_runs/results/design_new_tiers.csv
+
+Write into `experiments/DESIGN.md`, under a heading with the date and the commit, one
+table with a row per instance and variant (`tiers`, `tiers knap=0`): objective, change
+in percent against replication 1, t_best, Run, shakes, iterations and `sets_pct`, and
+the replication-1 to replication-2 difference on the same instance if
+`design_new_rep2.csv` exists. Then the totals of the three comparisons and three
+sentences: whether `tiers` is within noise of the paper's weights on the objective,
+whether the unweighted shake does better or worse than the weighted one, and what each
+does to the run time and the shake count. No recommendation; the author decides.
 
 ## What to report
 
