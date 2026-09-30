@@ -162,6 +162,44 @@ ILS_SEED = 42
 _MISS = object()                    # 'absent from the evaluated-route store'
 THETA = 10**12                      # the paper's shake fires on exhaustion, so this threshold never binds
 SCALE_EPS = float(os.environ.get("ILS_SCALE_EPS", 0.01))
+# TEST MODE tiers (experiments/TEST_RUNBOOK.md): |dI| or |dd| at or below TIER_TOL counts as zero.
+# ILS_TIERS_REFERENCE=1 recomputes dI and dd of every move from scratch (slow; for the check
+# that the fast computation yields the same run).
+TIER_TOL = 1e-9
+TIERS_REFERENCE = bool(os.environ.get("ILS_TIERS_REFERENCE"))
+
+
+def _tier_weight(m):
+    """(weight, key, dd, tier) of a move given as (dI, key, dd). Tier 1: dI > 0 and dd <= 0;
+    2: dI > 0 and dd > 0; 3: dI <= 0 and dd <= 0; 4: dI <= 0 and dd > 0.
+    Weight |dI|^sign(dI) / |dd|^sign(dd), with 0^0 = 1."""
+    dI, key, dd = m[0], m[1], m[2]
+    num = dI if dI > TIER_TOL else (-1.0 / dI if dI < -TIER_TOL else 1.0)
+    den = dd if dd > TIER_TOL else (-1.0 / dd if dd < -TIER_TOL else 1.0)
+    return (num / den, key, dd, (1 if dI > TIER_TOL else 3) + (1 if dd > TIER_TOL else 0))
+
+
+def _tiers_reference(nd, route, m):
+    """(dI, key, dd) of a move recomputed from scratch: the best-end information of every
+    target of both routes from their own arrival chains, the lengths summed leg by leg."""
+    import fast_sets as _fsr
+    key = m[1]; op = key[0]
+    if op == "add":
+        _, u, p = key; new = route[:p] + [u] + route[p:]
+    elif op == "replace":
+        _, u, p = key; new = route[:p] + [u] + route[p + 1:]
+    elif op == "swap":
+        _, p, q = key; new = list(route); new[p], new[q] = new[q], new[p]
+    else:
+        _, p, q = key; new = route[:p] + route[p:q + 1][::-1] + route[q + 1:]
+    def info(rt):
+        a, b = _fsr.chain_bounds(nd, rt)
+        return sum(nd.I0[rt[i]] + nd.GAM[rt[i]] * ((a[i] if nd.GAM[rt[i]] < 0 else b[i]) - nd.EW[rt[i]])
+                   for i in range(1, len(rt)))
+    def length(rt):
+        e = rt + [nd.depot]
+        return sum(nd.DM[e[i]][e[i + 1]] for i in range(len(e) - 1))
+    return (info(new) - info(route), key, length(new) - length(route))
 # diagnostic: draw Swap and 2-opt uniformly from their sets, as before change 2,
 # instead of weighting them by the route-wide information change
 REORDER_UNIFORM = bool(os.environ.get("ILS_REORDER_UNIFORM"))
@@ -635,7 +673,7 @@ class TimedILS:
                 self.DM[_a][_b] = float(_dd); self.DM[_b][_a] = float(_dd)
         self._nd = (_fs.NodeData(self.graph, self.depot, self.T_max, self.v_max, self.DM,
                                  self.F_leg, self.B_leg) if hasattr(self, 'F_leg') else None)
-        if self.fast_sets and not (INSERT_RATIO and REORDER_W in ("exch", "signs", "signsm", "mid", "midall", "boundall", "route", "routebest")):
+        if self.fast_sets and not (INSERT_RATIO and REORDER_W in ("exch", "signs", "signsm", "mid", "midall", "boundall", "route", "routebest", "tiers")):
             raise SystemExit("--fast-sets builds the weights of ILS_INSERT_RATIO=1 ILS_REORDER_W=exch")
 
         # Energy per meter is E_arc / L = P(v)/v with v = L/t. Since L >= d_ij,
@@ -1806,12 +1844,15 @@ class TimedILS:
                     # is applied and the enumeration advances by one
                     d0_ = route_distance(route, G, depot)
                     pick = None
-                    for j_ in range(ref_idx, min(ref_idx + max(1, SHAKE_KNAP), len(ref_pairs))):
+                    _hi = min(ref_idx + max(1, SHAKE_KNAP), len(ref_pairs))
+                    for j_ in range(ref_idx, _hi):
                         cons_, post_ = ref_pairs[j_]
                         cand = self._remove_block(route, cons_, post_)
                         if cand is None:
                             continue
-                        sc = self._knap(cand, max(0.0, d0_ - route_distance(cand, G, depot)))
+                        # with a single removal in the window its value decides nothing: not computed
+                        sc = (self._knap(cand, max(0.0, d0_ - route_distance(cand, G, depot)))
+                              if _hi - ref_idx > 1 else 0.0)
                         if pick is None or sc > pick[0]:
                             pick = (sc, cand, cons_)
                     ref_idx += 1
@@ -1973,15 +2014,17 @@ class TimedILS:
             elif self.fast_sets:
                 # the same sets and weights as the four blocks below, in O(1) per candidate
                 if op == "add":
-                    moves = _fs.build_add(self._nd, route, Nprime, amin0, amax0, d_room, self.counters, point=("best" if REORDER_W == "routebest" else "mid"))
+                    moves = _fs.build_add(self._nd, route, Nprime, amin0, amax0, d_room, self.counters, point=("best" if REORDER_W in ("routebest", "tiers") else "mid"),
+                                           raw=(REORDER_W == "tiers"))
                 elif op == "replace":
-                    moves = _fs.build_replace(self._nd, route, Nprime, amin0, amax0, d_room, self.counters, point=("best" if REORDER_W == "routebest" else "mid"))
+                    moves = _fs.build_replace(self._nd, route, Nprime, amin0, amax0, d_room, self.counters, point=("best" if REORDER_W in ("routebest", "tiers") else "mid"),
+                                           raw=(REORDER_W == "tiers"))
                 elif op == "swap":
                     moves = _fs.build_swap(self._nd, route, amin0, amax0, d_room, None, self.counters,
-                                           mode=(REORDER_W if REORDER_W in ("mid", "midall", "boundall", "route", "routebest") else None))
+                                           mode=(REORDER_W if REORDER_W in ("mid", "midall", "boundall", "route", "routebest", "tiers") else None))
                 else:
                     moves = _fs.build_two_opt(self._nd, route, amin0, amax0, d_room, None, self.counters,
-                                              mode=(REORDER_W if REORDER_W in ("mid", "midall", "boundall", "route", "routebest") else None))
+                                              mode=(REORDER_W if REORDER_W in ("mid", "midall", "boundall", "route", "routebest", "tiers") else None))
             elif op == "add":
                 FR, BR = chained_sets(route, F, B, depot)
                 for p in range(1, k + 2):
@@ -2140,6 +2183,11 @@ class TimedILS:
                     return 2.0 if (gp > 0 and gq < 0) else (0.0 if (gp < 0 and gq > 0) else 1.0)
                 random.shuffle(moves)                      # uniform order within a tier
                 moves = [(_tier(m), m[1], m[2]) for m in moves]
+            if cached_set is None and REORDER_W == "tiers" and moves:
+                # TEST MODE tiers: every move of every operator gets its tier and weight
+                if TIERS_REFERENCE:
+                    moves = [_tiers_reference(self._nd, route, m) for m in moves]
+                moves = [_tier_weight(m) for m in moves]
             if cached_set is None and self.reorder_rcl and op in ("swap", "two_opt") \
                     and len(moves) > self.reorder_rcl:
                 # restricted candidate list: only the L_r reorderings of largest exchange
@@ -2149,10 +2197,13 @@ class TimedILS:
                 # the first L_r pairs in construction order, all sharing position p = 1.
                 self.counters["reorder_trimmed"] += len(moves) - self.reorder_rcl
                 moves = heapq.nlargest(self.reorder_rcl, moves,
-                                       key=(lambda m: m[0]) if REORDER_W in ("signs", "signsm")
+                                       key=(lambda m: (-m[3], m[0], -m[2])) if REORDER_W == "tiers"
+                                       else (lambda m: m[0]) if REORDER_W in ("signs", "signsm")
                                        else (lambda m: (m[0], -m[2])))
             if cached_set is None:
                 random.shuffle(moves)          # break ties between equal weights
+                if REORDER_W == "tiers":
+                    moves.sort(key=lambda m: m[3])   # best tier first, shuffled order within a tier
                 self._msets[op] = moves
                 _dt = int((time.perf_counter() - _t_set) * 1e6)   # built, weighted and trimmed
                 self.counters["sets_us"] += _dt
@@ -2170,7 +2221,14 @@ class TimedILS:
                 # Paper (55): the scores carry a sign, so they are shifted onto a
                 # positive scale over the set being drawn from before the roulette.
                 # The shift leaves the least attractive move a small probability.
-                if (INSERT_RATIO and op in ("add", "replace")) or \
+                if REORDER_W == "tiers":
+                    # the moves left in the best tier form a prefix of the set: roulette over it
+                    t_ = moves[0][3]; n_ = 1
+                    while n_ < len(moves) and moves[n_][3] == t_:
+                        n_ += 1
+                    wts = [moves[i_][0] for i_ in range(n_)]
+                    idx = random.choices(range(n_), weights=wts, k=1)[0]
+                elif (INSERT_RATIO and op in ("add", "replace")) or \
                    (REORDER_W in ("dsave", "route", "routebest") and op in ("swap", "two_opt")):
                     # weights are already non-negative: plain roulette, ratios kept
                     wts = [m[0] if m[0] > 0.0 else 0.0 for m in moves]
@@ -2220,7 +2278,7 @@ class TimedILS:
                     idx = random.choices(range(len(moves)), weights=wts, k=1)[0]
                 _w_chosen = 1.0 if wts is None else wts[idx]
                 _w_sum = float(len(moves)) if wts is None else sum(wts)
-                _s_chosen, key, dd = moves.pop(idx)   # drawn once: removed from the set either way
+                _s_chosen, key, dd = moves.pop(idx)[:3]   # drawn once: removed from the set either way
                 if wts is not None:
                     del wts[idx]
                 if key[0] == "add":
@@ -2265,11 +2323,11 @@ class TimedILS:
                 if self._mt_fh is not None:
                     chosen = "-".join(str(x) for x in key[1:])
                     if wts is None:
-                        rest = [(kk, 1.0) for _, kk, _ in moves[:self._mt_top]]
+                        rest = [(m_[1], 1.0) for m_ in moves[:self._mt_top]]
                         rank = 1
                     else:
                         pairs = sorted(zip(wts, moves), key=lambda x: -x[0])[:self._mt_top]
-                        rest = [(kk, ww) for ww, (_, kk, _) in pairs]
+                        rest = [(mm_[1], ww) for ww, mm_ in pairs]
                         rank = 1 + sum(1 for w in wts if w > _w_chosen)
                     self._pending_ms = (op, len(moves) + 1, chosen, rank, _w_chosen, _w_sum,
                                         [("-".join(str(x) for x in kk[1:]), ww) for kk, ww in rest])

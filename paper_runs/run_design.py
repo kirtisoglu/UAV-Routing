@@ -70,7 +70,8 @@ INIT_SEED = int(os.environ.get("DESIGN_INIT_SEED", 1))
 DYNAMICS = os.environ.get("DESIGN_DYNAMICS", "") not in ("", "0")
 ETA = float(os.environ.get("DESIGN_ETA", 1.0))
 OUT = os.environ.get("DESIGN_OUT", "")
-REORDER_W = os.environ.get("DESIGN_REORDER_W", "exch")   # exch (the paper) | signs | signsm | mid | midall | boundall | route | routebest (experiments/TEST_RUNBOOK.md)
+SHAKE_KNAP_ENV = os.environ.get("DESIGN_SHAKE_KNAP", "6")   # 6 = look-ahead of the paper, 0 = the next removal only
+REORDER_W = os.environ.get("DESIGN_REORDER_W", "exch")   # exch (the paper) | signs | signsm | mid | midall | boundall | route | routebest | tiers (experiments/TEST_RUNBOOK.md)
 EXTRA = os.environ.get("DESIGN_EXTRA", "").split()
 TRACE_DIR = os.path.join(HERE, "results", "details", "design_traces")
 DYN_DIR = os.path.join(HERE, "results", "details", "dynamics")
@@ -97,7 +98,7 @@ COMMIT = git_commit()
 
 
 def run_one(name, design):
-    env = dict(os.environ, ILS_INSERT_RATIO="1", ILS_SHAKE_KNAP="6", ILS_NO_RETURN="2",
+    env = dict(os.environ, ILS_INSERT_RATIO="1", ILS_SHAKE_KNAP=SHAKE_KNAP_ENV, ILS_NO_RETURN="2",
                ILS_REORDER_W=REORDER_W)
     tag = f"design_{design}{OUT}"
     stem = stem_of(name)
@@ -142,7 +143,8 @@ def run_one(name, design):
     socp_ms = (cnt.get("socp_us", 0) / 1000.0 / cnt["socp_calls"]) if cnt.get("socp_calls") else ""
     return {"Instance": name, "design": design, "init": INIT, "init_seed": INIT_SEED if INIT == "R3" else "",
             "D": CAPDIV, "L_r": RCL if design == "new" else "", "S": IDLE if design == "new" else "",
-            "extra": " ".join(EXTRA + (["--eta", str(ETA)] if ETA != 1.0 else []) + ([f"reorder={REORDER_W}"] if REORDER_W != "exch" else [])), "commit": COMMIT,
+            "extra": " ".join(EXTRA + (["--eta", str(ETA)] if ETA != 1.0 else []) + ([f"reorder={REORDER_W}"] if REORDER_W != "exch" else [])
+                               + ([f"knap={SHAKE_KNAP_ENV}"] if SHAKE_KNAP_ENV != "6" else [])), "commit": COMMIT,
             "init_obj": float(init.group(1)) if init else "", "init_size": int(init.group(2)) if init else "",
             "Objective": float(m.group(1)), "Tour": int(m.group(2)),
             "flown_km": round(float(phys.group(1)) / 1000.0, 2) if phys else "",

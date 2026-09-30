@@ -125,7 +125,7 @@ def delta_replace(nd, ext, k, amin, amax, p, u, lo, hi, best=False):
     return dI
 
 
-def build_add(nd, route, Nprime, amin, amax, d_room, counters=None, point="mid"):
+def build_add(nd, route, Nprime, amin, amax, d_room, counters=None, point="mid", raw=False):
     """[(score, ("add", u, p), dd)], score = dI / dd (dI if dd ~ 0), the weight of
     run_start_paper with ILS_INSERT_RATIO=1 and route-wide information change."""
     depot, EW, LW, DM, inv_v = nd.depot, nd.EW, nd.LW, nd.DM, nd.inv_v
@@ -153,11 +153,12 @@ def build_add(nd, route, Nprime, amin, amax, d_room, counters=None, point="mid")
                 if counters is not None: counters["label_excluded"] += 1
                 continue
             dI = delta_insert(nd, ext, k, amin, amax, p, u, lo, hi, best=(point == "best"))
-            moves.append((dI / dd if dd > 1e-9 else dI, ("add", u, p), dd))
+            # raw (tiers test mode): the information change itself; dd is the change of the route length
+            moves.append((dI if raw else (dI / dd if dd > 1e-9 else dI), ("add", u, p), dd))
     return moves
 
 
-def build_replace(nd, route, Nprime, amin, amax, d_room, counters=None, point="mid"):
+def build_replace(nd, route, Nprime, amin, amax, d_room, counters=None, point="mid", raw=False):
     """[(score, ("replace", u, p), dd)], score = dI / dd_w (dI if dd_w ~ 0) with
     dd_w the detour of u into the gap left by r_p and dd the change of the route
     length, as in run_start_paper."""
@@ -189,7 +190,9 @@ def build_replace(nd, route, Nprime, amin, amax, d_room, counters=None, point="m
                 if counters is not None: counters["label_excluded"] += 1
                 continue
             dI = delta_replace(nd, ext, k, amin, amax, p, u, lo, hi, best=(point == "best"))
-            moves.append((dI / dd_w if dd_w > 1e-9 else dI, ("replace", u, p), dd))
+            # raw (tiers test mode): the change between R and R with u in position p; dd is the
+            # full change of the route length, which can be negative
+            moves.append((dI if raw else (dI / dd_w if dd_w > 1e-9 else dI), ("replace", u, p), dd))
     return moves
 
 
@@ -204,9 +207,10 @@ def build_two_opt(nd, route, amin, amax, d_room, arr=None, counters=None, mode=N
     k = len(route) - 1
     if k < 2:
         return []
-    if mode in ("midall", "boundall", "route", "routebest"):
-        return build_two_opt_midall(nd, route, amin, amax, d_room, counters, route_wide=(mode in ("route", "routebest")),
-                                    point=("best" if mode in ("boundall", "routebest") else "mid"))
+    if mode in ("midall", "boundall", "route", "routebest", "tiers"):
+        return build_two_opt_midall(nd, route, amin, amax, d_room, counters, route_wide=(mode in ("route", "routebest", "tiers")),
+                                    point=("best" if mode in ("boundall", "routebest", "tiers") else "mid"), divide=(mode != "tiers"),
+                                    canonical=(mode == "tiers"))
     ext = route + [depot]
     A = amin if arr is None else arr
     S = [[0.0] * (k + 2) for _ in range(k + 2)]
@@ -270,9 +274,9 @@ def build_swap(nd, route, amin, amax, d_room, arr=None, counters=None, mode=None
     k = len(route) - 1
     if k < 2:
         return []
-    if mode in ("midall", "boundall", "route", "routebest"):
-        return build_swap_midall(nd, route, amin, amax, d_room, counters, route_wide=(mode in ("route", "routebest")),
-                                 point=("best" if mode in ("boundall", "routebest") else "mid"))
+    if mode in ("midall", "boundall", "route", "routebest", "tiers"):
+        return build_swap_midall(nd, route, amin, amax, d_room, counters, route_wide=(mode in ("route", "routebest", "tiers")),
+                                 point=("best" if mode in ("boundall", "routebest", "tiers") else "mid"), divide=(mode != "tiers"))
     ext = route + [depot]
     A = amin if arr is None else arr
     moves = []
@@ -376,7 +380,7 @@ def _forward_tables(nd, route):
     return Df, Wf, Lf
 
 
-def build_swap_midall(nd, route, amin, amax, d_room, counters=None, route_wide=False, point="mid"):
+def build_swap_midall(nd, route, amin, amax, d_room, counters=None, route_wide=False, point="mid", divide=True):
     """Same feasible set as build_swap; score = sum over the reordered part
     (r_q, r_{p+1}, ..., r_{q-1}, r_p) of gamma times (new midpoint - old midpoint)."""
     depot, EW, LW, GAM, DM, inv_v = nd.depot, nd.EW, nd.LW, nd.GAM, nd.DM, nd.inv_v
@@ -451,12 +455,14 @@ def build_swap_midall(nd, route, amin, amax, d_room, counters=None, route_wide=F
                 # fallback: the route-wide change over the length change when the move lengthens
                 # the route, the change itself otherwise
                 score += _outside(nd, ext, k, amin, amax, p, q, xq, amax_v, x, ap, best)
-                score = score / dd if dd > 1e-9 else score
+                if divide:
+                    score = score / dd if dd > 1e-9 else score
             moves.append((score, ("swap", p, q), dd))
     return moves
 
 
-def build_two_opt_midall(nd, route, amin, amax, d_room, counters=None, route_wide=False, point="mid"):
+def build_two_opt_midall(nd, route, amin, amax, d_room, counters=None, route_wide=False, point="mid", divide=True,
+                         canonical=False):
     """Same feasible set as build_two_opt; score = sum over the reversed segment
     (r_q, ..., r_p) of gamma times (new midpoint - old midpoint).  The tables of the
     reversed segments are filled with p descending, so the inner segments
@@ -523,8 +529,13 @@ def build_two_opt_midall(nd, route, amin, amax, d_room, counters=None, route_wid
                 # fallback: the route-wide change over the length change when the move lengthens
                 # the route, the change itself otherwise
                 score += _outside(nd, ext, k, amin, amax, p, q, xq, amax_v, x, ap, best)
-                score = score / dd if dd > 1e-9 else score
+                if divide:
+                    score = score / dd if dd > 1e-9 else score
             moves.append((score, ("two_opt", p, q), dd))
+    if canonical:
+        # the tables are filled with p descending; list the moves in the order of build_two_opt,
+        # p then q ascending, since with a fixed seed the order is part of the draw
+        moves.sort(key=lambda m: (m[1][1], m[1][2]))
     return moves
 
 
