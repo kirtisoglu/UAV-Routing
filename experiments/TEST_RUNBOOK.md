@@ -65,6 +65,16 @@ A third variant keeps the exchange value's form but changes what it reads:
   full recomputation of the arrival chain on every feasible Swap and 2-opt of those
   routes (2352 moves, largest relative difference 3e-13). Building the sets takes
   C104 (100) 4.7 against 20.1 ms, PR15 (240) 6.5 against 7.5 ms, PR10 (288) 3.0 against 3.7 ms (default against `route`).
+* `routebest`: `route` with each target read at the end of its realized window that
+  gives the most information, the upper end I^+ of Section 4.3 (label
+  `eq:info-bounds`): the earliest arrival when its slope is negative, the latest
+  otherwise, in place of the midpoint. The route-wide change of that value is taken for
+  all four operators, so unlike `route` the Insert and Replace weights change as well;
+  the weight is the one of `route` (the change over the length change when the move
+  lengthens the route, the change itself otherwise, clamped at zero, plain roulette).
+  Checked against a full recomputation of the arrival chain on every feasible move of
+  the four operators on the best routes of nine instances (3633 moves, largest
+  relative difference 6e-12).
 
 The driver knob is `DESIGN_REORDER_W` (default `exch`, the paper); the value is
 recorded in the `extra` column of every row as `reorder=signs`, `reorder=signsm`,
@@ -94,6 +104,23 @@ Sanity check before the six-instance runs (seconds):
 
 Expected: `stop=max_idle_shakes`, `extra` reads `reorder=signs`, an objective near
 11 902.02 (R101 (50) has almost no feasible reorderings, so the rule barely acts).
+
+## Added 30 September: `routebest`, and `route` completed on this machine
+
+The `route` runs on this machine covered C104, PR11 and PR15; its numbers for R102,
+RC104 and R1_2_1 came from the cloud container, whose license caps routes at 32
+targets. Run both variants on the same six instances here:
+
+    R="R102 (100);RC104 (100);R1_2_1 (200);C104 (100);PR11 (48);PR15 (240)"
+    DESIGN_INSTANCES="$R" DESIGN_REORDER_W=route     DESIGN_OUT=_route     python3 paper_runs/run_design.py new
+    DESIGN_INSTANCES="$R" DESIGN_REORDER_W=routebest DESIGN_OUT=_routebest python3 paper_runs/run_design.py new
+    python3 paper_runs/compare_runs.py paper_runs/results/design_new_route.csv     paper_runs/results/design_new.csv
+    python3 paper_runs/compare_runs.py paper_runs/results/design_new_routebest.csv paper_runs/results/design_new.csv
+    python3 paper_runs/compare_runs.py paper_runs/results/design_new_routebest.csv paper_runs/results/design_new_route.csv
+
+The first command resumes `design_new_route.csv` and runs only the three instances it
+lacks. About 25 minutes in total at the reference run times; C104 and PR15 dominate.
+Report the three comparisons and the `sets_pct` column of both CSVs.
 
 ## What to report
 
