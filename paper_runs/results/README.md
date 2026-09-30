@@ -13,10 +13,14 @@ records of earlier designs; no script reads them and no table is built from them
 | `eta_sweep.csv`, `details/eta_*.json` | Table `tab:eta-sweep` |
 | `loitering.csv`, `details/loiter_*.json` | Table `tab:loitering` |
 
-## Current: matheuristic (Section 5.7 to 5.10), written by `paper_runs/run_design.py`
+## Current: matheuristic (Section 5.8 to 5.11), written by `paper_runs/run_design.py`
 
 One CSV per configuration; the suffix is `DESIGN_OUT`. Every row carries the git
 commit of the run. `paper_runs/fill_tables.py` reads these and writes the tables.
+Since 30 September 2026 the design is the tiers weighting with the shake applying the
+next removal (`experiments/RERUN_PLAN.md`); the files below are written by that
+campaign, and until a step has run its file is absent and its table keeps the
+previous numbers.
 
 | File | Configuration | Table or figure |
 |---|---|---|
@@ -27,15 +31,15 @@ commit of the run. `paper_runs/fill_tables.py` reads these and writes the tables
 | `design_new_D6.csv`, `design_new_D12.csv` | D = 6, D = 12 | `tab:theta` |
 | `design_new_R1.csv`, `design_new_R2.csv`, `design_new_R3s1.csv`, `design_new_R3s2.csv`, `design_new_R3s3.csv` | starts R1, R2, R3 with seeds 1, 2, 3 | `tab:initial-tour` |
 | `details/dynamics/pr15_240_new_D{3,6,12}dyn.csv` (ignored by git, regenerated) | PR15 with the per-iteration trace | `fig:ils-capdiv` |
-| `design_new_eta075.csv`, `design_new_fixed_eta075.csv`, `design_new_noloiter_eta075.csv`, and the same with `_eta125` | the reference run and both variants at `eta = 0.75` and `1.25` (runbook Step 8) | `tab:levers-eta` |
-| `design_new.v1.csv` | the same reference run recorded by the earlier driver (27 Sept 2026, fewer columns) | comparison with the rerun only |
+| `design_new_eta075.csv`, `design_new_fixed_eta075.csv`, `design_new_noloiter_eta075.csv`, and the same with `_eta125` | the reference run and both variants at `eta = 0.75` and `1.25` (runbook Step 7) | `tab:levers-eta` |
+| `design_new_Lall.csv` | no restricted list (`DESIGN_RCL=0`) on the six instances where reorderings matter (runbook Step 8) | the L_r numbers of the Parameter analysis prose |
 
 ## Records (not inputs to any table)
 
 | File | What |
 |---|---|
 | `design_old.csv`, `details/design_traces/<stem>_old.csv` | the 2026-09-26 design on the same machine; the comparison in `experiments/DESIGN.md` |
-| `design_new_Lall.csv`, `design_new_S300.csv` | L_r = 0 and S = 300 probes on PR11 of 27 Sept 2026, quoted in Section 5.8 |
+| `previous_design/` | every `design_new*.csv` of the previous design (exchange value for Swap and 2-opt, six-removal look-ahead in the shake), campaigns of 27 to 29 Sept 2026, and the test runs of `experiments/TEST_RUNBOOK.md` |
 | `newdesign/design_*.log` | console logs of the campaigns above |
 | `newdesign/anim_*.log` | logs of the viewer recordings (`animation/pack_all.py` reads them) |
 | everything else (`anim_exch.csv`, `capdiv*.csv`, `verify_d3.csv`, `stall_ten.csv`, `iratio_*.csv`, `initial_tours*.csv`, `ils_*.csv`, `final.csv`, `tuning/`, `figures/`, `details/aba`, `details/capdiv_traces`, `details/theta_traces`, `details/ils_traces`, `details/gain1h_traces`, the old `details/dynamics/*.csv`, `details/*.log`, the remaining `newdesign/*.log`) | previous designs; listed for deletion by the author |

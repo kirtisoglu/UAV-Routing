@@ -20,7 +20,7 @@ silently use a different setup than the one documented here.
 | Energy tie-break | 1e-5 x normalized energy, subtracted from the reward |
 | Exact model | MISOCP with tightened per-leg big-M constants; no valid inequalities |
 | Gurobi | seed 42, `Threads = 0` (all cores), 3600 s per solve |
-| Matheuristic | single start from R4; operators Insert, Replace, Swap, 2-opt drawn uniformly; feasible sets from the leg sets, the exact slot test (Insert, Replace) and the O(1) segment-concatenation test (Swap, 2-opt), energy floor while the set is built and the taut-string test on the drawn move; weights: route-wide midpoint estimate over the detour (Insert, Replace), exchange value (Swap, 2-opt); only the L_r = 20 reorderings of largest weight enter the set, ties to the larger distance saving; roulette over the set; accept Insert/Replace on f(R') > f(R), reorderings on an improvement or a tie with smaller cap; shake at every exhausted route on the reference local optimum, removals enumerated per size (one sweep of the route per cons = 1..ceil(k/3)), knapsack look-ahead over the next 6; stop after S = 100 consecutive shakes without an improvement of R_best; fixed-tour SOCP in nondimensional units (Presolve 0, homogeneous barrier). ILS seed 42. `paper_runs/run_design.py new` |
+| Matheuristic | single start from R4; operators Insert, Replace, Swap, 2-opt drawn uniformly; feasible sets from the leg sets, the exact slot test (Insert, Replace) and the O(1) segment-concatenation test (Swap, 2-opt), energy floor while the set is built and the taut-string test on the drawn move; every move placed in one of four tiers by the route-wide change dI of the best-end information and the length change dd, weighted by |dI|^sgn(dI) / |dd|^sgn(dd); only the L_r = 20 reorderings of the best tiers and largest weight enter the set, ties to the larger distance saving; roulette over the best tier left in the set; accept Insert/Replace on f(R') > f(R), reorderings on an improvement or a tie with smaller cap; shake at every exhausted route on the reference local optimum, removals enumerated per size (one sweep of the route per cons = 1..ceil(k/3)), the next removal applied at each shake; stop after S = 100 consecutive shakes without an improvement of R_best; fixed-tour SOCP in nondimensional units (Presolve 0, homogeneous barrier). ILS seed 42. `paper_runs/run_design.py new` |
 | Machine | Apple M3 Pro, 11 cores; one ILS run at a time, never next to a MISOCP solve |
 | Versions | python 3.12.2, gurobi 13 |
 
@@ -45,7 +45,7 @@ the saturated regime and distorts the reported objective by about 3e-6.
 | `fill_tables.py` | writes the bodies of the five matheuristic tables into `paper/ArXiv-version.tex` from the CSVs | the tex |
 | `make_convergence_figure.py` | `fig:ils-convergence` | `paper/fig/meta_convergence_timematched.png` |
 | `make_capdiv_figure.py` | `fig:ils-capdiv` | `paper/fig/ils_capdiv.png` |
-| `analyze_traces.py` | Section 5.8 evidence from traces: acceptance rate by rank, shake gaps, S calibration | console |
+| `analyze_traces.py` | Parameter analysis evidence from traces: acceptance rate by rank, shake gaps, S calibration (`shakes`/`stop` on `results/details/design_traces '*_new.csv'`) | console |
 | `compare_runs.py` | two campaign CSVs side by side (reproduction check, variant against reference) | console |
 | `reorder_share.py` | Section 5.1: share of position pairs of the best routes whose Swap or 2-opt keeps every window reachable | console |
 
@@ -84,15 +84,15 @@ listed in its docstring and used step by step in `experiments/RERUN_PLAN.md`.
 |---|---|
 | 4.1 nondimensional subproblem, solver settings | `uav_routing/solver/socp.py`, `Solver(scaled=True)` (set through `instance.socp_scaled`; runner flag `--scaled-socp`) |
 | 4.2 construction heuristics R1 to R4 | `uav_routing/local_search/initial_solution.py`, `build_R1` to `build_R4`; each candidate is evaluated by the subproblem of the run (variable or fixed speed, loitering or `L_ij = d_ij`) |
-| 4.3 leg sets, arrival bounds, slot test | `experiments/fast_sets.py`: `chain_bounds`, `chained_sets`, `build_add`, `build_replace` |
-| 4.3 reorderings in O(1) (segment summaries d_sigma, omega^min, omega^max; named D, W, L in the code) | `fast_sets.build_two_opt` (prepend), `fast_sets.build_swap` (append) |
-| 4.3 propagated information estimate | `fast_sets.delta_insert`, `fast_sets.delta_replace` |
-| 4.3 2-opt weight by the recursion S(p,q) = x(p,q) + S(p+1,q-1) | `fast_sets.build_two_opt` |
-| 4.3 restricted candidate list L_r for Swap and 2-opt, ties to the distance saving | `run_ils_time_matched.py`, `--reorder-rcl` (`heapq.nlargest` on `(exchange value, -dd)` before the roulette) |
-| 4.3 roulette, zero-weight fallback | `run_ils_time_matched.py`, the draw loop of `run_start_paper` |
+| 4.3 arrival bounds; Appendix A leg sets and slot test | `experiments/fast_sets.py`: `chain_bounds`, `chained_sets`, `build_add`, `build_replace` |
+| Appendix A reorderings in O(1) (segment summaries d_sigma, omega^min, omega^max; named D, W, L in the code) and the realized windows of a reordered route | `fast_sets.build_two_opt_midall`, `fast_sets.build_swap_midall`, `fast_sets._forward_tables`, `fast_sets._outside` |
+| 4.3 information change dI (best end, route-wide) and length change dd | Insert, Replace: `fast_sets.delta_insert`, `fast_sets.delta_replace` with `best=True`, `raw=True`; Swap, 2-opt: the `_midall` builders with `route_wide=True`, `point="best"`, `divide=False` (`ILS_REORDER_W=tiers`) |
+| 4.3 four tiers and the weight |dI|^sgn(dI) / |dd|^sgn(dd) | `run_ils_time_matched.py`, `_tier_weight` |
+| 4.3 restricted candidate list L_r for Swap and 2-opt, best tiers then largest weight, ties to the distance saving | `run_ils_time_matched.py`, `--reorder-rcl` (`heapq.nlargest` on `(-tier, weight, -dd)`) |
+| 4.3 roulette over the best tier left in the set | `run_ils_time_matched.py`, the draw loop of `run_start_paper` (branch `REORDER_W == "tiers"`) |
 | 4.4 acceptance (strict for Insert/Replace; improvement or tie with smaller cap for reorderings) | `run_start_paper`, the `# ---- acceptance criterion ----` block (`ILS_REORDER_ACCEPT=tie`) |
-| 4.4 enumeration E(R^ref), block removal, look-ahead | `TimedILS._enumeration`, `TimedILS._remove_block`, `--sweep enum`, `ILS_SHAKE_KNAP=6` |
+| 4.4 enumeration E(R^ref), block removal, the next removal at each shake | `TimedILS._enumeration`, `TimedILS._remove_block`, `--sweep enum`, `ILS_SHAKE_KNAP=0` |
 | 4.4 termination after S idle shakes | `--max-idle-shakes`; `idle_shakes` reset in `_record_best` |
 | identity check of the O(1) construction | `experiments/validate_fast_sets.py` (same sets and weights as the previous construction on trace routes) |
 | SOCP settings check | `experiments/test_scaled_socp2.py` (feasibility verdicts against the physical model and the taut string, barrier iterations, time) |
-| campaign | `paper_runs/run_design.py new` |
+| campaign | `paper_runs/run_design.py new` (defaults `DESIGN_REORDER_W=tiers`, `DESIGN_SHAKE_KNAP=0`) |

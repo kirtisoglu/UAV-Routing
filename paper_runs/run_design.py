@@ -2,7 +2,9 @@
 
 One run of experiments/run_ils_time_matched.py per instance at the design of
 Section 4 (--fast-sets --scaled-socp --reorder-rcl L_r --sweep enum
---max-idle-shakes S, cap divisor D, single start), the result appended to a CSV
+--max-idle-shakes S, cap divisor D, single start; every move weighted by the four
+tiers of Section 4.3, ILS_REORDER_W=tiers, and the shake applying the next removal
+of the enumeration, ILS_SHAKE_KNAP=0), the result appended to a CSV
 under paper_runs/results and the best-seen trace copied next to it. The tables
 are then written into the manuscript by paper_runs/fill_tables.py.
 
@@ -23,6 +25,10 @@ Knobs (environment variables; every one defaults to the paper's setting):
                     the input of the perturbation figure (fig:ils-capdiv)
   DESIGN_ETA        energy budget scaling eta (default 1); name the output by it, e.g.
                     DESIGN_ETA=0.75 DESIGN_OUT=_eta075 (the value is recorded in the extra column)
+  DESIGN_REORDER_W  move weights (default tiers, the paper since 30 Sept 2026; exch is the
+                    previous design; the test modes are in experiments/TEST_RUNBOOK.md)
+  DESIGN_SHAKE_KNAP removals the shake looks ahead over (default 0 = the next removal only,
+                    the paper; 6 is the previous design's look-ahead)
   DESIGN_BUDGET     wall-clock safeguard per run, seconds (default 14400)
   DESIGN_WORKERS    parallel runs (default 1; keep 1 whenever t_best or Run is reported)
 
@@ -31,6 +37,7 @@ Which run fills which table (the exact commands are in experiments/RERUN_PLAN.md
                                   D = 3 block of tab:theta, the R4 column of
                                   tab:initial-tour, the "variable speed" block of
                                   tab:fixed-speed, the "loitering allowed" block of tab:coverage
+  design_new_rep2.csv             tab:matheuristic-vs-exact, replication 2 (DESIGN_EXTRA="--seed-offset 1" DESIGN_OUT=_rep2)
   design_new_fixed.csv            tab:fixed-speed   (DESIGN_EXTRA="--fixed-speed" DESIGN_OUT=_fixed)
   design_new_noloiter.csv         tab:coverage      (DESIGN_EXTRA="--no-loiter"   DESIGN_OUT=_noloiter)
   design_new_D6.csv, _D12.csv     tab:theta         (DESIGN_CAPDIV=6 DESIGN_OUT=_D6, DESIGN_CAPDIV=12 DESIGN_OUT=_D12)
@@ -70,8 +77,8 @@ INIT_SEED = int(os.environ.get("DESIGN_INIT_SEED", 1))
 DYNAMICS = os.environ.get("DESIGN_DYNAMICS", "") not in ("", "0")
 ETA = float(os.environ.get("DESIGN_ETA", 1.0))
 OUT = os.environ.get("DESIGN_OUT", "")
-SHAKE_KNAP_ENV = os.environ.get("DESIGN_SHAKE_KNAP", "6")   # 6 = look-ahead of the paper, 0 = the next removal only
-REORDER_W = os.environ.get("DESIGN_REORDER_W", "exch")   # exch (the paper) | signs | signsm | mid | midall | route | routebest | tiers (experiments/TEST_RUNBOOK.md)
+SHAKE_KNAP_ENV = os.environ.get("DESIGN_SHAKE_KNAP", "0")   # 0 = the next removal only (the paper), 6 = the previous look-ahead
+REORDER_W = os.environ.get("DESIGN_REORDER_W", "tiers")  # tiers (the paper) | exch (previous design) | signs | signsm | mid | midall | route | routebest
 EXTRA = os.environ.get("DESIGN_EXTRA", "").split()
 TRACE_DIR = os.path.join(HERE, "results", "details", "design_traces")
 DYN_DIR = os.path.join(HERE, "results", "details", "dynamics")
@@ -111,6 +118,7 @@ def run_one(name, design):
                  "--max-idle-shakes", str(IDLE)]
     else:
         env["ILS_SHAKE_STALL"] = "1000"
+        env["ILS_REORDER_W"], env["ILS_SHAKE_KNAP"] = "exch", "6"   # as design_old.csv was run
         args += ["--max-iter", "13000"]
     if ETA != 1.0:
         args += ["--eta", str(ETA)]
@@ -143,8 +151,8 @@ def run_one(name, design):
     socp_ms = (cnt.get("socp_us", 0) / 1000.0 / cnt["socp_calls"]) if cnt.get("socp_calls") else ""
     return {"Instance": name, "design": design, "init": INIT, "init_seed": INIT_SEED if INIT == "R3" else "",
             "D": CAPDIV, "L_r": RCL if design == "new" else "", "S": IDLE if design == "new" else "",
-            "extra": " ".join(EXTRA + (["--eta", str(ETA)] if ETA != 1.0 else []) + ([f"reorder={REORDER_W}"] if REORDER_W != "exch" else [])
-                               + ([f"knap={SHAKE_KNAP_ENV}"] if SHAKE_KNAP_ENV != "6" else [])), "commit": COMMIT,
+            "extra": " ".join(EXTRA + (["--eta", str(ETA)] if ETA != 1.0 else []) + ([f"reorder={REORDER_W}"] if REORDER_W != "tiers" else [])
+                               + ([f"knap={SHAKE_KNAP_ENV}"] if SHAKE_KNAP_ENV != "0" else [])), "commit": COMMIT,
             "init_obj": float(init.group(1)) if init else "", "init_size": int(init.group(2)) if init else "",
             "Objective": float(m.group(1)), "Tour": int(m.group(2)),
             "flown_km": round(float(phys.group(1)) / 1000.0, 2) if phys else "",
@@ -201,7 +209,7 @@ def main():
     jobs = [n for n in order if n not in done]
     print(f"[plan] {design}{OUT}: {len(jobs)} runs, {WORKERS} at a time; start {INIT}"
           f"{' seed ' + str(INIT_SEED) if INIT == 'R3' else ''}, L_r={RCL} S={IDLE} D={CAPDIV} "
-          f"eta={ETA:g} reorder={REORDER_W} budget {BUDGET:.0f}s extra={EXTRA} dynamics={'on' if DYNAMICS else 'off'} commit {COMMIT}",
+          f"eta={ETA:g} reorder={REORDER_W} knap={SHAKE_KNAP_ENV} budget {BUDGET:.0f}s extra={EXTRA} dynamics={'on' if DYNAMICS else 'off'} commit {COMMIT}",
           flush=True)
     with ThreadPoolExecutor(max_workers=WORKERS) as ex:
         futs = {ex.submit(run_one, n, design): n for n in jobs}
