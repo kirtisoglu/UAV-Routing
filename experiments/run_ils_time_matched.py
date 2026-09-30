@@ -1957,6 +1957,7 @@ class TimedILS:
                 self.counters["sets_built"] += 1
             f, T_R, E_R, cap_R, eps, beta, d_room, info0, amin0, amax0 = self._mctx
             ext = route + [depot]                                # ext[p] = r_p, ext[k+1] = depot
+            _t_set = time.perf_counter()                        # set-construction timer
             cached_set = self._msets.get(op)
             moves = [] if cached_set is None else cached_set     # (score, key, dd)
 
@@ -2153,6 +2154,9 @@ class TimedILS:
             if cached_set is None:
                 random.shuffle(moves)          # break ties between equal weights
                 self._msets[op] = moves
+                _dt = int((time.perf_counter() - _t_set) * 1e6)   # built, weighted and trimmed
+                self.counters["sets_us"] += _dt
+                self.counters[f"sets_us_{op}"] += _dt
                 if SCORE_DIAG and moves:
                     self.counters[f"sneg_{op}"] += sum(1 for m in moves if m[0] < 0.0)
                     self.counters[f"szero_{op}"] += sum(1 for m in moves if m[0] == 0.0)

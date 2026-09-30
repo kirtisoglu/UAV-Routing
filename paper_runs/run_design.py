@@ -77,7 +77,8 @@ DYN_DIR = os.path.join(HERE, "results", "details", "dynamics")
 COLS = ["Instance", "design", "init", "init_seed", "D", "L_r", "S", "extra", "commit",
         "init_obj", "init_size", "Objective", "Tour", "flown_km", "energy_pct", "time_s",
         "t_best (s)", "Wall (s)", "stop", "iterations", "shakes", "iter_of_best", "accepted",
-        "socp_calls", "socp_ms", "reorder_trimmed", "socp_numeric_infeasible", "Route"]
+        "socp_calls", "socp_ms", "reorder_trimmed", "socp_numeric_infeasible", "Route",
+        "sets_s", "sets_pct"]
 
 
 def stem_of(name):
@@ -154,7 +155,9 @@ def run_one(name, design):
             "socp_ms": round(socp_ms, 2) if socp_ms != "" else "",
             "reorder_trimmed": cnt.get("reorder_trimmed", 0),
             "socp_numeric_infeasible": cnt.get("socp_numeric_infeasible", 0),
-            "Route": "-".join(x.strip() for x in route.group(1).split(",")) if route else ""}
+            "Route": "-".join(x.strip() for x in route.group(1).split(",")) if route else "",
+            "sets_s": round(cnt.get("sets_us", 0) / 1e6, 2),
+            "sets_pct": round(100.0 * cnt.get("sets_us", 0) / 1e6 / wall, 1) if wall > 0 else ""}
 
 
 def open_csv(csv_path):
@@ -162,10 +165,12 @@ def open_csv(csv_path):
     if os.path.exists(csv_path):
         with open(csv_path, newline="") as f:
             header = next(csv.reader(f), [])
-        if header == COLS:
+        if header == COLS or (header and header == COLS[:len(header)] and "Route" in header):
+            # the current columns, or those of the driver before the set-construction
+            # timer (sets_s, sets_pct): resume with the file's own columns
             done = {r["Instance"] for r in csv.DictReader(open(csv_path))}
             print(f"[resume] {len(done)} runs on disk", flush=True)
-            return done
+            return done, header
         k = 1
         while os.path.exists(csv_path.replace(".csv", f".v{k}.csv")):
             k += 1
@@ -175,7 +180,7 @@ def open_csv(csv_path):
               f"kept as {os.path.basename(old)}, starting a fresh file", flush=True)
     with open(csv_path, "w", newline="") as f:
         csv.DictWriter(f, fieldnames=COLS).writeheader()
-    return set()
+    return set(), COLS
 
 
 def main():
@@ -185,7 +190,7 @@ def main():
     assert design in ("new", "old"), "usage: run_design.py new|old"
     assert INIT in ("R1", "R2", "R3", "R4"), "DESIGN_INIT must be R1, R2, R3 or R4"
     csv_path = os.path.join(HERE, "results", f"design_{design}{OUT}.csv")
-    done = open_csv(csv_path)
+    done, header = open_csv(csv_path)
     order = ([n.strip() for n in os.environ["DESIGN_INSTANCES"].split(";")]
              if os.environ.get("DESIGN_INSTANCES") else ORDER)
     for n in order:
@@ -207,7 +212,7 @@ def main():
             if row is None:
                 print(f"[warn] {name}: no result parsed", flush=True); continue
             with open(csv_path, "a", newline="") as f:
-                csv.DictWriter(f, fieldnames=COLS).writerow(row); f.flush(); os.fsync(f.fileno())
+                csv.DictWriter(f, fieldnames=header, extrasaction="ignore").writerow(row); f.flush(); os.fsync(f.fileno())
             print(f"[saved] {name}: obj={row['Objective']:.2f} tour={row['Tour']} t_best={row['t_best (s)']} "
                   f"wall={row['Wall (s)']} shakes={row['shakes']} stop={row['stop']}", flush=True)
     print(f"\nDONE -> {csv_path}", flush=True)

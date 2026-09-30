@@ -106,7 +106,9 @@ Expected: `stop=max_idle_shakes`, `extra` reads `reorder=signs`, an objective ne
 
 Write into `experiments/DESIGN.md`, under a heading with the date and the commit, one
 table with a row per instance and variant: objective, change in percent against
-replication 1, t_best, Run, shakes (all from the CSVs), and, if `design_new_rep2.csv`
+replication 1, t_best, Run,
+shakes and `sets_pct`, the share of the run spent building the move sets (all from
+the CSVs; pull before running, since a CSV started earlier lacks that column), and, if `design_new_rep2.csv`
 exists, the replication-1 to replication-2 difference on the same instance as the
 noise reference. Then three sentences: whether the sign rule is within noise of the
 exchange value on the objective, what it does to the run time and the shake count,
