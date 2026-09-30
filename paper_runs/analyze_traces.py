@@ -4,6 +4,9 @@
   python3 paper_runs/analyze_traces.py shakes [trace_dir]   shake index of every improvement of R_best
   python3 paper_runs/analyze_traces.py stop   [trace_dir]   objective and stopping shake for candidate S
 
+  A third argument restricts the files, e.g. the reference run's traces of the driver:
+  python3 paper_runs/analyze_traces.py shakes paper_runs/results/details/design_traces '*_new.csv'
+
 Traces are the files <stem>_moves.csv and <stem>_route.csv written by
 run_ils_time_matched.py --route-trace / --move-trace (default directory
 animation/traces).  A move trace lists, for every recorded event, the drawn
@@ -20,6 +23,7 @@ returned and the shake at which it would have stopped.
 import csv, glob, os, sys
 from collections import defaultdict
 
+PATTERN = None
 BUCKETS = [(1, 1), (2, 5), (6, 10), (11, 20), (21, 50), (51, 10 ** 9)]
 OPS = ("add", "replace", "swap", "two_opt")
 
@@ -76,9 +80,15 @@ def improvements(f):
     return out, shakes
 
 
+def _files(trace_dir):
+    if PATTERN:
+        return sorted(glob.glob(os.path.join(trace_dir, PATTERN)))
+    return sorted(glob.glob(os.path.join(trace_dir, "*_route.csv"))) or sorted(glob.glob(os.path.join(trace_dir, "*.csv")))
+
+
 def shakes(trace_dir):
     print(f"{'run':16s} {'shakes':>6s} {'#impr':>5s} {'last impr':>9s} {'idle after':>10s} {'max gap':>7s}  last gaps")
-    for f in sorted(glob.glob(os.path.join(trace_dir, "*_route.csv"))):
+    for f in _files(trace_dir):
         imp, total = improvements(f)
         idx = [s for s, _ in imp]
         gaps = [b - a for a, b in zip(idx, idx[1:])]
@@ -88,8 +98,7 @@ def shakes(trace_dir):
 
 def stop(trace_dir, candidates=(25, 50, 100, 150, 200, 300)):
     print(f"{'run':16s} " + " ".join(f"{'S=' + str(S):>18s}" for S in candidates) + "   (objective @ stopping shake)")
-    files = sorted(glob.glob(os.path.join(trace_dir, "*_route.csv"))) or sorted(glob.glob(os.path.join(trace_dir, "*.csv")))
-    for f in files:
+    for f in _files(trace_dir):
         imp, total = improvements(f)
         if not imp:
             continue
@@ -111,4 +120,5 @@ def stop(trace_dir, candidates=(25, 50, 100, 150, 200, 300)):
 if __name__ == "__main__":
     what = sys.argv[1] if len(sys.argv) > 1 else "ranks"
     d = sys.argv[2] if len(sys.argv) > 2 else "animation/traces"
+    PATTERN = sys.argv[3] if len(sys.argv) > 3 else None
     {"ranks": ranks, "shakes": shakes, "stop": stop}[what](d)

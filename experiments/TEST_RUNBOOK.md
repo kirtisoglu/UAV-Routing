@@ -1,5 +1,13 @@
 # Test runbook: alternative move weights
 
+**Outcome, 30 September 2026.** `tiers` with the unweighted shake (`DESIGN_SHAKE_KNAP=0`)
+is adopted as the design; the paper describes it and `experiments/RERUN_PLAN.md`
+regenerates every ILS table under it. The driver's defaults are now
+`DESIGN_REORDER_W=tiers` and `DESIGN_SHAKE_KNAP=0`, so the commands below, written when
+the defaults were `exch` and 6, need `DESIGN_SHAKE_KNAP=6` added to reproduce their runs,
+and the previous design itself is `DESIGN_REORDER_W=exch DESIGN_SHAKE_KNAP=6`. Their CSVs
+are in `paper_runs/results/previous_design/`.
+
 For the local agent. This is an experiment, not a change of the design: nothing in
 the paper is edited, the reference results stay, and the outcome is written to
 `experiments/DESIGN.md` under a dated heading. Rules 1, 2, 5 and 6 of
