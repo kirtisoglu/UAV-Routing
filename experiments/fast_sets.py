@@ -204,8 +204,8 @@ def build_two_opt(nd, route, amin, amax, d_room, arr=None, counters=None, mode=N
     k = len(route) - 1
     if k < 2:
         return []
-    if mode == "midall":
-        return build_two_opt_midall(nd, route, amin, amax, d_room, counters)
+    if mode in ("midall", "route"):
+        return build_two_opt_midall(nd, route, amin, amax, d_room, counters, route_wide=(mode == "route"))
     ext = route + [depot]
     A = amin if arr is None else arr
     S = [[0.0] * (k + 2) for _ in range(k + 2)]
@@ -269,8 +269,8 @@ def build_swap(nd, route, amin, amax, d_room, arr=None, counters=None, mode=None
     k = len(route) - 1
     if k < 2:
         return []
-    if mode == "midall":
-        return build_swap_midall(nd, route, amin, amax, d_room, counters)
+    if mode in ("midall", "route"):
+        return build_swap_midall(nd, route, amin, amax, d_room, counters, route_wide=(mode == "route"))
     ext = route + [depot]
     A = amin if arr is None else arr
     moves = []
@@ -374,7 +374,7 @@ def _forward_tables(nd, route):
     return Df, Wf, Lf
 
 
-def build_swap_midall(nd, route, amin, amax, d_room, counters=None):
+def build_swap_midall(nd, route, amin, amax, d_room, counters=None, route_wide=False):
     """Same feasible set as build_swap; score = sum over the reordered part
     (r_q, r_{p+1}, ..., r_{q-1}, r_p) of gamma times (new midpoint - old midpoint)."""
     depot, EW, LW, GAM, DM, inv_v = nd.depot, nd.EW, nd.LW, nd.GAM, nd.DM, nd.inv_v
@@ -442,11 +442,13 @@ def build_swap_midall(nd, route, amin, amax, d_room, counters=None):
             if amax_v > LW[xq]: amax_v = LW[xq]
             score = (gx * (0.5 * (ap + amax_u) - mid_old[p])
                      + GAM[xq] * (0.5 * (aq + amax_v) - mid_old[q]) + inner)
+            if route_wide:
+                score += _outside(nd, ext, k, amin, amax, p, q, xq, amax_v, x, ap)
             moves.append((score, ("swap", p, q), dd))
     return moves
 
 
-def build_two_opt_midall(nd, route, amin, amax, d_room, counters=None):
+def build_two_opt_midall(nd, route, amin, amax, d_room, counters=None, route_wide=False):
     """Same feasible set as build_two_opt; score = sum over the reversed segment
     (r_q, ..., r_p) of gamma times (new midpoint - old midpoint).  The tables of the
     reversed segments are filled with p descending, so the inner segments
@@ -506,5 +508,35 @@ def build_two_opt_midall(nd, route, amin, amax, d_room, counters=None):
                 inner += GAM[ext[j]] * (0.5 * (lo + hi) - mid_old[j])
             score = (gx * (0.5 * (ap + amax_u) - mid_old[p])
                      + GAM[xq] * (0.5 * (aq + amax_v) - mid_old[q]) + inner)
+            if route_wide:
+                score += _outside(nd, ext, k, amin, amax, p, q, xq, amax_v, x, ap)
             moves.append((score, ("two_opt", p, q), dd))
     return moves
+
+
+def _outside(nd, ext, k, amin, amax, p, q, first, amax_first, last, amin_last):
+    """TEST MODE "route": the change of the midpoint estimate of the targets outside the
+    reordered part. Before it (positions p-1 .. 1) only the latest arrivals move, after it
+    (positions q+1 .. k) only the earliest ones; each shift is propagated with the
+    recursion of chain_bounds, in the same floating-point order, until a window end
+    absorbs it and the bound equals the current route's, after which nothing changes."""
+    EW, LW, GAM, DM, inv_v = nd.EW, nd.LW, nd.GAM, nd.DM, nd.inv_v
+    tot = 0.0
+    nxt_node, hi = first, amax_first
+    for j in range(p - 1, 0, -1):
+        rj = ext[j]
+        nxt = hi - DM[rj][nxt_node] * inv_v
+        hi = LW[rj] if LW[rj] < nxt else nxt
+        if hi == amax[j]:
+            break
+        tot += GAM[rj] * 0.5 * (hi - amax[j])
+        nxt_node = rj
+    prv_node, lo = last, amin_last
+    for j in range(q + 1, k + 1):
+        rj = ext[j]
+        lo = max(EW[rj], lo + DM[prv_node][rj] * inv_v)
+        if lo == amin[j]:
+            break
+        tot += GAM[rj] * 0.5 * (lo - amin[j])
+        prv_node = rj
+    return tot
