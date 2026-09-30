@@ -204,6 +204,8 @@ def build_two_opt(nd, route, amin, amax, d_room, arr=None, counters=None, mode=N
     k = len(route) - 1
     if k < 2:
         return []
+    if mode == "midall":
+        return build_two_opt_midall(nd, route, amin, amax, d_room, counters)
     ext = route + [depot]
     A = amin if arr is None else arr
     S = [[0.0] * (k + 2) for _ in range(k + 2)]
@@ -267,6 +269,8 @@ def build_swap(nd, route, amin, amax, d_room, arr=None, counters=None, mode=None
     k = len(route) - 1
     if k < 2:
         return []
+    if mode == "midall":
+        return build_swap_midall(nd, route, amin, amax, d_room, counters)
     ext = route + [depot]
     A = amin if arr is None else arr
     moves = []
@@ -335,4 +339,172 @@ def build_swap(nd, route, amin, amax, d_room, arr=None, counters=None, mode=None
                 moves.append((x_mid, ("swap", p, q), dd))
                 continue
             moves.append(((gx - GAM[xq]) * (A[q] - ax), ("swap", p, q), dd))
+    return moves
+
+
+# ---------------------------------------------------------------------------
+# TEST MODE "midall" (experiments/TEST_RUNBOOK.md): every target of the reordered
+# part is read at the midpoint of its realized window after the move minus before.
+# The windows after the move come from tables of nested segment summaries, O(1)
+# per target, so a feasible pair costs O(q - p) instead of O(1).
+# ---------------------------------------------------------------------------
+
+def _forward_tables(nd, route):
+    """Summaries of every forward segment (r_j, ..., r_i), 1 <= j <= i <= k, by the
+    append rule: Df = travel time at v_max, Wf = earliest arrival at r_i forced by the
+    windows inside, Lf = latest arrival at r_j meeting every window inside (-INF when
+    the segment misses a window however early it is entered)."""
+    EW, LW, DM, inv_v = nd.EW, nd.LW, nd.DM, nd.inv_v
+    k = len(route) - 1
+    Df = [[0.0] * (k + 1) for _ in range(k + 1)]
+    Wf = [[-INF] * (k + 1) for _ in range(k + 1)]
+    Lf = [[-INF] * (k + 1) for _ in range(k + 1)]
+    for j in range(1, k + 1):
+        sj = route[j]; D, W, L, last = 0.0, EW[sj], LW[sj], sj
+        Df[j][j], Wf[j][j], Lf[j][j] = D, W, L
+        for i in range(j + 1, k + 1):
+            z = route[i]; tau = DM[last][z] * inv_v
+            if W + tau > LW[z]:
+                break                          # every longer segment misses this window too
+            Lz = LW[z] - D - tau
+            if Lz < L: L = Lz
+            W = W + tau if W + tau > EW[z] else EW[z]
+            D += tau; last = z
+            Df[j][i], Wf[j][i], Lf[j][i] = D, W, L
+    return Df, Wf, Lf
+
+
+def build_swap_midall(nd, route, amin, amax, d_room, counters=None):
+    """Same feasible set as build_swap; score = sum over the reordered part
+    (r_q, r_{p+1}, ..., r_{q-1}, r_p) of gamma times (new midpoint - old midpoint)."""
+    depot, EW, LW, GAM, DM, inv_v = nd.depot, nd.EW, nd.LW, nd.GAM, nd.DM, nd.inv_v
+    k = len(route) - 1
+    if k < 2:
+        return []
+    ext = route + [depot]
+    Df, Wf, Lf = _forward_tables(nd, route)
+    mid_old = [0.5 * (a + b) for a, b in zip(amin, amax)]
+    moves = []
+    for p in range(1, k):
+        x = ext[p]; pre = ext[p - 1]; gx = GAM[x]
+        for q in range(p + 1, k + 1):
+            xq = ext[q]; nxt = ext[q + 1]
+            if q > p + 1 and (Lf[p + 1][q - 1] == -INF or Lf[p + 1][q - 1] < EW[ext[p + 1]]):
+                break                          # the interior cannot be flown on time
+            if q == p + 1:
+                dd = DM[pre][xq] + DM[x][nxt] - DM[pre][x] - DM[xq][nxt]
+            else:
+                c, e = ext[p + 1], ext[q - 1]
+                dd = (DM[pre][xq] + DM[xq][c] + DM[e][x] + DM[x][nxt]
+                      - DM[pre][x] - DM[x][c] - DM[e][xq] - DM[xq][nxt])
+            if dd > d_room:
+                if counters is not None: counters["floor_excluded"] += 1
+                continue
+            aq = amin[p - 1] + DM[pre][xq] * inv_v
+            if aq < EW[xq]: aq = EW[xq]
+            if aq > LW[xq]:
+                if counters is not None: counters["label_excluded"] += 1
+                continue
+            amax_u = amax[q + 1] - DM[x][nxt] * inv_v
+            if amax_u > LW[x]: amax_u = LW[x]
+            inner = 0.0
+            if q == p + 1:
+                ap = aq + DM[xq][x] * inv_v
+                if ap < EW[x]: ap = EW[x]
+                if ap > LW[x] or ap + DM[x][nxt] * inv_v > amax[q + 1]:
+                    if counters is not None: counters["label_excluded"] += 1
+                    continue
+                amax_v = amax_u - DM[xq][x] * inv_v
+            else:
+                c, e = ext[p + 1], ext[q - 1]
+                af = aq + DM[xq][c] * inv_v
+                if af < EW[c]: af = EW[c]
+                if af > Lf[p + 1][q - 1]:
+                    if counters is not None: counters["label_excluded"] += 1
+                    continue
+                D, W = Df[p + 1][q - 1], Wf[p + 1][q - 1]
+                al = af + D
+                if al < W: al = W
+                tau_e = DM[e][x] * inv_v
+                ap = al + tau_e
+                if ap < EW[x]: ap = EW[x]
+                if ap > LW[x] or ap + DM[x][nxt] * inv_v > amax[q + 1]:
+                    if counters is not None: counters["label_excluded"] += 1
+                    continue
+                tau_c = DM[xq][c] * inv_v
+                amax_v = min(Lf[p + 1][q - 1] - tau_c, amax_u - tau_c - D - tau_e)
+                for j in range(p + 1, q):          # the interior, re-timed by the new legs
+                    lo = af + Df[p + 1][j]
+                    if lo < Wf[p + 1][j]: lo = Wf[p + 1][j]
+                    hi = amax_u - tau_e - Df[j][q - 1]
+                    if hi > Lf[j][q - 1]: hi = Lf[j][q - 1]
+                    inner += GAM[ext[j]] * (0.5 * (lo + hi) - mid_old[j])
+            if amax_v > LW[xq]: amax_v = LW[xq]
+            score = (gx * (0.5 * (ap + amax_u) - mid_old[p])
+                     + GAM[xq] * (0.5 * (aq + amax_v) - mid_old[q]) + inner)
+            moves.append((score, ("swap", p, q), dd))
+    return moves
+
+
+def build_two_opt_midall(nd, route, amin, amax, d_room, counters=None):
+    """Same feasible set as build_two_opt; score = sum over the reversed segment
+    (r_q, ..., r_p) of gamma times (new midpoint - old midpoint).  The tables of the
+    reversed segments are filled with p descending, so the inner segments
+    (r_q, ..., r_j), j > p, exist when the pair (p, q) is scored."""
+    depot, EW, LW, GAM, DM, inv_v = nd.depot, nd.EW, nd.LW, nd.GAM, nd.DM, nd.inv_v
+    k = len(route) - 1
+    if k < 2:
+        return []
+    ext = route + [depot]
+    Dt = [[0.0] * (k + 2) for _ in range(k + 2)]
+    Wt = [[-INF] * (k + 2) for _ in range(k + 2)]
+    Lt = [[-INF] * (k + 2) for _ in range(k + 2)]
+    mid_old = [0.5 * (a + b) for a, b in zip(amin, amax)]
+    moves = []
+    for p in range(k - 1, 0, -1):
+        x = ext[p]; pre = ext[p - 1]; gx = GAM[x]
+        d_pre_x = DM[pre][x]
+        D, W, L = 0.0, -INF, LW[x]
+        first = x
+        Dt[p][p], Wt[p][p], Lt[p][p] = D, W, L
+        for q in range(p + 1, k + 1):
+            y = first; xq = ext[q]
+            if EW[y] > L:
+                break
+            tau = DM[xq][y] * inv_v
+            L = LW[xq] if LW[xq] < L - tau else L - tau
+            W = max(EW[y] + D, W)
+            D += tau
+            first = xq
+            if L < EW[xq]:
+                break
+            Dt[p][q], Wt[p][q], Lt[p][q] = D, W, L
+            nxt = ext[q + 1]
+            dd = DM[pre][xq] + DM[x][nxt] - d_pre_x - DM[xq][nxt]
+            if dd > d_room:
+                if counters is not None: counters["floor_excluded"] += 1
+                continue
+            aq = amin[p - 1] + DM[pre][xq] * inv_v
+            if aq < EW[xq]: aq = EW[xq]
+            if aq > L:
+                if counters is not None: counters["label_excluded"] += 1
+                continue
+            ap = aq + D
+            if ap < W: ap = W
+            if ap + DM[x][nxt] * inv_v > amax[q + 1]:
+                if counters is not None: counters["label_excluded"] += 1
+                continue
+            amax_u = amax[q + 1] - DM[x][nxt] * inv_v
+            if amax_u > LW[x]: amax_u = LW[x]
+            amax_v = L if L < amax_u - D else amax_u - D
+            inner = 0.0
+            for j in range(p + 1, q):              # r_j moves to position p + q - j
+                lo = aq + Dt[j][q]
+                if lo < Wt[j][q]: lo = Wt[j][q]
+                hi = amax_u - Dt[p][j]
+                if hi > Lt[p][j]: hi = Lt[p][j]
+                inner += GAM[ext[j]] * (0.5 * (lo + hi) - mid_old[j])
+            score = (gx * (0.5 * (ap + amax_u) - mid_old[p])
+                     + GAM[xq] * (0.5 * (aq + amax_v) - mid_old[q]) + inner)
+            moves.append((score, ("two_opt", p, q), dd))
     return moves

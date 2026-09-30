@@ -37,12 +37,25 @@ A third variant keeps the exchange value's form but changes what it reads:
   pair is unchanged. For a 2-opt only the outer pair (r_p, r_q) is read this way; the
   nested pairs keep the paper's value. The draw (roulette over the shifted values)
   and the list length L_r are unchanged, so this isolates the effect of the reading.
+* `midall`: the reading of `mid` extended to every target of the reordered part. For
+  a 2-opt that is every target of the reversed segment (r_q, ..., r_p); for a Swap it
+  is r_q, r_p and the interior r_{p+1}, ..., r_{q-1}, whose arrivals the new legs
+  shift. The score is the sum over those targets of the slope times the change of the
+  midpoint of the realized window. The windows after the move come from tables of
+  nested segment summaries (every forward interior segment for Swap, every reversed
+  segment for 2-opt, filled once per route), so a target costs O(1) and a feasible
+  pair O(q - p) instead of O(1). Targets before and after the reordered part are still
+  not read; reading them too would be the route-wide estimate the paper rejected for
+  reorderings. Checked against a full recomputation of the arrival chain on every
+  feasible Swap and 2-opt of the best routes of nine instances (2352 moves, largest
+  difference 4e-12), with feasible sets identical to the default builders'. Building
+  the Swap and 2-opt sets of those best routes takes C104 (100) 4.9 against 11.4 ms, PR15 (240) 6.8 against 7.2 ms, PR10 (288) 3.3 against 3.4 ms (default against `midall`).
 
 The driver knob is `DESIGN_REORDER_W` (default `exch`, the paper); the value is
-recorded in the `extra` column of every row as `reorder=signs`, `reorder=signsm` or
-`reorder=mid`.
+recorded in the `extra` column of every row as `reorder=signs`, `reorder=signsm`,
+`reorder=mid` or `reorder=midall`.
 
-## Runs, about 2.5 hours in total
+## Runs, about 3 hours in total
 
 The six instances where reorderings matter (the L_r grid set of Section 5.8):
 
@@ -52,6 +65,7 @@ The six instances where reorderings matter (the L_r grid set of Section 5.8):
     DESIGN_INSTANCES="$G" DESIGN_REORDER_W=signsm                DESIGN_OUT=_signsm     python3 paper_runs/run_design.py new
     DESIGN_INSTANCES="$G" DESIGN_REORDER_W=signs  DESIGN_RCL=0   DESIGN_OUT=_signs_Lall python3 paper_runs/run_design.py new
     DESIGN_INSTANCES="$G" DESIGN_REORDER_W=mid                   DESIGN_OUT=_mid        python3 paper_runs/run_design.py new
+    DESIGN_INSTANCES="$G" DESIGN_REORDER_W=midall                DESIGN_OUT=_midall     python3 paper_runs/run_design.py new
 
 The reference is replication 1, `paper_runs/results/design_new.csv` (and
 `design_new_rep2.csv` if Step 9 of the runbook has run, which says how large the
@@ -70,6 +84,7 @@ Expected: `stop=max_idle_shakes`, `extra` reads `reorder=signs`, an objective ne
     python3 paper_runs/compare_runs.py paper_runs/results/design_new_signsm.csv     paper_runs/results/design_new.csv
     python3 paper_runs/compare_runs.py paper_runs/results/design_new_signs_Lall.csv paper_runs/results/design_new.csv
     python3 paper_runs/compare_runs.py paper_runs/results/design_new_mid.csv        paper_runs/results/design_new.csv
+    python3 paper_runs/compare_runs.py paper_runs/results/design_new_midall.csv     paper_runs/results/design_new.csv
 
 Write into `experiments/DESIGN.md`, under a heading with the date and the commit, one
 table with a row per instance and variant: objective, change in percent against
@@ -77,8 +92,9 @@ replication 1, t_best, Run, shakes (all from the CSVs), and, if `design_new_rep2
 exists, the replication-1 to replication-2 difference on the same instance as the
 noise reference. Then three sentences: whether the sign rule is within noise of the
 exchange value on the objective, what it does to the run time and the shake count,
-whether `signs` or `signsm` is the better 2-opt rule, and whether `mid` moves the
-objective against the paper's reading in either direction. No recommendation beyond
+whether `signs` or `signsm` is the better 2-opt rule, whether `mid` moves the
+objective against the paper's reading in either direction, and whether `midall` adds
+anything to `mid` beyond its cost in run time. No recommendation beyond
 that; the author decides.
 
 ## What must not happen
